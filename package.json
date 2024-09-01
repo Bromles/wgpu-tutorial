@@ -1,4 +1,8 @@
 {
+  "name": "learn-webgpu-rust",
+  "version": "0.1",
+  "license": "CC-BY-4.0",
+  "type": "module",
   "devDependencies": {
     "vitepress": "^1.3.4",
     "vue": "^3.4.38"
