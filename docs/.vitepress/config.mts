@@ -5,6 +5,9 @@ export default defineConfig({
   title: "Learn WebGPU In Rust",
   description: "Beginners-friendly introduction to WebGPU with Rust",
   base: "learn-webgpu-rust",
+  markdown: {
+    math: true
+  },
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
