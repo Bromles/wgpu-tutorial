@@ -3,23 +3,19 @@
 layout: home
 
 hero:
-  name: "Learn WebGPU In Rust"
-  text: "Beginners-friendly introduction to WebGPU with Rust"
-  tagline: My great project tagline
+  name: "Learn WGPU"
+  text: "Руководство по изучению WGPU на Rust для начинающих"
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
-    - theme: alt
-      text: API Examples
-      link: /api-examples
+      text: Начало работы
+      link: /getting-started
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: Новый стандарт графического API WebGPU
+    details: Использование нового стандарта означает высокую совместимость с реализациями на других языках программирования, а также обилие информации и потенциально широкое применение.
+  - title: Кроссплатформерность
+    details: Поддержка DirectX, Vulkan и Metal, дающая возможность использовать код на всех мобильных и десктопных платформах.
+  - title: Быстрый и безопасный язык программирования Rust
+    details: Удобство как разработки, так и сборки, без компромиссов по быстродействию и надежности кода. Никаких 20 глав попыток корректно собрать и подключить С++ библиотеки, никакого UB, никаких Segmentation Fault.
 ---
 
