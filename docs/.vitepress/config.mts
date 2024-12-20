@@ -55,6 +55,11 @@ export default defineConfig({
                             {text: 'Система координат', link: '/getting-started/coordinate-system'},
                             {text: 'Камера', link: '/getting-started/camera'},
                         ]
+                    },
+                    {
+                        items: [
+                            {text: 'О руководстве', link: '/about'},
+                        ]
                     }
                 ],
 
