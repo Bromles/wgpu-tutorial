@@ -110,7 +110,7 @@ export default defineConfig({
                 },
 
                 editLink: {
-                    pattern: 'https://github.com/Bromles/learn-webgpu-rust/edit/master/docs/:path',
+                    pattern: 'https://github.com/Bromles/wgpu-tutorial/edit/master/docs/:path',
                     text: 'Редактировать эту страницу'
                 }
             }
