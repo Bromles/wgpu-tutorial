@@ -1,10 +1,10 @@
 ---
 prev:
   text: 'Введение'
-  link: 'getting-started'
+  link: '/guide/getting-started'
 next:
   text: 'Создание окна'
-  link: 'getting-started/creating-window'
+  link: '/guide/getting-started/creating-window'
 ---
 
 # WebGPU и WGPU

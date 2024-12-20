@@ -1,7 +1,7 @@
 ---
 prev:
   text: 'Система координат'
-  link: 'getting-started/coordinate-system'
+  link: '/guide/getting-started/coordinate-system'
 next: false
 ---
 

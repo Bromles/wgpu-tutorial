@@ -1,10 +1,10 @@
 ---
 prev:
   text: 'WebGPU и WGPU'
-  link: 'getting-started/webgpu-and-wgpu'
+  link: '/guide/getting-started/webgpu-and-wgpu'
 next:
   text: 'Первый треугольник'
-  link: 'getting-started/hello-triangle'
+  link: '/guide/getting-started/hello-triangle'
 ---
 
 # Создание окна

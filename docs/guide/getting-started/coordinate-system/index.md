@@ -1,10 +1,10 @@
 ---
 prev:
   text: 'Трансформации'
-  link: 'getting-started/transformations'
+  link: '/guide/getting-started/transformations'
 next:
   text: 'Камера'
-  link: 'getting-started/camera'
+  link: '/guide/getting-started/camera'
 ---
 
 # Система координат

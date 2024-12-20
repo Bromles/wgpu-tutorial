@@ -10,58 +10,70 @@ export default defineConfig({
         math: true
     },
     lastUpdated: true,
+    themeConfig: {
+        search: {
+            provider: 'local',
+            options: {
+                locales: ['ru'],
+                translations: {
+                    button: {
+                        buttonText: 'Поиск'
+                    },
+                    modal: {
+                        noResultsText: 'Нет результатов для',
+                        footer: {
+                            navigateText: 'для навигации',
+                            selectText: 'выделить',
+                            closeText: 'закрыть'
+                        }
+                    }
+                }
+            }
+        },
+    },
     locales: {
         root: {
             lang: 'ru',
             themeConfig: {
                 // https://vitepress.dev/reference/default-theme-config
                 nav: [
-                    {text: 'Руководство', link: '/getting-started'},
-                    {text: 'Примеры', link: '/api-examples'}
+                    {text: 'Руководство', link: '/guide/getting-started'},
+                    {text: 'Примеры', link: '/examples/api-examples'}
                 ],
 
-                search: {
-                    provider: 'local',
-                    options: {
-                        locales: ['ru'],
-                        translations: {
-                            button: {
-                                buttonText: 'Поиск'
-                            },
-                            modal: {
-                                noResultsText: 'Нет результатов для',
-                                footer: {
-                                    navigateText: 'для навигации',
-                                    selectText: 'выделить',
-                                    closeText: 'закрыть'
-                                }
-                            }
+                sidebar: {
+                    "/guide": [
+                        {
+                            text: 'Начало работы',
+                            collapsed: false,
+                            items: [
+                                {text: 'Введение', link: '/guide/getting-started'},
+                                {text: 'WebGPU и WGPU', link: '/guide/getting-started/webgpu-and-wgpu'},
+                                {text: 'Создание окна', link: '/guide/getting-started/creating-window'},
+                                {text: 'Первый треугольник', link: '/guide/getting-started/hello-triangle'},
+                                {text: 'Шейдеры', link: '/guide/getting-started/shaders'},
+                                {text: 'Текстуры', link: '/guide/getting-started/textures'},
+                                {text: 'Трансформации', link: '/guide/getting-started/transformations'},
+                                {text: 'Система координат', link: '/guide/getting-started/coordinate-system'},
+                                {text: 'Камера', link: '/guide/getting-started/camera'},
+                            ]
+                        },
+                        {
+                            items: [
+                                {text: 'О руководстве', link: '/guide/about'},
+                            ]
                         }
-                    }
+                    ],
+                    "examples": [
+                        {
+                            text: 'Примеры',
+                            items: [
+                                {text: 'Markdown', link: '/examples/markdown-examples'},
+                                {text: 'API', link: '/examples/api-examples'},
+                            ]
+                        }
+                    ]
                 },
-
-                sidebar: [
-                    {
-                        text: 'Начало работы',
-                        collapsed: false,
-                        items: [
-                            {text: 'Введение', link: '/getting-started'},
-                            {text: 'WebGPU и WGPU', link: '/getting-started/webgpu-and-wgpu'},
-                            {text: 'Создание окна', link: '/getting-started/creating-window'},
-                            {text: 'Первый треугольник', link: '/getting-started/hello-triangle'},
-                            {text: 'Шейдеры', link: '/getting-started/shaders'},
-                            {text: 'Текстуры', link: '/getting-started/textures'},
-                            {text: 'Трансформации', link: '/getting-started/transformations'},
-                            {text: 'Система координат', link: '/getting-started/coordinate-system'},
-                            {text: 'Камера', link: '/getting-started/camera'},
-                        ]
-                    },
-                    {
-                        items: [
-                            {text: 'О руководстве', link: '/about'},
-                        ]
-                    }
-                ],
 
                 socialLinks: [
                     {icon: 'github', link: 'https://github.com/Bromles/learn-webgpu-rust'}

@@ -8,7 +8,7 @@ hero:
   actions:
     - theme: brand
       text: Начало работы
-      link: /getting-started
+      link: /guide/getting-started
 
 features:
   - title: Новый стандарт графического API WebGPU

@@ -1,10 +1,10 @@
 ---
 prev:
   text: 'Первый треугольник'
-  link: 'getting-started/hello-triangle'
+  link: '/guide/getting-started/hello-triangle'
 next:
   text: 'Текстуры'
-  link: 'getting-started/textures'
+  link: '/guide/getting-started/textures'
 ---
 
 # Шейдеры

@@ -1,10 +1,10 @@
 ---
 prev:
   text: 'Текстуры'
-  link: 'getting-started/textures'
+  link: '/guide/getting-started/textures'
 next:
   text: 'Система координат'
-  link: 'getting-started/coordinate-system'
+  link: '/guide/getting-started/coordinate-system'
 ---
 
 # Трансформации
