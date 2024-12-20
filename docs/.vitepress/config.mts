@@ -1,4 +1,10 @@
 import {defineConfig} from 'vitepress'
+import {SearchPlugin} from "vitepress-plugin-search"
+
+const searchOptions = {
+    buttonLabel: "Поиск",
+    placeholder: 'Поиск по сайту'
+}
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -9,12 +15,19 @@ export default defineConfig({
     markdown: {
         math: true
     },
+    vite: {
+        plugins: [SearchPlugin(searchOptions)],
+    },
     themeConfig: {
         // https://vitepress.dev/reference/default-theme-config
         nav: [
             {text: 'Руководство', link: '/getting-started'},
             {text: 'Примеры', link: '/api-examples'}
         ],
+
+        search: {
+            provider: 'local'
+        },
 
         sidebar: [
             {
