@@ -90,6 +90,11 @@ export default defineConfig({
                         hour12: false,
                         forceLocale: true
                     }
+                },
+
+                editLink: {
+                    pattern: 'https://github.com/Bromles/learn-webgpu-rust/edit/master/docs/:path',
+                    text: 'Редактировать эту страницу'
                 }
             }
         },
