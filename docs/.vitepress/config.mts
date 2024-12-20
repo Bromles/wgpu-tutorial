@@ -1,10 +1,4 @@
 import {defineConfig} from 'vitepress'
-import {SearchPlugin} from "vitepress-plugin-search"
-
-const searchOptions = {
-    buttonLabel: "Поиск",
-    placeholder: 'Поиск по сайту'
-}
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -15,9 +9,7 @@ export default defineConfig({
     markdown: {
         math: true
     },
-    vite: {
-        plugins: [SearchPlugin(searchOptions)],
-    },
+    lang: 'ru',
     themeConfig: {
         // https://vitepress.dev/reference/default-theme-config
         nav: [
@@ -26,12 +18,29 @@ export default defineConfig({
         ],
 
         search: {
-            provider: 'local'
+            provider: 'local',
+            options: {
+                locales: ['ru'],
+                translations: {
+                    button: {
+                        buttonText: 'Поиск'
+                    },
+                    modal: {
+                        noResultsText: 'Нет результатов для',
+                        footer: {
+                            navigateText: 'для навигации',
+                            selectText: 'выделить',
+                            closeText: 'закрыть'
+                        }
+                    }
+                }
+            }
         },
 
         sidebar: [
             {
                 text: 'Начало работы',
+                collapsed: false,
                 items: [
                     {text: 'Введение', link: '/getting-started'},
                     {text: 'WebGPU и WGPU', link: '/getting-started/webgpu-and-wgpu'},
@@ -53,6 +62,12 @@ export default defineConfig({
         footer: {
             message: 'Опубликовано под лицензией CC-BY-4.0',
             copyright: '© Bromles, 2024'
+        },
+
+        notFound: {
+            title: 'Страница не найдена',
+            quote: 'Дальше живут драконы',
+            linkText: 'На главную'
         }
     }
 })
