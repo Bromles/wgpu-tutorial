@@ -2,9 +2,9 @@ import {defineConfig} from 'vitepress'
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-    title: "Learn WGPU",
+    title: "WGPU tutorial",
     description: "Руководство по изучению WGPU на Rust для начинающих",
-    base: "/learn-webgpu-rust/",
+    base: "/wgpu-tutorial/",
     cleanUrls: true,
     markdown: {
         math: true
