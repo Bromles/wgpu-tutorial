@@ -64,7 +64,7 @@ export default defineConfig({
                             ]
                         }
                     ],
-                    "examples": [
+                    "/examples": [
                         {
                             text: 'Примеры',
                             items: [
