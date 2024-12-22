@@ -1,6 +1,5 @@
 import {defineConfig} from 'vitepress'
 
-// https://vitepress.dev/reference/site-config
 export default defineConfig({
     title: "WGPU tutorial",
     description: "Руководство по изучению WGPU на Rust для начинающих",
@@ -20,7 +19,6 @@ export default defineConfig({
         search: {
             provider: 'local',
             options: {
-                locales: ['ru'],
                 translations: {
                     button: {
                         buttonText: 'Поиск'
@@ -39,6 +37,7 @@ export default defineConfig({
     },
     locales: {
         root: {
+            label: 'Russian',
             lang: 'ru',
             themeConfig: {
                 sidebar: {
