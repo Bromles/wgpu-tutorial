@@ -64,8 +64,7 @@ impl Renderer {
                 .request_device(
                     &DeviceDescriptor {
                         label: None,
-                        required_features: (adapter.features() & Features::POLYGON_MODE_LINE)
-                            | (adapter.features() & Features::default()),
+                        required_features: adapter.features() & Features::default(),
                         required_limits: Limits::downlevel_defaults(),
                         memory_hints: MemoryHints::Performance,
                     },
