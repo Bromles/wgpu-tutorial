@@ -10,7 +10,13 @@ export default defineConfig({
         math: true
     },
     lastUpdated: true,
+    head: [
+        ['link', { rel: 'icon', href: '/wgpu-tutorial/favicon.svg' }],
+    ],
     themeConfig: {
+        logo: {
+            src: '/favicon.svg'
+        },
         search: {
             provider: 'local',
             options: {
@@ -35,14 +41,13 @@ export default defineConfig({
         root: {
             lang: 'ru',
             themeConfig: {
-                // https://vitepress.dev/reference/default-theme-config
-                nav: [
-                    {text: 'Руководство', link: '/guide/getting-started'},
-                    {text: 'Примеры', link: '/examples/api-examples'}
-                ],
-
                 sidebar: {
-                    "/guide": [
+                    "/": [
+                        {
+                            items: [
+                                {text: 'О руководстве', link: '/'},
+                            ]
+                        },
                         {
                             text: 'Начало работы',
                             collapsed: false,
@@ -58,11 +63,6 @@ export default defineConfig({
                                 {text: 'Камера', link: '/guide/getting-started/camera'},
                             ]
                         },
-                        {
-                            items: [
-                                {text: 'О руководстве', link: '/guide/about'},
-                            ]
-                        }
                     ],
                     "/examples": [
                         {
