@@ -63,6 +63,27 @@ export default defineConfig({
                                 {text: 'Камера', link: '/guide/getting-started/camera'},
                             ]
                         },
+                        {
+                            text: 'Математика для графики',
+                            collapsed: true,
+                            items: [
+                                {text: 'Введение', link: '/guide/math'},
+                            ]
+                        },
+                        {
+                            text: 'Освещение',
+                            collapsed: true,
+                            items: [
+                                {text: 'Введение', link: '/guide/lighting'},
+                            ]
+                        },
+                        {
+                            text: 'Вычисления на GPU',
+                            collapsed: true,
+                            items: [
+                                {text: 'Введение', link: '/guide/compute'},
+                            ]
+                        }
                     ],
                     "/examples": [
                         {
