@@ -11,7 +11,7 @@ export default defineConfig({
     },
     lastUpdated: true,
     head: [
-        ['link', { rel: 'icon', href: '/wgpu-tutorial/favicon.svg' }],
+        ['link', {rel: 'icon', href: '/wgpu-tutorial/favicon.svg'}],
     ],
     themeConfig: {
         logo: {
