@@ -175,7 +175,7 @@ impl Renderer {
         );
     }
 
-    fn render(&mut self, window: Arc<Window>, _recreate_swapchain: &mut bool) {
+    fn render(&mut self, window: Arc<Window>) {
         match self.surface.get_current_texture() {
             Ok(frame) => {
                 let mut encoder = self
@@ -245,14 +245,13 @@ impl ApplicationHandler for App {
         let Self::Ready {
             window,
             renderer,
-            recreate_swapchain,
             ..
         } = self
         else {
             return;
         };
 
-        renderer.render(window.clone(), recreate_swapchain);
+        renderer.render(window.clone());
 
         window.set_visible(true);
     }
@@ -285,7 +284,7 @@ impl ApplicationHandler for App {
                     *recreate_swapchain = false;
                 }
 
-                renderer.render(window.clone(), recreate_swapchain);
+                renderer.render(window.clone());
 
                 window.request_redraw();
             }
