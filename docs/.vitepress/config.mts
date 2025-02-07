@@ -14,7 +14,8 @@ export default defineConfig({
     ],
     themeConfig: {
         logo: {
-            src: '/favicon.svg'
+            light: '/logo.light.svg',
+            dark: '/logo.dark.svg'
         },
         search: {
             provider: 'local',
