@@ -1,6 +1,7 @@
 import {defineConfig} from 'vitepress'
+import {withMermaid} from "vitepress-plugin-mermaid";
 
-export default defineConfig({
+const vitePressConfig = defineConfig({
     title: "WGPU tutorial",
     description: "Руководство по изучению WGPU на Rust для начинающих",
     base: "/wgpu-tutorial/",
@@ -137,4 +138,9 @@ export default defineConfig({
             }
         },
     },
+})
+
+// noinspection JSUnusedGlobalSymbols
+export default withMermaid({
+    ...vitePressConfig,
 })
