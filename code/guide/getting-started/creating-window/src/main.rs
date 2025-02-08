@@ -1,4 +1,5 @@
 use std::sync::Arc;
+
 use tracing::debug;
 use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;

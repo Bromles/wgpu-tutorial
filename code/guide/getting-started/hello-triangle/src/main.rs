@@ -3,9 +3,9 @@ use std::sync::Arc;
 use pollster::block_on;
 use tracing::debug;
 use wgpu::{
-    include_wgsl, Backends, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites,
-    CommandEncoderDescriptor, CompositeAlphaMode, Device, DeviceDescriptor, Features,
-    FragmentState, FrontFace, Instance, InstanceDescriptor, Limits, LoadOp, MemoryHints,
+    Backends, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites, CommandEncoderDescriptor,
+    CompositeAlphaMode, Device, DeviceDescriptor, Features, FragmentState,
+    FrontFace, include_wgsl, Instance, InstanceDescriptor, Limits, LoadOp, MemoryHints,
     MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
     PolygonMode, PowerPreference, PresentMode, PrimitiveState, PrimitiveTopology, Queue,
     RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,

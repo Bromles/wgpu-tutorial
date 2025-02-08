@@ -46,45 +46,50 @@ const vitePressConfig = defineConfig({
                     "/": [
                         {
                             items: [
-                                {text: 'О руководстве', link: '/'},
+                                {text: 'О руководстве 🚧', link: '/'},
                             ]
                         },
                         {
                             text: 'Начало работы',
                             collapsed: false,
                             items: [
-                                {text: 'Введение', link: '/guide/getting-started'},
-                                {text: 'WebGPU и WGPU', link: '/guide/getting-started/webgpu-and-wgpu'},
-                                {text: 'Создание окна', link: '/guide/getting-started/creating-window'},
-                                {text: 'Первый треугольник', link: '/guide/getting-started/hello-triangle'},
-                                {text: 'Шейдеры', link: '/guide/getting-started/shaders'},
-                                {text: 'Текстуры', link: '/guide/getting-started/textures'},
-                                {text: 'Трансформации', link: '/guide/getting-started/transformations'},
-                                {text: 'Система координат', link: '/guide/getting-started/coordinate-system'},
-                                {text: 'Камера', link: '/guide/getting-started/camera'},
+                                {text: 'Введение 🚧', link: '/guide/getting-started'},
+                                {text: 'WebGPU и WGPU 🚧', link: '/guide/getting-started/webgpu-and-wgpu'},
+                                {text: 'Создание окна 🚧', link: '/guide/getting-started/creating-window'},
+                                {text: 'Первый треугольник 🚧', link: '/guide/getting-started/hello-triangle'},
+                                {text: 'Шейдеры 🚧', link: '/guide/getting-started/shaders'},
+                                {text: 'Текстуры 🚧', link: '/guide/getting-started/textures'},
+                                {text: 'Трансформации 🚧', link: '/guide/getting-started/transformations'},
+                                {text: 'Система координат 🚧', link: '/guide/getting-started/coordinate-system'},
+                                {text: 'Камера 🚧', link: '/guide/getting-started/camera'},
                             ]
                         },
                         {
                             text: 'Математика для графики',
                             collapsed: true,
                             items: [
-                                {text: 'Введение', link: '/guide/math'},
+                                {text: 'Введение 🚧', link: '/guide/math'},
                             ]
                         },
                         {
                             text: 'Освещение',
                             collapsed: true,
                             items: [
-                                {text: 'Введение', link: '/guide/lighting'},
+                                {text: 'Введение 🚧', link: '/guide/lighting'},
                             ]
                         },
                         {
                             text: 'Вычисления на GPU',
                             collapsed: true,
                             items: [
-                                {text: 'Введение', link: '/guide/compute'},
+                                {text: 'Введение 🚧', link: '/guide/compute'},
                             ]
-                        }
+                        },
+                        {
+                            items: [
+                                {text: 'Глоссарий 🚧', link: '/guide/glossary'},
+                            ]
+                        },
                     ],
                     "/examples": [
                         {
