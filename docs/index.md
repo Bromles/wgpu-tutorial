@@ -29,7 +29,7 @@ editLink: false
 
 ```mermaid
 flowchart LR
-    CPU --> Native["Native API"] --> Driver --> GPU
+    Code["Our code"] --> Native["Native API"] --> Driver --> GPU
 ```
 
 * Абстракции и обертки - различные библиотеки, предоставляющие своё графическое API поверх нативных. Такие как
@@ -38,12 +38,17 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    CPU --> Abstraction["Abstraction Library"] --> Native["Native API"] --> Driver --> GPU
+  Code["Our code"] --> Abstraction["Abstraction Library"] --> Native["Native API"] --> Driver --> GPU
 ```
 
-Отдельно можно выделить API в браузерах, например WebGL. Код фронтенда может работать с ними напрямую, но внутри самого
+* Отдельно можно выделить API в браузерах, например WebGL. Код фронтенда может работать с ними напрямую, но внутри самого
 браузера все равно происходят вызовы нативного API текущей платформы. Таким образом, браузерные API можно тоже считать
 абстракциями над нативными.
+
+```mermaid
+flowchart LR
+  Code["Our code"] --> Browser --> Native["Native API"] --> Driver --> GPU
+```
 
 ## Почему WebGPU
 
@@ -100,7 +105,7 @@ WebGL/OpenGL.
 
 ```mermaid
 flowchart LR
-    CPU --> Dawn/wgpu --> Native["Native API "] --> Driver --> GPU
+  Code["Our code"] --> Dawn/wgpu --> Native["Native API "] --> Driver --> GPU
 ```
 
 <details class="details custom-block" style="padding-top: 8px">
