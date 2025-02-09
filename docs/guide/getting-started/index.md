@@ -5,3 +5,5 @@ next:
 ---
 
 # Введение
+
+<<< @/../code/guide/getting-started/creating-window/src/main.rs#appstate{2,5}

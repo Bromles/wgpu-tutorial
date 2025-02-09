@@ -6,12 +6,14 @@ use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::window::{Window, WindowAttributes, WindowId};
 
+// #region appstate
 enum App {
     Loading,
     Ready {
         window: Arc<Window>
     },
 }
+// #endregion appstate
 
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {

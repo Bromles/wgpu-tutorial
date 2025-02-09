@@ -46,7 +46,7 @@ const vitePressConfig = defineConfig({
                     "/": [
                         {
                             items: [
-                                {text: 'О руководстве 🚧', link: '/'},
+                                {text: 'О руководстве', link: '/'},
                             ]
                         },
                         {
@@ -108,7 +108,7 @@ const vitePressConfig = defineConfig({
 
                 footer: {
                     message: 'Опубликовано под лицензией CC-BY-4.0',
-                    copyright: '© Bromles, 2024'
+                    copyright: '© Bromles, 2025'
                 },
 
                 notFound: {
