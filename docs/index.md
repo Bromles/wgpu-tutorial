@@ -82,7 +82,7 @@ flowchart LR
 
 <div class="info custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Дополнительная информация</p>
-<p>Vulkan, DirectX 12, Metal и WebGPU относятся к графическим API нового поколения, тогда как OpenGL и WebGL - к старому</p>
+<p>Vulkan, DirectX 12, Metal и WebGPU относятся к графическим API нового поколения, тогда как OpenGL и WebGL - к старому.</p>
 </div>
 
 ## Почему Rust

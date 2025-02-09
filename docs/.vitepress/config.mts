@@ -54,7 +54,6 @@ const vitePressConfig = defineConfig({
                             collapsed: false,
                             items: [
                                 {text: 'Введение 🚧', link: '/guide/getting-started'},
-                                {text: 'WebGPU и WGPU 🚧', link: '/guide/getting-started/webgpu-and-wgpu'},
                                 {text: 'Создание окна 🚧', link: '/guide/getting-started/creating-window'},
                                 {text: 'Первый треугольник 🚧', link: '/guide/getting-started/hello-triangle'},
                                 {text: 'Шейдеры 🚧', link: '/guide/getting-started/shaders'},
