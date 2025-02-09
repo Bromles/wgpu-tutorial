@@ -69,9 +69,12 @@ WebGL/OpenGL.
 И Metal. Что позволяет использовать их продвинутые возможности в WebGPU, которое является "общим знаменателем" между тремя
 современными графическими API.
 
+Важно понимать, что и Dawn, и wgpu, не являются нативными графическими API, и лишь базируются на них для работоспособности.
+"Под капотом" они превращают свои вызовы в вызовы платмформерного API, то есть Vulkan, DirectX 12 или Metal. 
+
 ```mermaid
 flowchart LR
-    CPU --> Dawn/wgpu --> Vuukan/Dx12/Metal --> Driver --> GPU
+    CPU --> Dawn/wgpu --> Vulkan/Dx12/Metal --> Driver --> GPU
 ```
 
 <details class="details custom-block" style="padding-top: 8px">
