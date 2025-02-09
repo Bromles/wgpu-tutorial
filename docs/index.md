@@ -65,6 +65,15 @@ WebGL/OpenGL.
 писать несколько реализаций под разные API и платформы, а также делать это так же просто, как на OpenGL или Metal,
 значительно проще Vulkan и DirectX 12.
 
+Обе реализации WebGPU внутри себя превращают нативные вызовы в обращения к нативным API, включая и Vulkan, и Direct X 12, 
+И Metal. Что позволяет использовать их продвинутые возможности в WebGPU, которое является "общим знаменателем" между тремя
+современными графическими API.
+
+```mermaid
+flowchart LR
+    CPU --> Dawn/wgpu --> Vuukan/Dx12/Metal --> Driver --> GPU
+```
+
 <details class="details custom-block" style="padding-top: 8px">
 <summary>Примечание</summary>
 За месяц до написания данной страницы вышла версия 24.0.0 wgpu, в которой добавили поддержку Apple Vision Pro, 
