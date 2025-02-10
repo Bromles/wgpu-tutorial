@@ -42,7 +42,7 @@ impl Renderer {
         physical_size.width = physical_size.width.max(1);
         physical_size.height = physical_size.height.max(1);
 
-        let instance = Instance::new(InstanceDescriptor {
+        let instance = Instance::new(&InstanceDescriptor {
             backends: Backends::PRIMARY,
             ..Default::default()
         });
