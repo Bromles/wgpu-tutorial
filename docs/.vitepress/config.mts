@@ -29,7 +29,7 @@ const vitePressConfig = defineConfig({
                         noResultsText: 'Нет результатов для',
                         footer: {
                             navigateText: 'для навигации',
-                            selectText: 'выделить',
+                            selectText: 'выбрать',
                             closeText: 'закрыть'
                         }
                     }
@@ -102,7 +102,7 @@ const vitePressConfig = defineConfig({
                 },
 
                 socialLinks: [
-                    {icon: 'github', link: 'https://github.com/Bromles/learn-webgpu-rust'}
+                    {icon: 'github', link: 'https://github.com/Bromles/wgpu-tutorial'}
                 ],
 
                 footer: {
