@@ -2,7 +2,7 @@ import {defineConfig} from 'vitepress'
 import {withMermaid} from "vitepress-plugin-mermaid";
 
 const vitePressConfig = defineConfig({
-    title: "WGPU tutorial",
+    title: "WGPU Tutorial",
     description: "Руководство по изучению WGPU на Rust для начинающих",
     base: "/wgpu-tutorial/",
     cleanUrls: true,
