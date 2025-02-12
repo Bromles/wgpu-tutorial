@@ -8,11 +8,11 @@ use wgpu::{
     Backends, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites, CommandEncoderDescriptor,
     CompositeAlphaMode, Device, DeviceDescriptor, Features, FragmentState,
     FrontFace, include_wgsl, Instance, InstanceDescriptor, Limits, LoadOp, MemoryHints,
-    MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
-    PolygonMode, PowerPreference, PresentMode, PrimitiveState, PrimitiveTopology, Queue,
-    RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
-    RequestAdapterOptions, StoreOp, Surface, SurfaceConfiguration, SurfaceError, TextureFormat,
-    TextureUsages, TextureViewDescriptor, VertexState,
+    MultisampleState, Operations, PipelineCompilationOptions, PolygonMode, PowerPreference,
+    PresentMode, PrimitiveState, PrimitiveTopology, Queue, RenderPassColorAttachment,
+    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, RequestAdapterOptions, StoreOp,
+    Surface, SurfaceConfiguration, SurfaceError, TextureFormat, TextureUsages,
+    TextureViewDescriptor, VertexState,
 };
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
@@ -24,7 +24,6 @@ use winit::window::{Window, WindowAttributes, WindowId};
 enum App {
     Loading,
     Ready {
-        async_runtime: Arc<Runtime>,
         window: Arc<Window>,
         renderer: Renderer,
         need_to_resize_surface: bool,
@@ -116,18 +115,10 @@ impl Renderer {
             .device
             .create_shader_module(include_wgsl!("shader.wgsl"));
 
-        let pipeline_layout = renderer
-            .device
-            .create_pipeline_layout(&PipelineLayoutDescriptor {
-                label: None,
-                bind_group_layouts: &[],
-                push_constant_ranges: &[],
-            });
-
         renderer.pipeline = Some(renderer.device.create_render_pipeline(
             &RenderPipelineDescriptor {
                 label: None,
-                layout: Some(&pipeline_layout),
+                layout: None,
                 vertex: VertexState {
                     module: &shader_module,
                     entry_point: Some("vs_main"),
@@ -252,7 +243,6 @@ impl ApplicationHandler for App {
             let renderer = Renderer::new(window.clone(), runtime.clone());
 
             *self = Self::Ready {
-                async_runtime: runtime,
                 window,
                 renderer,
                 need_to_resize_surface: false,
