@@ -4,7 +4,6 @@ use std::sync::Arc;
 
 use tokio::runtime;
 use tokio::runtime::Runtime;
-use tracing::debug;
 use wgpu::{
     Backends, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites, CommandEncoderDescriptor,
     CompositeAlphaMode, Device, DeviceDescriptor, Features, FragmentState,
@@ -17,8 +16,9 @@ use wgpu::{
 };
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
-use winit::event::WindowEvent;
+use winit::event::{ElementState, KeyEvent, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowAttributes, WindowId};
 
 enum App {
@@ -27,7 +27,7 @@ enum App {
         async_runtime: Arc<Runtime>,
         window: Arc<Window>,
         renderer: Renderer,
-        recreate_swapchain: bool,
+        need_to_resize_surface: bool,
     },
 }
 
@@ -36,7 +36,7 @@ struct Renderer {
     queue: Queue,
     surface: Surface<'static>,
     surface_config: SurfaceConfiguration,
-    swapchain_format: TextureFormat,
+    surface_format: TextureFormat,
     pipeline: Option<RenderPipeline>,
 }
 
@@ -51,7 +51,9 @@ impl Renderer {
             ..Default::default()
         });
 
-        let surface = instance.create_surface(window).unwrap();
+        let surface = instance
+            .create_surface(window)
+            .expect("Failed to create surface");
         let adapter = runtime.block_on(async {
             instance
                 .request_adapter(&RequestAdapterOptions {
@@ -60,7 +62,7 @@ impl Renderer {
                     compatible_surface: Some(&surface),
                 })
                 .await
-                .unwrap()
+                .expect("Failed to request adapter")
         });
 
         let (device, queue) = runtime.block_on(async {
@@ -75,22 +77,22 @@ impl Renderer {
                     None,
                 )
                 .await
-                .unwrap()
+                .expect("Failed to request device")
         });
 
         let surface_capabilities = surface.get_capabilities(&adapter);
 
-        let swapchain_format = surface_capabilities
+        let surface_format = surface_capabilities
             .formats
             .iter()
             .copied()
             .find(TextureFormat::is_srgb)
             .or_else(|| surface_capabilities.formats.first().copied())
-            .unwrap();
+            .expect("Failed to get surface format");
 
         let surface_config = SurfaceConfiguration {
             usage: TextureUsages::RENDER_ATTACHMENT,
-            format: swapchain_format,
+            format: surface_format,
             width: physical_size.width,
             height: physical_size.height,
             present_mode: PresentMode::AutoNoVsync,
@@ -104,11 +106,11 @@ impl Renderer {
             queue,
             surface,
             surface_config,
-            swapchain_format,
+            surface_format,
             pipeline: None,
         };
 
-        renderer.configure_surface(physical_size);
+        renderer.resize_surface(physical_size);
 
         let shader_module = renderer
             .device
@@ -136,7 +138,7 @@ impl Renderer {
                     module: &shader_module,
                     entry_point: Some("fs_main"),
                     targets: &[Some(ColorTargetState {
-                        format: renderer.swapchain_format,
+                        format: renderer.surface_format,
                         blend: Some(BlendState {
                             color: BlendComponent::REPLACE,
                             alpha: BlendComponent::REPLACE,
@@ -165,7 +167,7 @@ impl Renderer {
         renderer
     }
 
-    fn configure_surface(&self, size: PhysicalSize<u32>) {
+    fn resize_surface(&self, size: PhysicalSize<u32>) {
         let width = size.width.max(1);
         let height = size.height.max(1);
 
@@ -204,7 +206,7 @@ impl Renderer {
                         occlusion_query_set: None,
                     });
 
-                    rpass.set_pipeline(self.pipeline.as_ref().unwrap());
+                    rpass.set_pipeline(self.pipeline.as_ref().expect("Failed to get pipeline"));
                     rpass.draw(0..3, 0..1);
                 }
 
@@ -214,7 +216,7 @@ impl Renderer {
             }
             Err(error) => match error {
                 SurfaceError::OutOfMemory => {
-                    panic!("Swapchain error: {error}")
+                    panic!("Surface error: {error}")
                 }
                 _ => {
                     window.request_redraw();
@@ -237,7 +239,11 @@ impl ApplicationHandler for App {
                 .with_title("WGPU Tutorial")
                 .with_visible(false);
 
-            let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
+            let window = Arc::new(
+                event_loop
+                    .create_window(window_attributes)
+                    .expect("Failed to create window"),
+            );
 
             center_window(window.clone());
 
@@ -249,7 +255,7 @@ impl ApplicationHandler for App {
                 async_runtime: runtime,
                 window,
                 renderer,
-                recreate_swapchain: false,
+                need_to_resize_surface: false,
             }
         }
 
@@ -274,7 +280,7 @@ impl ApplicationHandler for App {
         let Self::Ready {
             window,
             renderer,
-            recreate_swapchain,
+            need_to_resize_surface,
             ..
         } = self
         else {
@@ -283,14 +289,12 @@ impl ApplicationHandler for App {
 
         match event {
             WindowEvent::RedrawRequested => {
-                debug!("Rendering");
-
-                if *recreate_swapchain {
+                if *need_to_resize_surface {
                     let size = window.inner_size();
 
-                    renderer.configure_surface(size);
+                    renderer.resize_surface(size);
 
-                    *recreate_swapchain = false;
+                    *need_to_resize_surface = false;
                 }
 
                 renderer.render(window.clone());
@@ -298,12 +302,13 @@ impl ApplicationHandler for App {
                 window.request_redraw();
             }
             WindowEvent::Resized(_) => {
-                *recreate_swapchain = true;
+                *need_to_resize_surface = true;
                 window.request_redraw();
             }
             WindowEvent::CloseRequested => {
                 event_loop.exit();
             }
+            WindowEvent::KeyboardInput { event, .. } => handle_keyboard_input(event_loop, event),
             _ => {}
         }
     }
@@ -318,7 +323,18 @@ fn main() {
 
     let mut app = App::Loading;
 
-    event_loop.run_app(&mut app).expect("Failed to run event loop");
+    event_loop
+        .run_app(&mut app)
+        .expect("Failed to run event loop");
+}
+
+fn handle_keyboard_input(event_loop: &ActiveEventLoop, event: KeyEvent) {
+    match (event.physical_key, event.state) {
+        (PhysicalKey::Code(KeyCode::Escape), ElementState::Pressed) => {
+            event_loop.exit();
+        }
+        _ => {}
+    }
 }
 
 fn center_window(window: Arc<Window>) {
