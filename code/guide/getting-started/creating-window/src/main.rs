@@ -7,7 +7,7 @@ use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::window::{Window, WindowAttributes, WindowId};
-use log::debug;
+
 // #region appstate
 enum App {
     Loading,
@@ -53,7 +53,7 @@ impl ApplicationHandler for App {
             }
             WindowEvent::Resized(_) => {
                 debug!("Resized");
-                
+
                 window.request_redraw();
             }
             WindowEvent::CloseRequested => {
@@ -75,7 +75,9 @@ fn main() {
 
     let mut app = App::Loading;
 
-    event_loop.run_app(&mut app).expect("Failed to run event loop");
+    event_loop
+        .run_app(&mut app)
+        .expect("Failed to run event loop");
 }
 // #endregion main
 
