@@ -4,8 +4,9 @@ use std::sync::Arc;
 
 use tracing::debug;
 use winit::application::ApplicationHandler;
-use winit::event::WindowEvent;
+use winit::event::{ElementState, KeyEvent, WindowEvent};
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
+use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowAttributes, WindowId};
 
 // #region appstate
@@ -59,6 +60,7 @@ impl ApplicationHandler for App {
             WindowEvent::CloseRequested => {
                 event_loop.exit();
             }
+            WindowEvent::KeyboardInput { event, .. } => handle_keyboard_input(event_loop, event),
             _ => {}
         }
     }
@@ -80,6 +82,17 @@ fn main() {
         .expect("Failed to run event loop");
 }
 // #endregion main
+
+// #region keyboardinput
+fn handle_keyboard_input(event_loop: &ActiveEventLoop, event: KeyEvent) {
+    match (event.physical_key, event.state) {
+        (PhysicalKey::Code(KeyCode::Escape), ElementState::Pressed) => {
+            event_loop.exit();
+        }
+        _ => {}
+    }
+}
+// #endregion keyboardinput
 
 // #region centerwindow
 fn center_window(window: Arc<Window>) {
