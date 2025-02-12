@@ -314,11 +314,11 @@ fn main() {
         .with_max_level(tracing::Level::INFO)
         .init();
 
-    let event_loop = EventLoop::new().unwrap();
+    let event_loop = EventLoop::new().expect("Failed to create event loop");
 
     let mut app = App::Loading;
 
-    let _ = event_loop.run_app(&mut app);
+    event_loop.run_app(&mut app).expect("Failed to run event loop");
 }
 
 fn center_window(window: Arc<Window>) {

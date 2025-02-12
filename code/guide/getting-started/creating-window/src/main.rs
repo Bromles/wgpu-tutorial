@@ -7,13 +7,11 @@ use winit::application::ApplicationHandler;
 use winit::event::WindowEvent;
 use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::window::{Window, WindowAttributes, WindowId};
-
+use log::debug;
 // #region appstate
 enum App {
     Loading,
-    Ready {
-        window: Arc<Window>
-    },
+    Ready { window: Arc<Window> },
 }
 // #endregion appstate
 
@@ -21,29 +19,29 @@ impl ApplicationHandler for App {
     // #region appsetup
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if let Self::Loading = self {
-            let window_attributes = WindowAttributes::default()
-                .with_title("WGPU Tutorial");
+            let window_attributes = WindowAttributes::default().with_title("WGPU Tutorial");
 
-            let window = Arc::new(event_loop.create_window(window_attributes).unwrap());
+            let window = Arc::new(
+                event_loop
+                    .create_window(window_attributes)
+                    .expect("Failed to create window"),
+            );
 
             center_window(window.clone());
 
-            event_loop.set_control_flow(ControlFlow::Wait);
-
-            *self = Self::Ready {
-                window
-            }
+            *self = Self::Ready { window }
         }
     }
     // #endregion appsetup
-    
+
     // #region apploop
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, _window_id: WindowId, event: WindowEvent) {
-        let Self::Ready {
-            window,
-            ..
-        } = self
-        else {
+    fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        _window_id: WindowId,
+        event: WindowEvent,
+    ) {
+        let Self::Ready { window, .. } = self else {
             return;
         };
 
@@ -54,6 +52,8 @@ impl ApplicationHandler for App {
                 window.request_redraw();
             }
             WindowEvent::Resized(_) => {
+                debug!("Resized");
+                
                 window.request_redraw();
             }
             WindowEvent::CloseRequested => {
@@ -68,14 +68,14 @@ impl ApplicationHandler for App {
 // #region main
 fn main() {
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::ERROR)
+        .with_max_level(tracing::Level::INFO)
         .init();
-    
-    let event_loop = EventLoop::new().unwrap();
+
+    let event_loop = EventLoop::new().expect("Failed to create event loop");
 
     let mut app = App::Loading;
 
-    let _ = event_loop.run_app(&mut app);
+    event_loop.run_app(&mut app).expect("Failed to run event loop");
 }
 // #endregion main
 
@@ -92,5 +92,5 @@ fn center_window(window: Arc<Window>) {
                 + monitor.position().y as f64,
         });
     }
-} 
+}
 // #endregion centerwindow
