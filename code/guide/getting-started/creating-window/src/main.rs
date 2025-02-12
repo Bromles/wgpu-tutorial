@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use std::sync::Arc;
 
 use tracing::debug;
@@ -16,6 +18,7 @@ enum App {
 // #endregion appstate
 
 impl ApplicationHandler for App {
+    // #region appsetup
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if let Self::Loading = self {
             let window_attributes = WindowAttributes::default()
@@ -32,7 +35,9 @@ impl ApplicationHandler for App {
             }
         }
     }
-
+    // #endregion appsetup
+    
+    // #region apploop
     fn window_event(&mut self, event_loop: &ActiveEventLoop, _window_id: WindowId, event: WindowEvent) {
         let Self::Ready {
             window,
@@ -57,16 +62,24 @@ impl ApplicationHandler for App {
             _ => {}
         }
     }
+    // #endregion apploop
 }
 
+// #region main
 fn main() {
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::ERROR)
+        .init();
+    
     let event_loop = EventLoop::new().unwrap();
 
     let mut app = App::Loading;
 
     let _ = event_loop.run_app(&mut app);
 }
+// #endregion main
 
+// #region centerwindow
 fn center_window(window: Arc<Window>) {
     if let Some(monitor) = window.current_monitor() {
         let screen_size = monitor.size();
@@ -80,3 +93,4 @@ fn center_window(window: Arc<Window>) {
         });
     }
 } 
+// #endregion centerwindow

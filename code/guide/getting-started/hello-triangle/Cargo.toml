@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 winit.workspace = true
-pollster.workspace = true
+tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 wgpu.workspace = true

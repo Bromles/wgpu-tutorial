@@ -53,8 +53,7 @@ const vitePressConfig = defineConfig({
                             text: 'Начало работы',
                             collapsed: false,
                             items: [
-                                {text: 'Введение 🚧', link: '/guide/getting-started'},
-                                {text: 'Создание окна 🚧', link: '/guide/getting-started/creating-window'},
+                                {text: 'Создание окна', link: '/guide/getting-started/creating-window'},
                                 {text: 'Первый треугольник 🚧', link: '/guide/getting-started/hello-triangle'},
                                 {text: 'Шейдеры 🚧', link: '/guide/getting-started/shaders'},
                                 {text: 'Текстуры 🚧', link: '/guide/getting-started/textures'},

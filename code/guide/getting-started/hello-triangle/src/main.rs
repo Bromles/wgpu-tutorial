@@ -1,6 +1,9 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use std::sync::Arc;
 
-use pollster::block_on;
+use tokio::runtime;
+use tokio::runtime::Runtime;
 use tracing::debug;
 use wgpu::{
     Backends, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites, CommandEncoderDescriptor,
@@ -21,6 +24,7 @@ use winit::window::{Window, WindowAttributes, WindowId};
 enum App {
     Loading,
     Ready {
+        async_runtime: Arc<Runtime>,
         window: Arc<Window>,
         renderer: Renderer,
         recreate_swapchain: bool,
@@ -37,7 +41,7 @@ struct Renderer {
 }
 
 impl Renderer {
-    fn new(window: Arc<Window>) -> Self {
+    fn new(window: Arc<Window>, runtime: Arc<Runtime>) -> Self {
         let mut physical_size = window.inner_size();
         physical_size.width = physical_size.width.max(1);
         physical_size.height = physical_size.height.max(1);
@@ -48,7 +52,7 @@ impl Renderer {
         });
 
         let surface = instance.create_surface(window).unwrap();
-        let adapter = block_on(async {
+        let adapter = runtime.block_on(async {
             instance
                 .request_adapter(&RequestAdapterOptions {
                     power_preference: PowerPreference::default(),
@@ -59,13 +63,13 @@ impl Renderer {
                 .unwrap()
         });
 
-        let (device, queue) = block_on(async {
+        let (device, queue) = runtime.block_on(async {
             adapter
                 .request_device(
                     &DeviceDescriptor {
                         label: None,
                         required_features: adapter.features() & Features::default(),
-                        required_limits: Limits::downlevel_defaults(),
+                        required_limits: Limits::default().using_resolution(adapter.limits()),
                         memory_hints: MemoryHints::Performance,
                     },
                     None,
@@ -223,6 +227,12 @@ impl Renderer {
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if let Self::Loading = self {
+            let runtime = Arc::new(
+                runtime::Builder::new_current_thread()
+                    .build()
+                    .expect("Failed to create tokio runtime"),
+            );
+
             let window_attributes = WindowAttributes::default()
                 .with_title("WGPU Tutorial")
                 .with_visible(false);
@@ -233,9 +243,10 @@ impl ApplicationHandler for App {
 
             event_loop.set_control_flow(ControlFlow::Wait);
 
-            let renderer = Renderer::new(window.clone());
+            let renderer = Renderer::new(window.clone(), runtime.clone());
 
             *self = Self::Ready {
+                async_runtime: runtime,
                 window,
                 renderer,
                 recreate_swapchain: false,
@@ -243,9 +254,7 @@ impl ApplicationHandler for App {
         }
 
         let Self::Ready {
-            window,
-            renderer,
-            ..
+            window, renderer, ..
         } = self
         else {
             return;
@@ -301,6 +310,10 @@ impl ApplicationHandler for App {
 }
 
 fn main() {
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .init();
+
     let event_loop = EventLoop::new().unwrap();
 
     let mut app = App::Loading;
