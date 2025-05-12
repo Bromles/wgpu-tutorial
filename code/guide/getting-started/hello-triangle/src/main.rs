@@ -72,8 +72,8 @@ impl Renderer {
                         required_features: adapter.features() & Features::default(),
                         required_limits: Limits::default().using_resolution(adapter.limits()),
                         memory_hints: MemoryHints::Performance,
+                        trace: Default::default(),
                     },
-                    None,
                 )
                 .await
                 .expect("Failed to request device")
