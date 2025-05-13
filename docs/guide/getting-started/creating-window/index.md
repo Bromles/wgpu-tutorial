@@ -43,14 +43,7 @@ next:
 Мы будем добавлять библиотеки по мере необходимости, но для начала обойдемся простым списком. Ниже приведена секция
 зависимостей нашего `Cargo.toml`:
 
-```toml [Cargo.toml]
-[dependencies]
-winit = { version = "0.30" }
-wgpu = { version = "24.0" }
-tokio = { version = "1.43", features = ["rt"] }
-tracing = { version = "0.1" }
-tracing-subscriber = { version = "0.3" }
-```
+<<< @/../Cargo.toml#deps
 
 <div class="warning custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Обратите внимание</p>

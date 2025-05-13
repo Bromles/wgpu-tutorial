@@ -11,6 +11,7 @@ codegen-units = 1
 opt-level = 3
 
 [workspace.dependencies]
+#region deps
 winit = "0.30"
 tokio = { version = "1.45", features = ["parking_lot", "rt"] }
 tracing = "0.1"
@@ -20,3 +21,4 @@ wgpu = "25.0"
 image = "0.25"
 glam = { version = "0.30", features = ["debug-glam-assert"] }
 encase = { version = "0.11", features = ["glam"] }
+#endregion deps
