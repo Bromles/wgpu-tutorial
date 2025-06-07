@@ -25,7 +25,7 @@ enum App {
     Loading,
     Ready {
         window: Arc<Window>,
-        renderer: Renderer,
+        renderer: Box<Renderer>,
         need_to_resize_surface: bool,
     },
 }
@@ -244,7 +244,7 @@ impl ApplicationHandler for App {
 
             *self = Self::Ready {
                 window,
-                renderer,
+                renderer: Box::new(renderer),
                 need_to_resize_surface: false,
             }
         }
