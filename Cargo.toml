@@ -5,6 +5,13 @@ members = [
     "code/guide/getting-started/*"
 ]
 
+[workspace.package]
+version = "0.1.0"
+authors = ["Bromles <bromles@yandex.ru>"]
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
 [profile.release]
 lto = true
 codegen-units = 1
