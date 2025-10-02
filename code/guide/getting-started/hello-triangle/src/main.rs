@@ -5,14 +5,14 @@ use std::sync::Arc;
 use tokio::runtime;
 use tokio::runtime::Runtime;
 use wgpu::{
-    Backends, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites, CommandEncoderDescriptor,
-    CompositeAlphaMode, Device, DeviceDescriptor, Features, FragmentState,
-    FrontFace, include_wgsl, Instance, InstanceDescriptor, Limits, LoadOp, MemoryHints,
+    Backends, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites,
+    CommandEncoderDescriptor, CompositeAlphaMode, Device, DeviceDescriptor, ExperimentalFeatures,
+    Features, FragmentState, FrontFace, Instance, InstanceDescriptor, Limits, LoadOp, MemoryHints,
     MultisampleState, Operations, PipelineCompilationOptions, PolygonMode, PowerPreference,
     PresentMode, PrimitiveState, PrimitiveTopology, Queue, RenderPassColorAttachment,
     RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, RequestAdapterOptions, StoreOp,
     Surface, SurfaceConfiguration, SurfaceError, TextureFormat, TextureUsages,
-    TextureViewDescriptor, VertexState,
+    TextureViewDescriptor, VertexState, include_wgsl,
 };
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
@@ -66,15 +66,14 @@ impl Renderer {
 
         let (device, queue) = runtime.block_on(async {
             adapter
-                .request_device(
-                    &DeviceDescriptor {
-                        label: None,
-                        required_features: adapter.features() & Features::default(),
-                        required_limits: Limits::default().using_resolution(adapter.limits()),
-                        memory_hints: MemoryHints::Performance,
-                        trace: Default::default(),
-                    },
-                )
+                .request_device(&DeviceDescriptor {
+                    label: None,
+                    required_features: adapter.features() & Features::default(),
+                    required_limits: Limits::default().using_resolution(adapter.limits()),
+                    memory_hints: MemoryHints::Performance,
+                    trace: Default::default(),
+                    experimental_features: ExperimentalFeatures::disabled(),
+                })
                 .await
                 .expect("Failed to request device")
         });
@@ -191,6 +190,7 @@ impl Renderer {
                                 load: LoadOp::Clear(Color::GREEN),
                                 store: StoreOp::Store,
                             },
+                            depth_slice: None,
                         })],
                         depth_stencil_attachment: None,
                         timestamp_writes: None,
