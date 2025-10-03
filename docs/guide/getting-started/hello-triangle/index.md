@@ -1,10 +1,10 @@
 ---
 prev:
-  text: 'Создание окна'
-  link: '/guide/getting-started/creating-window'
+  text: "Создание окна"
+  link: "/guide/getting-started/creating-window"
 next:
-  text: 'Шейдеры'
-  link: '/guide/getting-started/shaders'
+  text: "Шейдеры"
+  link: "/guide/getting-started/shaders"
 ---
 
 # Первый треугольник
