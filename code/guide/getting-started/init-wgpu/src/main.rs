@@ -18,6 +18,7 @@ use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowAttributes, WindowId};
 
+// #region appstate
 enum App {
     Loading,
     Ready {
@@ -26,15 +27,19 @@ enum App {
         need_to_resize_surface: bool,
     },
 }
+// #endregion appstate
 
+// #region renderer
 struct Renderer {
     device: Device,
     queue: Queue,
     surface: Surface<'static>,
     surface_config: SurfaceConfiguration,
 }
+// #endregion renderer
 
 impl Renderer {
+    // #region renderer-new
     fn new(window: Arc<Window>, runtime: Arc<Runtime>) -> Self {
         let mut physical_size = window.inner_size();
         physical_size.width = physical_size.width.max(1);
@@ -105,7 +110,9 @@ impl Renderer {
 
         renderer
     }
+    // #endregion renderer-new
 
+    // #region renderer-resize
     fn resize_surface(&self, size: PhysicalSize<u32>) {
         let width = size.width.max(1);
         let height = size.height.max(1);
@@ -119,7 +126,9 @@ impl Renderer {
             },
         );
     }
+    // #endregion renderer-resize
 
+    // #region renderer-render
     fn render(&mut self, window: Arc<Window>) {
         match self.surface.get_current_texture() {
             Ok(frame) => {
@@ -159,9 +168,11 @@ impl Renderer {
             },
         };
     }
+    // #endregion renderer-render
 }
 
 impl ApplicationHandler for App {
+    // #region appsetup
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if let Self::Loading = self {
             let runtime = Arc::new(
@@ -204,7 +215,9 @@ impl ApplicationHandler for App {
 
         window.set_visible(true);
     }
+    // #endregion appsetup
 
+    // #region apploop
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -246,6 +259,7 @@ impl ApplicationHandler for App {
             _ => {}
         }
     }
+    // #endregion apploop
 }
 
 fn main() {
