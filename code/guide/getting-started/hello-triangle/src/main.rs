@@ -78,6 +78,7 @@ impl Renderer {
                 .expect("Failed to request device")
         });
 
+        // #region renderer-new-surface-config
         let surface_capabilities = surface.get_capabilities(&adapter);
 
         let surface_format = surface_capabilities
@@ -98,6 +99,7 @@ impl Renderer {
             alpha_mode: CompositeAlphaMode::Auto,
             view_formats: vec![],
         };
+        // #endregion renderer-new-surface-config
 
         let mut renderer = Self {
             device,
