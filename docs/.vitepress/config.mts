@@ -54,7 +54,7 @@ const vitePressConfig = defineConfig({
                   link: "/guide/getting-started/creating-window",
                 },
                 {
-                  text: "Инициализация wgpu 🚧",
+                  text: "Инициализация wgpu",
                   link: "/guide/getting-started/init-wgpu",
                 },
                 {
