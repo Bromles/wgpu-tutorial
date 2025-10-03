@@ -1,7 +1,7 @@
 ---
 next:
-  text: "Первый треугольник"
-  link: "/guide/getting-started/hello-triangle"
+  text: "Инициализация wgpu"
+  link: "/guide/getting-started/init-wgpu"
 ---
 
 # Создание окна

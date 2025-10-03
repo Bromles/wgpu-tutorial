@@ -1,7 +1,7 @@
 ---
 prev:
-  text: "Создание окна"
-  link: "/guide/getting-started/creating-window"
+  text: "Инициализация wgpu"
+  link: "/guide/getting-started/init-wgpu"
 next:
   text: "Шейдеры"
   link: "/guide/getting-started/shaders"
