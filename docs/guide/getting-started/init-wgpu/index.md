@@ -45,6 +45,35 @@ flowchart LR
 
 ## Переходим к коду
 
+### Обновим зависимости
+
+```toml
+winit = "0.30"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+tokio = { version = "1.47", features = ["parking_lot", "rt"] } # [!code ++]
+wgpu = "27.0" # [!code ++]
+```
+
+<div class="warning custom-block" style="padding-top: 8px">
+<p class="custom-block-title">Обратите внимание</p>
+<p>
+wgpu требует resolver 2 в Cargo.toml для корректной работы. В отдельных крейтах Rust он используется по-умолчанию, начиная с
+2021 издания. Если же у вас более раннее издание, либо вы используете cargo workspace, то необходимо явно его указать
+в Cargo.toml
+</p>
+</div>
+
+Кроме самого wgpu мы будем использовать tokio для выполнения асинхронных функций. Вы можете заменить
+его на любой другой асинхронный рантайм, такой как pollster, встречающийся в примерах wgpu. Tokio выбран как самый
+популярный рантайм, предоставляющий все необходимые возможности не только для минимальной настройки, но и для дальнейшей
+реализации большого проекта.
+
+Мы ключаем у него фичи `parking_lot`, предоставляющую более оптимизированную реализацию некоторых механизмов
+синхронизации, а также `rt`, дающую однопоточный асинхронный рантайм.
+
+### `Renderer`
+
 Для организации кода создадим структуру `Renderer`, содержащую необходимые на данный момент ресурсы для отрисовки
 
 ```rust
@@ -122,9 +151,9 @@ fn new(window: Arc<Window>, runtime: Arc<Runtime>) -> Self {
 размеры не равны 0, потому что это привело бы к ошибке при конфигурации поверхности
 
 ```rust
-let instance = Instance::new(&InstanceDescriptor {
-    backends: Backends::PRIMARY,
-    ..Default::default()
+let instance = Instance::new( & InstanceDescriptor {
+backends: Backends::PRIMARY,
+..Default::default ()
 });
 ```
 
@@ -140,8 +169,8 @@ let instance = Instance::new(&InstanceDescriptor {
 
 ```rust
 let surface = instance
-    .create_surface(window)
-    .expect("Failed to create surface");
+.create_surface(window)
+.expect("Failed to create surface");
 ```
 
 Тут производим создание поверхности на основе имеющегося у нас окна winit. Это автоматически привязывает поверхность к
@@ -155,15 +184,15 @@ let surface = instance
 </details>
 
 ```rust
-let adapter = runtime.block_on(async {
-    instance
-        .request_adapter(&RequestAdapterOptions {
-            power_preference: PowerPreference::default(),
-            force_fallback_adapter: false,
-            compatible_surface: Some(&surface),
-        })
-        .await
-        .expect("Failed to request adapter")
+let adapter = runtime.block_on( async {
+instance
+.request_adapter( & RequestAdapterOptions {
+power_preference: PowerPreference::default (),
+force_fallback_adapter: false,
+compatible_surface: Some( & surface),
+})
+.await
+.expect("Failed to request adapter")
 });
 ```
 
@@ -176,18 +205,18 @@ let adapter = runtime.block_on(async {
 - `compatible_surface` - указываем, что запрашиваемый адаптер должен быть совместим с созданной нами поверхностью.
 
 ```rust
-let (device, queue) = runtime.block_on(async {
-    adapter
-        .request_device(&DeviceDescriptor {
-            label: Some("Main device"),
-            required_features: adapter.features() & Features::default(),
-            required_limits: Limits::default().using_resolution(adapter.limits()),
-            memory_hints: MemoryHints::Performance,
-            trace: Default::default(),
-            experimental_features: ExperimentalFeatures::disabled(),
-        })
-        .await
-        .expect("Failed to request device")
+let (device, queue) = runtime.block_on( async {
+adapter
+.request_device( & DeviceDescriptor {
+label: Some("Main device"),
+required_features: adapter.features() & Features::default (),
+required_limits: Limits::default ().using_resolution(adapter.limits()),
+memory_hints: MemoryHints::Performance,
+trace: Default::default (),
+experimental_features: ExperimentalFeatures::disabled(),
+})
+.await
+.expect("Failed to request device")
 });
 ```
 
@@ -211,8 +240,8 @@ let (device, queue) = runtime.block_on(async {
 
 ```rust
 let surface_config = surface
-    .get_default_config(&adapter, physical_size.width, physical_size.height)
-    .expect("Failed to get default surface config");
+.get_default_config( & adapter, physical_size.width, physical_size.height)
+.expect("Failed to get default surface config");
 ```
 
 На данный момент мы упростим себе задачу и создадим конфигурацию поверхности по-умолчанию. Мы просто передаем в нужный
@@ -222,14 +251,14 @@ let surface_config = surface
 вертикальная синхронизация.
 
 ```rust
-    surface.configure(&device, &surface_config);
+    surface.configure( & device, & surface_config);
 
-    Self {
-        device,
-        queue,
-        surface,
-        surface_config,
-    }
+Self {
+device,
+queue,
+surface,
+surface_config,
+}
 }
 ```
 
@@ -240,16 +269,16 @@ let surface_config = surface
 
 ```rust
 fn resize_surface(&self, size: PhysicalSize<u32>) {
-  let width = size.width.max(1);
-  let height = size.height.max(1);
-  self.surface.configure(
-    &self.device,
-    &SurfaceConfiguration {
-      width,
-      height,
-      ..self.surface_config.clone()
-    },
-  );
+    let width = size.width.max(1);
+    let height = size.height.max(1);
+    self.surface.configure(
+        &self.device,
+        &SurfaceConfiguration {
+            width,
+            height,
+            ..self.surface_config.clone()
+        },
+    );
 }
 ```
 
@@ -262,8 +291,8 @@ fn resize_surface(&self, size: PhysicalSize<u32>) {
 
 ```rust
 fn render(&mut self, window: Arc<Window>) {
-  match self.surface.get_current_texture() {
-    Ok(frame) => {
+    match self.surface.get_current_texture() {
+        Ok(frame) => {
 ```
 
 Мы начинаем с того, что запрашиваем у поверхности текущую текстуру для отрисовки. Если ее не удалось получить, то мы не
@@ -271,17 +300,17 @@ fn render(&mut self, window: Arc<Window>) {
 
 ```rust
 let mut encoder = self
-    .device
-    .create_command_encoder(&CommandEncoderDescriptor {
-        label: Some("Main command encoder"),
-    });
+.device
+.create_command_encoder( & CommandEncoderDescriptor {
+label: Some("Main command encoder"),
+});
 ```
 
 Далее мы создаем кодировщик команд для видеокарты с помощью девайса. Он позволит нам записывать операции, которые потом
 будут отправлены в очередь на выполнение
 
 ```rust
-let view = frame.texture.create_view(&TextureViewDescriptor::default());
+let view = frame.texture.create_view( & TextureViewDescriptor::default ());
 ```
 
 Теперь нам нужно получить представление текущей текстуры, в которое мы будем непосредственно производить отрисовку.
@@ -290,20 +319,20 @@ let view = frame.texture.create_view(&TextureViewDescriptor::default());
 Так как нам сейчас не нужно переопределять никакие параметры, используем дескриптор по-умолчанию
 
 ```rust
-encoder.begin_render_pass(&RenderPassDescriptor {
-    label: Some("Clear render pass"),
-    color_attachments: &[Some(RenderPassColorAttachment {
-        view: &view,
-        resolve_target: None,
-        ops: Operations {
-            load: LoadOp::Clear(Color::GREEN),
-            store: StoreOp::Store,
-        },
-        depth_slice: None,
-    })],
-    depth_stencil_attachment: None,
-    timestamp_writes: None,
-    occlusion_query_set: None,
+encoder.begin_render_pass( & RenderPassDescriptor {
+label: Some("Clear render pass"),
+color_attachments: & [Some(RenderPassColorAttachment {
+view: & view,
+resolve_target: None,
+ops: Operations {
+load: LoadOp::Clear(Color::GREEN),
+store: StoreOp::Store,
+},
+depth_slice: None,
+})],
+depth_stencil_attachment: None,
+timestamp_writes: None,
+occlusion_query_set: None,
 });
 ```
 
@@ -330,7 +359,7 @@ encoder.begin_render_pass(&RenderPassDescriptor {
 заканчивается.
 
 ```rust
-self.queue.submit([encoder.finish()]);
+self .queue.submit([encoder.finish()]);
 window.pre_present_notify();
 frame.present();
 ```
@@ -349,12 +378,12 @@ frame.present();
 
 ```rust
 Err(error) => match error {
-    SurfaceError::OutOfMemory => {
-        panic!("Surface error: {error}")
-    }
-    _ => {
-        window.request_redraw();
-    }
+SurfaceError::OutOfMemory => {
+panic ! ("Surface error: {error}")
+}
+_ => {
+window.request_redraw();
+}
 },
 ```
 
@@ -370,46 +399,46 @@ Err(error) => match error {
 
 ```rust
 fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-  if let Self::Loading = self { // [!code ++]
-    let runtime = Arc::new( // [!code ++]
-      runtime::Builder::new_current_thread() // [!code ++]
-              .build() // [!code ++]
-              .expect("Failed to create tokio runtime"), // [!code ++]
-    );
-    
-    let window_attributes = WindowAttributes::default()
+    if let Self::Loading = self { // [!code ++]
+        let runtime = Arc::new( // [!code ++]
+                                runtime::Builder::new_current_thread() // [!code ++]
+                                    .build() // [!code ++]
+                                    .expect("Failed to create tokio runtime"), // [!code ++]
+        );
+
+        let window_attributes = WindowAttributes::default()
             .with_title("WGPU Tutorial")
             .with_visible(false); // [!code ++]
-    
-    let window = Arc::new(
-      event_loop
-              .create_window(window_attributes)
-              .expect("Failed to create window"),
-    );
-    
-    center_window(window.clone());
-    
-    event_loop.set_control_flow(ControlFlow::Wait); // [!code ++]
-    
-    let renderer = Renderer::new(window.clone(), runtime.clone()); // [!code ++]
-    
-    *self = Self::Ready {
-      window,
-      renderer: Box::new(renderer), // [!code ++]
-      need_to_resize_surface: false, // [!code ++]
+
+        let window = Arc::new(
+            event_loop
+                .create_window(window_attributes)
+                .expect("Failed to create window"),
+        );
+
+        center_window(window.clone());
+
+        event_loop.set_control_flow(ControlFlow::Wait); // [!code ++]
+
+        let renderer = Renderer::new(window.clone(), runtime.clone()); // [!code ++]
+
+        *self = Self::Ready {
+            window,
+            renderer: Box::new(renderer), // [!code ++]
+            need_to_resize_surface: false, // [!code ++]
+        }
     }
-  }
-  
-  let Self::Ready { // [!code ++]
-    window, renderer, .. // [!code ++]
-  } = self // [!code ++]
-  else { // [!code ++]
-    return; // [!code ++]
-  }; // [!code ++]
-  
-  renderer.render(window.clone()); // [!code ++]
-  
-  window.set_visible(true); // [!code ++]
+
+    let Self::Ready { // [!code ++]
+        window, renderer, .. // [!code ++]
+    } = self // [!code ++]
+    else { // [!code ++]
+        return; // [!code ++]
+    }; // [!code ++]
+
+    renderer.render(window.clone()); // [!code ++]
+
+    window.set_visible(true); // [!code ++]
 }
 ```
 
@@ -438,46 +467,46 @@ fn resumed(&mut self, event_loop: &ActiveEventLoop) {
 
 ```rust
 fn window_event(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-        _window_id: WindowId,
-        event: WindowEvent,
-    ) {
-        let Self::Ready {
-            window,
-            renderer, // [!code ++]
-            need_to_resize_surface, // [!code ++]
-            ..
-        } = self
-        else {
-            return;
-        };
+    &mut self,
+    event_loop: &ActiveEventLoop,
+    _window_id: WindowId,
+    event: WindowEvent,
+) {
+    let Self::Ready {
+        window,
+        renderer, // [!code ++]
+        need_to_resize_surface, // [!code ++]
+        ..
+    } = self
+    else {
+        return;
+    };
 
-        match event {
-            WindowEvent::RedrawRequested => {
-                if *need_to_resize_surface { // [!code ++]
-                    let size = window.inner_size(); // [!code ++]
+    match event {
+        WindowEvent::RedrawRequested => {
+            if *need_to_resize_surface { // [!code ++]
+                let size = window.inner_size(); // [!code ++]
 
-                    renderer.resize_surface(size); // [!code ++]
+                renderer.resize_surface(size); // [!code ++]
 
-                    *need_to_resize_surface = false; // [!code ++]
-                }
-
-                renderer.render(window.clone()); // [!code ++]
-
-                window.request_redraw();
+                *need_to_resize_surface = false; // [!code ++]
             }
-            WindowEvent::Resized(_) => {
-                *need_to_resize_surface = true; // [!code ++]
-                window.request_redraw();
-            }
-            WindowEvent::CloseRequested => {
-                event_loop.exit();
-            }
-            WindowEvent::KeyboardInput { event, .. } => handle_keyboard_input(event_loop, event),
-            _ => {}
+
+            renderer.render(window.clone()); // [!code ++]
+
+            window.request_redraw();
         }
+        WindowEvent::Resized(_) => {
+            *need_to_resize_surface = true; // [!code ++]
+            window.request_redraw();
+        }
+        WindowEvent::CloseRequested => {
+            event_loop.exit();
+        }
+        WindowEvent::KeyboardInput { event, .. } => handle_keyboard_input(event_loop, event),
+        _ => {}
     }
+}
 }
 ```
 
