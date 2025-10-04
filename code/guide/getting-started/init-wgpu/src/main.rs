@@ -17,6 +17,7 @@ use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowAttributes, WindowId};
 
+// #region whole
 // #region appstate
 enum App {
     Loading,
@@ -269,6 +270,7 @@ impl ApplicationHandler for App {
     }
     // #endregion apploop
 }
+// #endregion whole
 
 fn main() {
     tracing_subscriber::fmt()

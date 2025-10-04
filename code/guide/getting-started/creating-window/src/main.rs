@@ -9,6 +9,7 @@ use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowAttributes, WindowId};
 
+// #region whole
 // #region appstate
 enum App {
     Loading,
@@ -109,3 +110,4 @@ fn center_window(window: Arc<Window>) {
     }
 }
 // #endregion centerwindow
+// #endregion whole
