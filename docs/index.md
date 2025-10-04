@@ -33,11 +33,12 @@ flowchart LR
 
 - Абстракции и обертки - различные библиотеки, предоставляющие своё графическое API поверх нативных. Такие, как
   [Skia](https://skia.org/), [IGL](https://github.com/facebook/igl),
-  [ANGLE](https://chromium.googlesource.com/angle/angle) и другие.
+  [ANGLE](https://chromium.googlesource.com/angle/angle) и другие. Эти библиотеки еще называют `RHI (Render Hardware
+  Interface)`, поскольку они предоставляют единый интерфейс поверх разнообразных нижележащих API и физических устройств.
 
 ```mermaid
 flowchart LR
-    Code["Our code"] --> Abstraction["Abstraction Library"] --> Native["Native API"] --> Driver --> GPU
+    Code["Our code"] --> RHI["RHI"] --> Native["Native API"] --> Driver --> GPU
 ```
 
 - Отдельно можно выделить API в браузерах, например WebGL. Код фронтенда может работать с ними напрямую, но внутри
@@ -46,7 +47,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    Code["Our code"] --> Browser --> Abstraction["Abstraction Library"] --> Native["Native API"] --> Driver --> GPU
+    Code["Our code"] --> Browser --> RHI["RHI"] --> Native["Native API"] --> Driver --> GPU
 ```
 
 ## Почему WebGPU
