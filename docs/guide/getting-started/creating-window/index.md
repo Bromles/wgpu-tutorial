@@ -6,9 +6,7 @@ next:
 
 # Создание окна
 
-::: details Полный код главы
-<<< @/../code/guide/getting-started/creating-window/src/main.rs#whole
-:::
+[Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/getting-started/creating-window)
 
 ## Первые шаги
 
@@ -18,7 +16,9 @@ next:
 <div class="info custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Примечание</p>
 <p>
-Мы можем использовать графическое API и без окна, рендеря в текстуру и сохраняя ее на диск как изображение. Пример подобного подхода есть в <a href="https://github.com/gfx-rs/wgpu/tree/trunk/examples/features/src/render_to_texture">репозитории wgpu</a>.
+Мы можем использовать графическое API и без окна, рендеря в текстуру и сохраняя ее на диск как изображение. 
+Пример подобного подхода есть в 
+<a href="https://github.com/gfx-rs/wgpu/tree/trunk/examples/features/src/render_to_texture">репозитории wgpu</a>.
 </p>
 </div>
 
@@ -48,7 +48,17 @@ next:
 
 Для начала обойдемся простым списком библиотек. Ниже приведена секция зависимостей нашего `Cargo.toml`:
 
-<<< @/../Cargo.toml#deps
+```toml
+winit = "0.30"
+tokio = { version = "1.47", features = ["parking_lot", "rt"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+wgpu = "27.0"
+bytemuck = { version = "1.9", features = ["derive"] }
+encase = "0.12"
+glam = { version = "0.30", features = ["debug-glam-assert", "encase", "bytemuck"] }
+image = "0.25"
+```
 
 <div class="warning custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Обратите внимание</p>
@@ -86,14 +96,19 @@ wgpu требует resolver 2 в Cargo.toml для корректной раб�
 
 Это позволяет удобно смоделировать состояние приложения через перечисление:
 
-<<< @/../code/guide/getting-started/creating-window/src/main.rs#appstate
+```rust
+enum App {
+    Loading,
+    Ready { window: Arc<Window> },
+}
+```
 
 Здесь каждый вариант соотносится с текущим состоянием приложения, то есть в `Ready` мы будем вкладывать необходимые для
 работы ресурсы.
 
 Трейт `ApplicationHandler` имеет следующие обязательные для реализации методы, наравне с множеством опциональных:
 
-```rs
+```rust
 trait ApplicationHandler {
     fn resumed(&mut self, event_loop: &ActiveEventLoop);
     fn window_event(&mut self, event_loop: &ActiveEventLoop, window_id: WindowId, event: WindowEvent);
@@ -114,7 +129,7 @@ trait ApplicationHandler {
 
 Реализация выглядит стандартно:
 
-```rs
+```rust
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         // ...
@@ -135,8 +150,39 @@ impl ApplicationHandler for App {
 
 ::: code-group
 
-<<< @/../code/guide/getting-started/creating-window/src/main.rs#appsetup [resumed]
-<<< @/../code/guide/getting-started/creating-window/src/main.rs#centerwindow [center_window]
+```rust [resumed]
+fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+    if let Self::Loading = self {
+        let window_attributes = WindowAttributes::default().with_title("WGPU Tutorial");
+
+        let window = Arc::new(
+            event_loop
+                .create_window(window_attributes)
+                .expect("Failed to create window"),
+        );
+
+        center_window(window.clone());
+
+        *self = Self::Ready { window }
+    }
+}
+```
+
+```rust [center_window]
+fn center_window(window: Arc<Window>) {
+    if let Some(monitor) = window.current_monitor() {
+        let screen_size = monitor.size();
+        let window_size = window.outer_size();
+
+        window.set_outer_position(winit::dpi::PhysicalPosition {
+            x: screen_size.width.saturating_sub(window_size.width) as f64 / 2.0
+                + monitor.position().x as f64,
+            y: screen_size.height.saturating_sub(window_size.height) as f64 / 2.0
+                + monitor.position().y as f64,
+        });
+    }
+}
+```
 
 :::
 
@@ -161,8 +207,44 @@ impl ApplicationHandler for App {
 
 ::: code-group
 
-<<< @/../code/guide/getting-started/creating-window/src/main.rs#apploop [window_event]
-<<< @/../code/guide/getting-started/creating-window/src/main.rs#keyboardinput [handle_keyboard_input]
+```rust [window_event] 
+fn window_event(
+    &mut self,
+    event_loop: &ActiveEventLoop,
+    _window_id: WindowId,
+    event: WindowEvent,
+) {
+    let Self::Ready { window, .. } = self else {
+        return;
+    };
+    match event {
+        WindowEvent::RedrawRequested => {
+            debug!("Rendering");
+            window.request_redraw();
+        }
+        WindowEvent::Resized(_) => {
+            debug!("Resized");
+            window.request_redraw();
+        }
+        WindowEvent::CloseRequested => {
+            event_loop.exit();
+        }
+        WindowEvent::KeyboardInput { event, .. } => handle_keyboard_input(event_loop, event),
+        _ => {}
+    }
+}
+```
+
+```rust [handle_keyboard_input]
+fn handle_keyboard_input(event_loop: &ActiveEventLoop, event: KeyEvent) {
+    match (event.physical_key, event.state) {
+        (PhysicalKey::Code(KeyCode::Escape), ElementState::Pressed) => {
+            event_loop.exit();
+        }
+        _ => {}
+    }
+}
+```
 
 :::
 
@@ -214,7 +296,21 @@ winit предоставляет нам возможность обрабаты�
 
 Наконец, связываем всё это воедино в `main`:
 
-<<< @/../code/guide/getting-started/creating-window/src/main.rs#main
+```rust
+fn main() {
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .init();
+
+    let event_loop = EventLoop::new().expect("Failed to create event loop");
+
+    let mut app = App::Loading;
+
+    event_loop
+        .run_app(&mut app)
+        .expect("Failed to run event loop");
+}
+```
 
 Сначала мы инициализируем tracing для вывода логов, затем создаем `event loop`, создаем объект нашего приложения в
 неинициализированном состоянии, и передаем его в `event loop` для исполнения.

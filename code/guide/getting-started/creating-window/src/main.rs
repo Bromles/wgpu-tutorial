@@ -9,16 +9,12 @@ use winit::event_loop::{ActiveEventLoop, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowAttributes, WindowId};
 
-// #region whole
-// #region appstate
 enum App {
     Loading,
     Ready { window: Arc<Window> },
 }
-// #endregion appstate
 
 impl ApplicationHandler for App {
-    // #region appsetup
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if let Self::Loading = self {
             let window_attributes = WindowAttributes::default().with_title("WGPU Tutorial");
@@ -34,9 +30,7 @@ impl ApplicationHandler for App {
             *self = Self::Ready { window }
         }
     }
-    // #endregion appsetup
 
-    // #region apploop
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -65,10 +59,8 @@ impl ApplicationHandler for App {
             _ => {}
         }
     }
-    // #endregion apploop
 }
 
-// #region main
 fn main() {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
@@ -82,9 +74,7 @@ fn main() {
         .run_app(&mut app)
         .expect("Failed to run event loop");
 }
-// #endregion main
 
-// #region keyboardinput
 fn handle_keyboard_input(event_loop: &ActiveEventLoop, event: KeyEvent) {
     match (event.physical_key, event.state) {
         (PhysicalKey::Code(KeyCode::Escape), ElementState::Pressed) => {
@@ -93,9 +83,7 @@ fn handle_keyboard_input(event_loop: &ActiveEventLoop, event: KeyEvent) {
         _ => {}
     }
 }
-// #endregion keyboardinput
 
-// #region centerwindow
 fn center_window(window: Arc<Window>) {
     if let Some(monitor) = window.current_monitor() {
         let screen_size = monitor.size();
@@ -109,5 +97,3 @@ fn center_window(window: Arc<Window>) {
         });
     }
 }
-// #endregion centerwindow
-// #endregion whole

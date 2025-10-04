@@ -17,49 +17,37 @@ use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowAttributes, WindowId};
 
-// #region whole
-// #region appstate
 enum App {
     Loading,
     Ready {
         window: Arc<Window>,
-        renderer: Box<Renderer>,      // [!code ++]
-        need_to_resize_surface: bool, // [!code ++]
+        renderer: Box<Renderer>,
+        need_to_resize_surface: bool,
     },
 }
-// #endregion appstate
 
-// #region renderer
 struct Renderer {
     device: Device,
     queue: Queue,
     surface: Surface<'static>,
     surface_config: SurfaceConfiguration,
 }
-// #endregion renderer
 
 impl Renderer {
-    // #region renderer-new-size
     fn new(window: Arc<Window>, runtime: Arc<Runtime>) -> Self {
         let mut physical_size = window.inner_size();
         physical_size.width = physical_size.width.max(1);
         physical_size.height = physical_size.height.max(1);
-        // #endregion renderer-new-size
 
-        // #region renderer-new-instance
         let instance = Instance::new(&InstanceDescriptor {
             backends: Backends::PRIMARY,
             ..Default::default()
         });
-        // #endregion renderer-new-instance
 
-        // #region renderer-new-surface
         let surface = instance
             .create_surface(window)
             .expect("Failed to create surface");
-        // #endregion renderer-new-surface
 
-        // #region renderer-new-adapter
         let adapter = runtime.block_on(async {
             instance
                 .request_adapter(&RequestAdapterOptions {
@@ -70,9 +58,7 @@ impl Renderer {
                 .await
                 .expect("Failed to request adapter")
         });
-        // #endregion renderer-new-adapter
 
-        // #region renderer-new-device
         let (device, queue) = runtime.block_on(async {
             adapter
                 .request_device(&DeviceDescriptor {
@@ -86,15 +72,11 @@ impl Renderer {
                 .await
                 .expect("Failed to request device")
         });
-        // #endregion renderer-new-device
 
-        // #region renderer-new-surface-config
         let surface_config = surface
             .get_default_config(&adapter, physical_size.width, physical_size.height)
             .expect("Failed to get default surface config");
-        // #endregion renderer-new-surface-config
 
-        // #region renderer-new-return
         surface.configure(&device, &surface_config);
 
         Self {
@@ -104,9 +86,7 @@ impl Renderer {
             surface_config,
         }
     }
-    // #endregion renderer-new-return
 
-    // #region renderer-resize
     fn resize_surface(&self, size: PhysicalSize<u32>) {
         let width = size.width.max(1);
         let height = size.height.max(1);
@@ -120,26 +100,18 @@ impl Renderer {
             },
         );
     }
-    // #endregion renderer-resize
 
-    // #region renderer-render-texture
     fn render(&mut self, window: Arc<Window>) {
         match self.surface.get_current_texture() {
             Ok(frame) => {
-                // #endregion renderer-render-texture
-                // #region renderer-render-encoder
                 let mut encoder = self
                     .device
                     .create_command_encoder(&CommandEncoderDescriptor {
                         label: Some("Main command encoder"),
                     });
-                // #endregion renderer-render-encoder
 
-                // #region renderer-render-view
                 let view = frame.texture.create_view(&TextureViewDescriptor::default());
-                // #endregion renderer-render-view
 
-                // #region renderer-render-pass
                 encoder.begin_render_pass(&RenderPassDescriptor {
                     label: Some("Clear render pass"),
                     color_attachments: &[Some(RenderPassColorAttachment {
@@ -155,14 +127,10 @@ impl Renderer {
                     timestamp_writes: None,
                     occlusion_query_set: None,
                 });
-                // #endregion renderer-render-pass
 
-                // #region renderer-render-finish
                 self.queue.submit([encoder.finish()]);
                 window.pre_present_notify();
                 frame.present();
-                // #endregion renderer-render-finish
-                // #region renderer-render-error
             }
             Err(error) => match error {
                 SurfaceError::OutOfMemory => {
@@ -174,24 +142,20 @@ impl Renderer {
             },
         };
     }
-    // #endregion renderer-render-error
-    // #endregion renderer-render
 }
 
 impl ApplicationHandler for App {
-    // #region appsetup
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if let Self::Loading = self {
-            // [!code ++]
             let runtime = Arc::new(
-                runtime::Builder::new_current_thread() // [!code ++]
-                    .build() // [!code ++]
-                    .expect("Failed to create tokio runtime"), // [!code ++]
-            ); // [!code ++]
+                runtime::Builder::new_current_thread()
+                    .build()
+                    .expect("Failed to create tokio runtime"),
+            );
 
             let window_attributes = WindowAttributes::default()
                 .with_title("WGPU Tutorial")
-                .with_visible(false); // [!code ++]
+                .with_visible(false);
 
             let window = Arc::new(
                 event_loop
@@ -201,31 +165,29 @@ impl ApplicationHandler for App {
 
             center_window(window.clone());
 
-            event_loop.set_control_flow(ControlFlow::Wait); // [!code ++]
+            event_loop.set_control_flow(ControlFlow::Wait);
 
-            let renderer = Renderer::new(window.clone(), runtime.clone()); // [!code ++]
+            let renderer = Renderer::new(window.clone(), runtime.clone());
 
             *self = Self::Ready {
                 window,
-                renderer: Box::new(renderer),  // [!code ++]
-                need_to_resize_surface: false, // [!code ++]
+                renderer: Box::new(renderer),
+                need_to_resize_surface: false,
             }
         }
 
-        let Self::Ready {  // [!code ++]
-            window, renderer, .. // [!code ++]
-        } = self // [!code ++]
-        else { // [!code ++]
-            return; // [!code ++]
-        }; // [!code ++]
+        let Self::Ready {
+            window, renderer, ..
+        } = self
+        else {
+            return;
+        };
 
-        renderer.render(window.clone()); // [!code ++]
+        renderer.render(window.clone());
 
-        window.set_visible(true); // [!code ++]
+        window.set_visible(true);
     }
-    // #endregion appsetup
 
-    // #region apploop
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,
@@ -234,8 +196,8 @@ impl ApplicationHandler for App {
     ) {
         let Self::Ready {
             window,
-            renderer,               // [!code ++]
-            need_to_resize_surface, // [!code ++]
+            renderer,
+            need_to_resize_surface,
             ..
         } = self
         else {
@@ -244,21 +206,20 @@ impl ApplicationHandler for App {
 
         match event {
             WindowEvent::RedrawRequested => {
-                // [!code ++]
                 if *need_to_resize_surface {
-                    let size = window.inner_size(); // [!code ++]
+                    let size = window.inner_size();
 
-                    renderer.resize_surface(size); // [!code ++]
+                    renderer.resize_surface(size);
 
-                    *need_to_resize_surface = false; // [!code ++]
-                } // [!code ++]
+                    *need_to_resize_surface = false;
+                }
 
-                renderer.render(window.clone()); // [!code ++]
+                renderer.render(window.clone());
 
                 window.request_redraw();
             }
             WindowEvent::Resized(_) => {
-                *need_to_resize_surface = true; // [!code ++]
+                *need_to_resize_surface = true;
                 window.request_redraw();
             }
             WindowEvent::CloseRequested => {
@@ -268,9 +229,7 @@ impl ApplicationHandler for App {
             _ => {}
         }
     }
-    // #endregion apploop
 }
-// #endregion whole
 
 fn main() {
     tracing_subscriber::fmt()

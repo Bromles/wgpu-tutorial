@@ -19,7 +19,6 @@ codegen-units = 1
 opt-level = 3
 
 [workspace.dependencies]
-#region deps
 winit = "0.30"
 tokio = { version = "1.47", features = ["parking_lot", "rt"] }
 tracing = "0.1"
@@ -29,4 +28,3 @@ bytemuck = { version = "1.9", features = ["derive"] }
 encase = "0.12"
 glam = { version = "0.30", features = ["debug-glam-assert", "encase", "bytemuck"] }
 image = "0.25"
-#endregion deps

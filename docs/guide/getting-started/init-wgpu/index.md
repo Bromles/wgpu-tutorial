@@ -9,9 +9,7 @@ next:
 
 # Что такое wgpu
 
-::: details Полный код главы
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#whole
-:::
+[Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/getting-started/init-wgpu)
 
 ## Инициализация wgpu
 
@@ -49,7 +47,14 @@ flowchart LR
 
 Для организации кода создадим структуру `Renderer`, содержащую необходимые на данный момент ресурсы для отрисовки
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer
+```rust
+struct Renderer {
+    device: Device,
+    queue: Queue,
+    surface: Surface<'static>,
+    surface_config: SurfaceConfiguration,
+}
+```
 
 Из отсутствующего на схеме выше здесь только `SurfaceConfiguration`, которая описывает параметры поверхности, такие как
 ее размер и формат изображения. С помощью нее мы реагируем на изменения размера окна, и также можем рендерить не на всё
@@ -58,19 +63,35 @@ flowchart LR
 `Instance` и `Adapter` хранить не нужно, т.к. на данный момент мы не планируем использование нескольких видеокарт или
 разных наборов фич.
 
+`Surface` имеет время жизни, привязанное к окну, чтобы гарантировать, что поверхность не может жить дольше окна, на
+которое
+она ссылается. Но так как мы храним окно только в корректном состоянии приложения и в `Arc`, то здесь считаем для
+простоты, что время жизни равно `'static`.
+
 Также обновим сущность состояния приложения, чтобы она включала наш объект `Renderer` и флаг необходимости обновления
 размера поверхности
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#appstate
+```rust
+enum App {
+    Loading,
+    Ready {
+        window: Arc<Window>,
+        renderer: Box<Renderer>, // [!code ++]
+        need_to_resize_surface: bool, // [!code ++]
+    },
+}
+```
 
 <details class="details custom-block" style="padding-top: 8px">
 <summary>Примечание</summary>
-<code>Renderer</code> здесь завернут в <code>Box</code>, чтобы разные варианты перечисления <code>App</code> не слишком различались по занимаемой памяти (хранение указателя требует ее намного меньше, чем самой структуры). На это есть отдельная <a href="https://rust-lang.github.io/rust-clippy/master/index.html#large_enum_variant">проверка в Clippy</a>
+<code>Renderer</code> здесь завернут в <code>Box</code>, чтобы разные варианты перечисления <code>App</code>не слишком 
+различались по занимаемой памяти (хранение указателя требует ее намного меньше, чем самой структуры).На это есть 
+отдельная <a href="https://rust-lang.github.io/rust-clippy/master/index.html#large_enum_variant">проверка в Clippy</a>
 </details>
 
 Наш `Renderer` имеет следующие методы:
 
-```rs
+```rust
 impl Renderer {
     fn new(window: Arc<Window>, runtime: Arc<Runtime>) -> Self;
     fn resize_surface(&self, size: PhysicalSize<u32>);
@@ -90,12 +111,22 @@ impl Renderer {
 
 ## Метод `new`
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-new-size
+```rust
+fn new(window: Arc<Window>, runtime: Arc<Runtime>) -> Self {
+    let mut physical_size = window.inner_size();
+    physical_size.width = physical_size.width.max(1);
+    physical_size.height = physical_size.height.max(1);
+```
 
 Здесь мы просто получаем текущий внутренний размер окна и сохраняем его в переменную, предварительно убедившись, что
 размеры не равны 0, потому что это привело бы к ошибке при конфигурации поверхности
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-new-instance
+```rust
+let instance = Instance::new(&InstanceDescriptor {
+    backends: Backends::PRIMARY,
+    ..Default::default()
+});
+```
 
 Теперь создаем `Instance`. Тут можно увидеть типичный способ создания сущностей wgpu - констукторы принимают объекты
 дескрипторов, задающие опции создания. Как правило, такие объекты реализуют трейт `Default`, что позволяет
@@ -107,17 +138,34 @@ impl Renderer {
 
 Теперь мы получили `Instance` как общую точку входа в API wgpu, и можем приступать к работе с ним.
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-new-surface
+```rust
+let surface = instance
+    .create_surface(window)
+    .expect("Failed to create surface");
+```
 
 Тут производим создание поверхности на основе имеющегося у нас окна winit. Это автоматически привязывает поверхность к
 окну
 
 <details class="details custom-block" style="padding-top: 8px">
 <summary>Примечание</summary>
-Вы могли слышать термины <code>Framebuffer</code> или <code>Swapchain</code>. В некоторых нативных API эти объекты существуют явно, как и в очень старых версиях wgpu. Но сейчас они сокрыты внутри поверхности и не нуждаются в ручном создании или управлении.
+Вы могли слышать термины <code>Framebuffer</code> или <code>Swapchain</code>. 
+В некоторых нативных API эти объекты существуют явно, как и в очень старых версиях wgpu. Но сейчас они сокрыты внутри 
+и не нуждаются в ручном создании или управлении.
 </details>
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-new-adapter
+```rust
+let adapter = runtime.block_on(async {
+    instance
+        .request_adapter(&RequestAdapterOptions {
+            power_preference: PowerPreference::default(),
+            force_fallback_adapter: false,
+            compatible_surface: Some(&surface),
+        })
+        .await
+        .expect("Failed to request adapter")
+});
+```
 
 Далее запрашиваем адаптер, для чего нам как раз понадобится асинхронный рантайм.
 
@@ -127,7 +175,21 @@ impl Renderer {
   аппаратным, а мы бы хотели использовать настоящую видеокарту
 - `compatible_surface` - указываем, что запрашиваемый адаптер должен быть совместим с созданной нами поверхностью.
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-new-device
+```rust
+let (device, queue) = runtime.block_on(async {
+    adapter
+        .request_device(&DeviceDescriptor {
+            label: Some("Main device"),
+            required_features: adapter.features() & Features::default(),
+            required_limits: Limits::default().using_resolution(adapter.limits()),
+            memory_hints: MemoryHints::Performance,
+            trace: Default::default(),
+            experimental_features: ExperimentalFeatures::disabled(),
+        })
+        .await
+        .expect("Failed to request device")
+});
+```
 
 Переходим к самому главному - созданию девайса и очереди команд, тоже асинхронному.
 
@@ -147,7 +209,11 @@ impl Renderer {
 
 Осталась лишь пара заключительных шагов, а именно - настроить нашу поверхность и создать сам объект `Renderer`.
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-new-surface-config
+```rust
+let surface_config = surface
+    .get_default_config(&adapter, physical_size.width, physical_size.height)
+    .expect("Failed to get default surface config");
+```
 
 На данный момент мы упростим себе задачу и создадим конфигурацию поверхности по-умолчанию. Мы просто передаем в нужный
 метод адаптер, на базе которого будет создана конфигурация, а также длину и ширину поверхности.
@@ -155,14 +221,37 @@ impl Renderer {
 В следующих главах мы научимся создавать свою конфигурацию, чтобы гибко настраивать параметры поверхности, такие как
 вертикальная синхронизация.
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-new-return
+```rust
+    surface.configure(&device, &surface_config);
+
+    Self {
+        device,
+        queue,
+        surface,
+        surface_config,
+    }
+}
+```
 
 И, в заключение, мы применяем полученную конфигурацию к поверхности с помощью девайса, конструируем объект `Renderer` и
 возвращаем его.
 
 ## Метод `resize_surface`
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-resize
+```rust
+fn resize_surface(&self, size: PhysicalSize<u32>) {
+  let width = size.width.max(1);
+  let height = size.height.max(1);
+  self.surface.configure(
+    &self.device,
+    &SurfaceConfiguration {
+      width,
+      height,
+      ..self.surface_config.clone()
+    },
+  );
+}
+```
 
 Здесь все просто - мы получаем новый размер поверхности как параметр, применяем защиту от нулевых значений, и вызываем
 реконфигурацию поверхности, используя девайс и старую конфигурацию
@@ -171,24 +260,52 @@ impl Renderer {
 
 Наконец, мы добрались до самого важного - нашего метода для отрисовки на экран.
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-render-texture
+```rust
+fn render(&mut self, window: Arc<Window>) {
+  match self.surface.get_current_texture() {
+    Ok(frame) => {
+```
 
 Мы начинаем с того, что запрашиваем у поверхности текущую текстуру для отрисовки. Если ее не удалось получить, то мы не
 можем обрабатывать текущий кадр.
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-render-encoder
+```rust
+let mut encoder = self
+    .device
+    .create_command_encoder(&CommandEncoderDescriptor {
+        label: Some("Main command encoder"),
+    });
+```
 
 Далее мы создаем кодировщик команд для видеокарты с помощью девайса. Он позволит нам записывать операции, которые потом
 будут отправлены в очередь на выполнение
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-render-view
+```rust
+let view = frame.texture.create_view(&TextureViewDescriptor::default());
+```
 
 Теперь нам нужно получить представление текущей текстуры, в которое мы будем непосредственно производить отрисовку.
 Можно считать это неким аналогом ссылки, понятной для GPU.
 
 Так как нам сейчас не нужно переопределять никакие параметры, используем дескриптор по-умолчанию
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-render-pass
+```rust
+encoder.begin_render_pass(&RenderPassDescriptor {
+    label: Some("Clear render pass"),
+    color_attachments: &[Some(RenderPassColorAttachment {
+        view: &view,
+        resolve_target: None,
+        ops: Operations {
+            load: LoadOp::Clear(Color::GREEN),
+            store: StoreOp::Store,
+        },
+        depth_slice: None,
+    })],
+    depth_stencil_attachment: None,
+    timestamp_writes: None,
+    occlusion_query_set: None,
+});
+```
 
 Мы начинаем запись команд для рендера с помощью `begin_render_pass`:
 
@@ -212,7 +329,11 @@ impl Renderer {
 параметров. Но на данный момент мы просто хотим залить экран сплошным цветом, поэтому на этом запись команд и
 заканчивается.
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-render-finish
+```rust
+self.queue.submit([encoder.finish()]);
+window.pre_present_notify();
+frame.present();
+```
 
 Три очень важные операции:
 
@@ -226,7 +347,16 @@ impl Renderer {
   поток выполнения, пока текстура фактически не покажется в окне, что может занять некоторое время из-за особенностей
   работы оконных серверов или забитой очереди на отображение.
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#renderer-render-error
+```rust
+Err(error) => match error {
+    SurfaceError::OutOfMemory => {
+        panic!("Surface error: {error}")
+    }
+    _ => {
+        window.request_redraw();
+    }
+},
+```
 
 Наконец, вторая ветка match - что мы делаем, если встречаем ошибку при попытке получения текущего кадра из поверхности.
 
@@ -238,7 +368,50 @@ impl Renderer {
 
 ### Метод `resumed`
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#appsetup
+```rust
+fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+  if let Self::Loading = self { // [!code ++]
+    let runtime = Arc::new( // [!code ++]
+      runtime::Builder::new_current_thread() // [!code ++]
+              .build() // [!code ++]
+              .expect("Failed to create tokio runtime"), // [!code ++]
+    );
+    
+    let window_attributes = WindowAttributes::default()
+            .with_title("WGPU Tutorial")
+            .with_visible(false); // [!code ++]
+    
+    let window = Arc::new(
+      event_loop
+              .create_window(window_attributes)
+              .expect("Failed to create window"),
+    );
+    
+    center_window(window.clone());
+    
+    event_loop.set_control_flow(ControlFlow::Wait); // [!code ++]
+    
+    let renderer = Renderer::new(window.clone(), runtime.clone()); // [!code ++]
+    
+    *self = Self::Ready {
+      window,
+      renderer: Box::new(renderer), // [!code ++]
+      need_to_resize_surface: false, // [!code ++]
+    }
+  }
+  
+  let Self::Ready { // [!code ++]
+    window, renderer, .. // [!code ++]
+  } = self // [!code ++]
+  else { // [!code ++]
+    return; // [!code ++]
+  }; // [!code ++]
+  
+  renderer.render(window.clone()); // [!code ++]
+  
+  window.set_visible(true); // [!code ++]
+}
+```
 
 Мы добавляем создание рантайма tokio в режиме работы на одном потоке, и дальше применяем маленький трюк с окном.
 
@@ -263,7 +436,50 @@ impl Renderer {
 
 ### Метод `window_event`
 
-<<< @/../code/guide/getting-started/init-wgpu/src/main.rs#apploop
+```rust
+fn window_event(
+        &mut self,
+        event_loop: &ActiveEventLoop,
+        _window_id: WindowId,
+        event: WindowEvent,
+    ) {
+        let Self::Ready {
+            window,
+            renderer, // [!code ++]
+            need_to_resize_surface, // [!code ++]
+            ..
+        } = self
+        else {
+            return;
+        };
+
+        match event {
+            WindowEvent::RedrawRequested => {
+                if *need_to_resize_surface { // [!code ++]
+                    let size = window.inner_size(); // [!code ++]
+
+                    renderer.resize_surface(size); // [!code ++]
+
+                    *need_to_resize_surface = false; // [!code ++]
+                }
+
+                renderer.render(window.clone()); // [!code ++]
+
+                window.request_redraw();
+            }
+            WindowEvent::Resized(_) => {
+                *need_to_resize_surface = true; // [!code ++]
+                window.request_redraw();
+            }
+            WindowEvent::CloseRequested => {
+                event_loop.exit();
+            }
+            WindowEvent::KeyboardInput { event, .. } => handle_keyboard_input(event_loop, event),
+            _ => {}
+        }
+    }
+}
+```
 
 Основные изменения в главном цикле приложения:
 
