@@ -151,7 +151,7 @@ fn new(window: Arc<Window>, runtime: Arc<Runtime>) -> Self {
 размеры не равны 0, потому что это привело бы к ошибке при конфигурации поверхности
 
 ```rust
-let instance = Instance::new( & InstanceDescriptor {
+let instance = Instance::new(&InstanceDescriptor {
     backends: Backends::PRIMARY,
     ..Default::default ()
 });
@@ -206,12 +206,12 @@ let surface = instance
 </div>
 
 ```rust
-let adapter = runtime.block_on( async {
+let adapter = runtime.block_on(async {
     instance
-        .request_adapter( & RequestAdapterOptions {
-            power_preference: PowerPreference::default (),
+        .request_adapter(&RequestAdapterOptions {
+            power_preference: PowerPreference::default(),
             force_fallback_adapter: false,
-            compatible_surface: Some( & surface),
+            compatible_surface: Some(&surface),
         })
     .await
     .expect("Failed to request adapter")
@@ -227,14 +227,14 @@ let adapter = runtime.block_on( async {
 - `compatible_surface` - указываем, что запрашиваемый адаптер должен быть совместим с созданной нами поверхностью.
 
 ```rust
-let (device, queue) = runtime.block_on( async {
+let (device, queue) = runtime.block_on(async {
     adapter
-        .request_device( & DeviceDescriptor {
+        .request_device(&DeviceDescriptor {
             label: Some("Main device"),
-            required_features: adapter.features() & Features::default (),
-            required_limits: Limits::default ().using_resolution(adapter.limits()),
+            required_features: adapter.features() & Features::default(),
+            required_limits: Limits::default().using_resolution(adapter.limits()),
             memory_hints: MemoryHints::Performance,
-            trace: Default::default (),
+            trace: Default::default(),
             experimental_features: ExperimentalFeatures::disabled(),
     })
     .await
@@ -262,7 +262,7 @@ let (device, queue) = runtime.block_on( async {
 
 ```rust
 let surface_config = surface
-    .get_default_config( & adapter, physical_size.width, physical_size.height)
+    .get_default_config(&adapter, physical_size.width, physical_size.height)
     .expect("Failed to get default surface config");
 ```
 
@@ -273,7 +273,7 @@ let surface_config = surface
 вертикальная синхронизация и тип буферизации.
 
 ```rust
-    surface.configure( & device, & surface_config);
+    surface.configure(&device, &surface_config);
 
     Self {
         device,
@@ -323,7 +323,7 @@ fn render(&mut self, window: Arc<Window>) {
 ```rust
 let mut encoder = self
     .device
-    .create_command_encoder( & CommandEncoderDescriptor {
+    .create_command_encoder(&CommandEncoderDescriptor {
         label: Some("Main command encoder"),
     });
 ```
@@ -332,7 +332,7 @@ let mut encoder = self
 будут отправлены в очередь на выполнение
 
 ```rust
-let view = frame.texture.create_view( & TextureViewDescriptor::default ());
+let view = frame.texture.create_view(&TextureViewDescriptor::default());
 ```
 
 Теперь нам нужно получить представление текущей текстуры, в которое мы будем непосредственно производить отрисовку.
@@ -341,10 +341,10 @@ let view = frame.texture.create_view( & TextureViewDescriptor::default ());
 Так как нам сейчас не нужно переопределять никакие параметры, используем дескриптор по-умолчанию
 
 ```rust
-encoder.begin_render_pass( & RenderPassDescriptor {
+encoder.begin_render_pass(&RenderPassDescriptor {
     label: Some("Clear render pass"),
-    color_attachments: & [Some(RenderPassColorAttachment {
-        view: & view,
+    color_attachments: &[Some(RenderPassColorAttachment {
+        view: &view,
         resolve_target: None,
         ops: Operations {
             load: LoadOp::Clear(Color::GREEN),
@@ -401,7 +401,7 @@ frame.present();
 ```rust
 Err(error) => match error {
     SurfaceError::OutOfMemory => {
-        panic ! ("Surface error: {error}")
+        panic!("Surface error: {error}")
     }
     _ => {
         window.request_redraw();
