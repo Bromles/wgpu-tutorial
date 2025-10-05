@@ -421,11 +421,11 @@ Err(error) => match error {
 
 ```rust
 fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-    if let Self::Loading = self { // [!code ++]
+    if let Self::Loading = self {
         let runtime = Arc::new( // [!code ++]
-                                runtime::Builder::new_current_thread() // [!code ++]
-                                    .build() // [!code ++]
-                                    .expect("Failed to create tokio runtime"), // [!code ++]
+            runtime::Builder::new_current_thread() // [!code ++]
+                .build() // [!code ++]
+                .expect("Failed to create tokio runtime"), // [!code ++]
         );
 
         let window_attributes = WindowAttributes::default()
