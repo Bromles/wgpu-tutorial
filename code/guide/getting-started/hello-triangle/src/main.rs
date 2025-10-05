@@ -67,7 +67,7 @@ impl Renderer {
         let (device, queue) = runtime.block_on(async {
             adapter
                 .request_device(&DeviceDescriptor {
-                    label: None,
+                    label: Some("Main device"),
                     required_features: adapter.features() & Features::default(),
                     required_limits: Limits::default().using_resolution(adapter.limits()),
                     memory_hints: MemoryHints::Performance,
@@ -118,7 +118,7 @@ impl Renderer {
 
         renderer.pipeline = Some(renderer.device.create_render_pipeline(
             &RenderPipelineDescriptor {
-                label: None,
+                label: Some("Main Render Pipeline"),
                 layout: None,
                 vertex: VertexState {
                     module: &shader_module,
@@ -178,13 +178,13 @@ impl Renderer {
             Ok(frame) => {
                 let mut encoder = self
                     .device
-                    .create_command_encoder(&CommandEncoderDescriptor { label: None });
+                    .create_command_encoder(&CommandEncoderDescriptor { label: Some("Main command encoder") });
 
                 let view = frame.texture.create_view(&TextureViewDescriptor::default());
 
                 {
                     let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
-                        label: None,
+                        label: Some("Main Render Pass"),
                         color_attachments: &[Some(RenderPassColorAttachment {
                             view: &view,
                             resolve_target: None,
