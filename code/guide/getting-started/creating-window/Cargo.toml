@@ -9,4 +9,3 @@ license.workspace = true
 winit.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
-log = "0.4.22"

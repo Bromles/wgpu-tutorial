@@ -361,7 +361,6 @@ dependencies = [
 name = "creating-window"
 version = "0.1.0"
 dependencies = [
- "log",
  "tracing",
  "tracing-subscriber",
  "winit",
