@@ -153,7 +153,7 @@ fn new(window: Arc<Window>, runtime: Arc<Runtime>) -> Self {
 ```rust
 let instance = Instance::new(&InstanceDescriptor {
     backends: Backends::PRIMARY,
-    ..Default::default ()
+    ..Default::default()
 });
 ```
 
@@ -381,7 +381,7 @@ encoder.begin_render_pass(&RenderPassDescriptor {
 заканчивается.
 
 ```rust
-self .queue.submit([encoder.finish()]);
+self.queue.submit([encoder.finish()]);
 window.pre_present_notify();
 frame.present();
 ```
