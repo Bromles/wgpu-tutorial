@@ -328,3 +328,5 @@ winit сначала вызовет наш обработчик события `
 
 </p>
 </div>
+
+[Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/getting-started/creating-window)
