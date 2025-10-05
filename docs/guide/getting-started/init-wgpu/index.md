@@ -111,7 +111,7 @@ enum App {
 }
 ```
 
-<details class="details custom-block" style="padding-top: 8px">
+<details class="tip custom-block" style="padding-top: 8px">
 <summary>Примечание</summary>
 <code>Renderer</code> здесь завернут в <code>Box</code>, чтобы разные варианты перечисления <code>App</code>не слишком 
 различались по занимаемой памяти (хранение указателя требует ее намного меньше, чем самой структуры).На это есть 
@@ -152,8 +152,8 @@ fn new(window: Arc<Window>, runtime: Arc<Runtime>) -> Self {
 
 ```rust
 let instance = Instance::new( & InstanceDescriptor {
-backends: Backends::PRIMARY,
-..Default::default ()
+    backends: Backends::PRIMARY,
+    ..Default::default ()
 });
 ```
 
@@ -169,30 +169,52 @@ backends: Backends::PRIMARY,
 
 ```rust
 let surface = instance
-.create_surface(window)
-.expect("Failed to create surface");
+    .create_surface(window)
+    .expect("Failed to create surface");
 ```
 
 Тут производим создание поверхности на основе имеющегося у нас окна winit. Это автоматически привязывает поверхность к
 окну
 
-<details class="details custom-block" style="padding-top: 8px">
-<summary>Примечание</summary>
-Вы могли слышать термины <code>Framebuffer</code> или <code>Swapchain</code>. 
+<div class="details custom-block" style="padding-top: 8px">
+<p class="custom-block-title">Про двойную буферизацию</p>
+<p>
+Видеокарта отрисовывает изображение не мгновенно, а попиксельно, обычно слева направо, сверху вниз. Это значит, что если
+мы будем рендерить в то же изображение (ту же текстуру), что сейчас находится на экране, пользователь будет видеть
+весь процесс, и выглядеть это будет непрезентабельно.
+</p>
+<p>
+Для решения данной проблемы была придумана двойная буферизация - мы на самом деле используем две текстуры (два изображения).
+Одна в данный момент находится на экране, тогда как вторая - в скрытом буфере. И мы производим отрисовку во вторую, "скрытую"
+текстуру, чтобы пользователь не видел этого процесса. И только когда кадр отрисован и готов, мы меняем эти буферы местами -
+свежеотрисованный отправляется на экран, тогда как прошлый уходит назад, в "скрытую" часть. И так процесс повторяется,
+пока наше приложение работает
+</p>
+<p>
+Вы могли натыкаться на то, как этот процесс выполнен в OpenGL - функция <code>glSwapBuffer</code> отвечает как раз за 
+смену мест этих двух буферов
+</p>
+<p>
+Буферизация не обязана быть именно двойной - бывает и тройная, и другие варианты. Но суть примерно одинаковая - у нас 
+есть текущий кадр на экране, и есть некие кадры "в очереди", с которыми уже и работает видеокарта.
+</p>
+<p>
+Вы могли слышать термины <code>Framebuffer</code> или <code>Swapchain</code>. Они как раз относятся к данному процессу.
 В некоторых нативных API эти объекты существуют явно, как и в очень старых версиях wgpu. Но сейчас они сокрыты внутри 
 и не нуждаются в ручном создании или управлении.
-</details>
+</p>
+</div>
 
 ```rust
 let adapter = runtime.block_on( async {
-instance
-.request_adapter( & RequestAdapterOptions {
-power_preference: PowerPreference::default (),
-force_fallback_adapter: false,
-compatible_surface: Some( & surface),
-})
-.await
-.expect("Failed to request adapter")
+    instance
+        .request_adapter( & RequestAdapterOptions {
+            power_preference: PowerPreference::default (),
+            force_fallback_adapter: false,
+            compatible_surface: Some( & surface),
+        })
+    .await
+    .expect("Failed to request adapter")
 });
 ```
 
@@ -206,17 +228,17 @@ compatible_surface: Some( & surface),
 
 ```rust
 let (device, queue) = runtime.block_on( async {
-adapter
-.request_device( & DeviceDescriptor {
-label: Some("Main device"),
-required_features: adapter.features() & Features::default (),
-required_limits: Limits::default ().using_resolution(adapter.limits()),
-memory_hints: MemoryHints::Performance,
-trace: Default::default (),
-experimental_features: ExperimentalFeatures::disabled(),
-})
-.await
-.expect("Failed to request device")
+    adapter
+        .request_device( & DeviceDescriptor {
+            label: Some("Main device"),
+            required_features: adapter.features() & Features::default (),
+            required_limits: Limits::default ().using_resolution(adapter.limits()),
+            memory_hints: MemoryHints::Performance,
+            trace: Default::default (),
+            experimental_features: ExperimentalFeatures::disabled(),
+    })
+    .await
+    .expect("Failed to request device")
 });
 ```
 
@@ -240,25 +262,25 @@ experimental_features: ExperimentalFeatures::disabled(),
 
 ```rust
 let surface_config = surface
-.get_default_config( & adapter, physical_size.width, physical_size.height)
-.expect("Failed to get default surface config");
+    .get_default_config( & adapter, physical_size.width, physical_size.height)
+    .expect("Failed to get default surface config");
 ```
 
 На данный момент мы упростим себе задачу и создадим конфигурацию поверхности по-умолчанию. Мы просто передаем в нужный
 метод адаптер, на базе которого будет создана конфигурация, а также длину и ширину поверхности.
 
 В следующих главах мы научимся создавать свою конфигурацию, чтобы гибко настраивать параметры поверхности, такие как
-вертикальная синхронизация.
+вертикальная синхронизация и тип буферизации.
 
 ```rust
     surface.configure( & device, & surface_config);
 
-Self {
-device,
-queue,
-surface,
-surface_config,
-}
+    Self {
+        device,
+        queue,
+        surface,
+        surface_config,
+    }
 }
 ```
 
@@ -300,10 +322,10 @@ fn render(&mut self, window: Arc<Window>) {
 
 ```rust
 let mut encoder = self
-.device
-.create_command_encoder( & CommandEncoderDescriptor {
-label: Some("Main command encoder"),
-});
+    .device
+    .create_command_encoder( & CommandEncoderDescriptor {
+        label: Some("Main command encoder"),
+    });
 ```
 
 Далее мы создаем кодировщик команд для видеокарты с помощью девайса. Он позволит нам записывать операции, которые потом
@@ -320,19 +342,19 @@ let view = frame.texture.create_view( & TextureViewDescriptor::default ());
 
 ```rust
 encoder.begin_render_pass( & RenderPassDescriptor {
-label: Some("Clear render pass"),
-color_attachments: & [Some(RenderPassColorAttachment {
-view: & view,
-resolve_target: None,
-ops: Operations {
-load: LoadOp::Clear(Color::GREEN),
-store: StoreOp::Store,
-},
-depth_slice: None,
-})],
-depth_stencil_attachment: None,
-timestamp_writes: None,
-occlusion_query_set: None,
+    label: Some("Clear render pass"),
+    color_attachments: & [Some(RenderPassColorAttachment {
+        view: & view,
+        resolve_target: None,
+        ops: Operations {
+            load: LoadOp::Clear(Color::GREEN),
+            store: StoreOp::Store,
+        },
+        depth_slice: None,
+    })],
+    depth_stencil_attachment: None,
+    timestamp_writes: None,
+    occlusion_query_set: None,
 });
 ```
 
@@ -378,12 +400,12 @@ frame.present();
 
 ```rust
 Err(error) => match error {
-SurfaceError::OutOfMemory => {
-panic ! ("Surface error: {error}")
-}
-_ => {
-window.request_redraw();
-}
+    SurfaceError::OutOfMemory => {
+        panic ! ("Surface error: {error}")
+    }
+    _ => {
+        window.request_redraw();
+    }
 },
 ```
 
