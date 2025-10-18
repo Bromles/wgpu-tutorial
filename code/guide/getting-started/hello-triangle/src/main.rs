@@ -157,17 +157,16 @@ impl Renderer {
         renderer
     }
 
-    fn resize_surface(&self, size: PhysicalSize<u32>) {
+    fn resize_surface(&mut self, size: PhysicalSize<u32>) {
         let width = size.width.max(1);
         let height = size.height.max(1);
 
+        self.surface_config.width = width;
+        self.surface_config.height = height;
+
         self.surface.configure(
             &self.device,
-            &SurfaceConfiguration {
-                width,
-                height,
-                ..self.surface_config.clone()
-            },
+            &self.surface_config,
         );
     }
 

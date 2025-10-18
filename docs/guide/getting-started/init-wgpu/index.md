@@ -360,7 +360,7 @@ enum App {
 ```rust
 impl Renderer {
     fn new(window: Arc<Window>, runtime: Arc<Runtime>) -> Self;
-    fn resize_surface(&self, size: PhysicalSize<u32>);
+    fn resize_surface(&mut self, size: PhysicalSize<u32>);
     fn render(&mut self, window: Arc<Window>);
 }
 ```
@@ -543,22 +543,22 @@ let surface_config = surface
 ## Метод `resize_surface`
 
 ```rust
-fn resize_surface(&self, size: PhysicalSize<u32>) {
+fn resize_surface(&mut self, size: PhysicalSize<u32>) {
     let width = size.width.max(1);
     let height = size.height.max(1);
+
+    self.surface_config.width = width;
+    self.surface_config.height = height;
+
     self.surface.configure(
         &self.device,
-        &SurfaceConfiguration {
-            width,
-            height,
-            ..self.surface_config.clone()
-        },
+        &self.surface_config,
     );
 }
 ```
 
-Здесь все просто - мы получаем новый размер поверхности как параметр, применяем защиту от нулевых значений, и вызываем
-реконфигурацию поверхности, используя девайс и старую конфигурацию
+Здесь все просто - мы получаем новый размер поверхности как параметр, применяем защиту от нулевых значений, обновляем
+сохраненную конфигурацию поверхности и применяем ее.
 
 ## Метод `render`
 
