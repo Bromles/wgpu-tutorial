@@ -4,11 +4,12 @@ use std::sync::Arc;
 
 use tokio::runtime;
 use tokio::runtime::Runtime;
+use wgpu::CurrentSurfaceTexture::Success;
 use wgpu::{
     Backends, Color, CommandEncoderDescriptor, Device, DeviceDescriptor, ExperimentalFeatures,
     Features, Instance, InstanceDescriptor, Limits, LoadOp, MemoryHints, Operations,
     PowerPreference, Queue, RenderPassColorAttachment, RenderPassDescriptor, RequestAdapterOptions,
-    StoreOp, Surface, SurfaceConfiguration, SurfaceError, TextureViewDescriptor,
+    StoreOp, Surface, SurfaceConfiguration, TextureViewDescriptor,
 };
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
@@ -39,9 +40,9 @@ impl Renderer {
         physical_size.width = physical_size.width.max(1);
         physical_size.height = physical_size.height.max(1);
 
-        let instance = Instance::new(&InstanceDescriptor {
+        let instance = Instance::new(InstanceDescriptor {
             backends: Backends::PRIMARY,
-            ..Default::default()
+            ..InstanceDescriptor::new_without_display_handle()
         });
 
         let surface = instance
@@ -94,15 +95,12 @@ impl Renderer {
         self.surface_config.width = width;
         self.surface_config.height = height;
 
-        self.surface.configure(
-            &self.device,
-            &self.surface_config,
-        );
+        self.surface.configure(&self.device, &self.surface_config);
     }
 
     fn render(&mut self, window: Arc<Window>) {
         match self.surface.get_current_texture() {
-            Ok(frame) => {
+            Success(frame) => {
                 let mut encoder = self
                     .device
                     .create_command_encoder(&CommandEncoderDescriptor {
@@ -125,20 +123,16 @@ impl Renderer {
                     depth_stencil_attachment: None,
                     timestamp_writes: None,
                     occlusion_query_set: None,
+                    multiview_mask: None,
                 });
 
                 self.queue.submit([encoder.finish()]);
                 window.pre_present_notify();
                 frame.present();
             }
-            Err(error) => match error {
-                SurfaceError::OutOfMemory => {
-                    panic!("Surface error: {error}")
-                }
-                _ => {
-                    window.request_redraw();
-                }
-            },
+            _ => {
+                panic!("can't get current surface texture")
+            }
         };
     }
 }

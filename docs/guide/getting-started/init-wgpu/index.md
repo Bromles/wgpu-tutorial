@@ -284,11 +284,11 @@ flowchart LR
 ### Обновим зависимости
 
 ```toml
-winit = "0.30"
+winit = "0.33"
 tracing = "0.1"
 tracing-subscriber = "0.3"
-tokio = { version = "1.47", features = ["parking_lot", "rt"] } # [!code ++]
-wgpu = "27.0" # [!code ++]
+tokio = { version = "1", features = ["parking_lot", "rt"] } # [!code ++]
+wgpu = "29.0" # [!code ++]
 ```
 
 <div class="warning custom-block" style="padding-top: 8px">
@@ -391,9 +391,9 @@ fn new(window: Arc<Window>, runtime: Arc<Runtime>) -> Self {
 ### `Instance`
 
 ```rust
-let instance = Instance::new(&InstanceDescriptor {
+let instance = Instance::new(InstanceDescriptor {
     backends: Backends::PRIMARY,
-    ..Default::default()
+    ..InstanceDescriptor::new_without_display_handle()
 });
 ```
 
@@ -567,7 +567,7 @@ fn resize_surface(&mut self, size: PhysicalSize<u32>) {
 ```rust
 fn render(&mut self, window: Arc<Window>) {
     match self.surface.get_current_texture() {
-        Ok(frame) => {
+      Success(frame) => {
 ```
 
 Мы начинаем с того, что запрашиваем у поверхности текущую текстуру для отрисовки. Если ее не удалось получить, то мы не
@@ -608,6 +608,7 @@ encoder.begin_render_pass(&RenderPassDescriptor {
     depth_stencil_attachment: None,
     timestamp_writes: None,
     occlusion_query_set: None,
+    multiview_mask: None,
 });
 ```
 
@@ -671,14 +672,9 @@ frame.present();
 </div>
 
 ```rust
-Err(error) => match error {
-    SurfaceError::OutOfMemory => {
-        panic!("Surface error: {error}")
-    }
-    _ => {
-        window.request_redraw();
-    }
-},
+_ => {
+    panic!("can't get current surface texture")
+}
 ```
 
 Наконец, вторая ветка `match` - что мы делаем, если встречаем ошибку при попытке получения текущего кадра из
