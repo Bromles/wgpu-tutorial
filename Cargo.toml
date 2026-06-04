@@ -2,7 +2,9 @@
 resolver = "2"
 
 members = [
-    "code/guide/getting-started/*"
+    "code/framework",
+    "code/guide/getting-started/*",
+    "code/guide/gpu-data-model/*"
 ]
 
 [workspace.package]
@@ -27,4 +29,5 @@ wgpu = "29.0"
 bytemuck = { version = "1.25", features = ["derive"] }
 encase = "0.12"
 glam = { version = "0.33", features = ["debug-glam-assert", "encase", "bytemuck"] }
+pollster = "0.4"
 image = "0.25"

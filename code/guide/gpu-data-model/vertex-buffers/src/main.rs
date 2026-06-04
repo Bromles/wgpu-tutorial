@@ -1,33 +1,106 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use framework::{run, Example, GpuContext};
+use std::mem::size_of;
+
+use bytemuck::{Pod, Zeroable};
+use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites,
-    CommandEncoder, FragmentState, LoadOp, MultisampleState, Operations, PipelineCompilationOptions,
-    PolygonMode, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
-    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, StoreOp, TextureView, VertexState,
+    include_wgsl, BlendComponent, BlendState, Buffer, BufferAddress, BufferUsages, Color,
+    ColorTargetState, ColorWrites, CommandEncoder, FragmentState, LoadOp, MultisampleState,
+    Operations, PipelineCompilationOptions, PolygonMode, PrimitiveState,
+    PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline,
+    RenderPipelineDescriptor, StoreOp, TextureView, VertexAttribute, VertexBufferLayout, VertexFormat,
+    VertexState, VertexStepMode,
 };
 use winit::dpi::PhysicalSize;
 
-struct Triangle {
-    pipeline: RenderPipeline,
+use framework::{run, Example, GpuContext};
+
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable)]
+struct Vertex {
+    position: [f32; 2],
+    color: [f32; 3],
 }
 
-impl Example for Triangle {
+impl Vertex {
+    const ATTRIBUTES: [VertexAttribute; 2] = [
+        VertexAttribute {
+            offset: 0,
+            shader_location: 0,
+            format: VertexFormat::Float32x2,
+        },
+        VertexAttribute {
+            offset: size_of::<[f32; 2]>() as BufferAddress,
+            shader_location: 1,
+            format: VertexFormat::Float32x3,
+        },
+    ];
+
+    fn desc() -> VertexBufferLayout<'static> {
+        VertexBufferLayout {
+            array_stride: size_of::<Vertex>() as BufferAddress,
+            step_mode: VertexStepMode::Vertex,
+            attributes: &Self::ATTRIBUTES,
+        }
+    }
+}
+
+const VERTICES: &[Vertex] = &[
+    Vertex {
+        position: [-0.5, -0.5],
+        color: [1.0, 0.0, 0.0],
+    },
+    Vertex {
+        position: [-0.5, 0.5],
+        color: [0.0, 1.0, 0.0],
+    },
+    Vertex {
+        position: [0.5, 0.5],
+        color: [0.0, 0.0, 1.0],
+    },
+    Vertex {
+        position: [-0.5, -0.5],
+        color: [1.0, 0.0, 0.0],
+    },
+    Vertex {
+        position: [0.5, 0.5],
+        color: [0.0, 0.0, 1.0],
+    },
+    Vertex {
+        position: [0.5, -0.5],
+        color: [1.0, 1.0, 0.0],
+    },
+];
+
+struct Quad {
+    pipeline: RenderPipeline,
+    vertex_buffer: Buffer,
+}
+
+impl Example for Quad {
     fn init(ctx: &GpuContext) -> Self {
         let shader_module = ctx
             .device
             .create_shader_module(include_wgsl!("shader.wgsl"));
 
+        let vertex_buffer = ctx
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(VERTICES),
+                usage: BufferUsages::VERTEX,
+            });
+
         let pipeline = ctx
             .device
             .create_render_pipeline(&RenderPipelineDescriptor {
-                label: Some("Main Render Pipeline"),
+                label: Some("Render Pipeline"),
                 layout: None,
                 vertex: VertexState {
                     module: &shader_module,
                     entry_point: Some("vs_main"),
-                    buffers: &[],
+                    buffers: &[Vertex::desc()],
                     compilation_options: PipelineCompilationOptions::default(),
                 },
                 fragment: Some(FragmentState {
@@ -59,19 +132,22 @@ impl Example for Triangle {
                 multiview_mask: None,
             });
 
-        Self { pipeline }
+        Self {
+            pipeline,
+            vertex_buffer,
+        }
     }
 
     fn resize(&mut self, _ctx: &GpuContext, _new_size: PhysicalSize<u32>) {}
 
     fn render(&mut self, _ctx: &GpuContext, view: &TextureView, encoder: &mut CommandEncoder) {
         let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
-            label: Some("Main Render Pass"),
+            label: Some("Render Pass"),
             color_attachments: &[Some(RenderPassColorAttachment {
                 view,
                 resolve_target: None,
                 ops: Operations {
-                    load: LoadOp::Clear(Color::GREEN),
+                    load: LoadOp::Clear(Color::BLACK),
                     store: StoreOp::Store,
                 },
                 depth_slice: None,
@@ -83,10 +159,11 @@ impl Example for Triangle {
         });
 
         rpass.set_pipeline(&self.pipeline);
-        rpass.draw(0..3, 0..1);
+        rpass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+        rpass.draw(0..6, 0..1);
     }
 }
 
 fn main() {
-    run::<Triangle>("Hello Triangle");
+    run::<Quad>("Vertex Buffers");
 }

@@ -442,6 +442,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 
 [[package]]
+name = "framework"
+version = "0.1.0"
+dependencies = [
+ "pollster",
+ "tracing",
+ "tracing-subscriber",
+ "wgpu",
+ "winit",
+]
+
+[[package]]
 name = "futures-core"
 version = "0.3.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -595,9 +606,7 @@ checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
 name = "hello-triangle"
 version = "0.1.0"
 dependencies = [
- "tokio",
- "tracing",
- "tracing-subscriber",
+ "framework",
  "wgpu",
  "winit",
 ]
@@ -615,6 +624,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfa686283ad6dd069f105e5ab091b04c62850d3e4cf5d67debad1933f55023df"
 
 [[package]]
+name = "index-buffers"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "framework",
+ "wgpu",
+ "winit",
+]
+
+[[package]]
 name = "indexmap"
 version = "2.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -628,7 +647,7 @@ dependencies = [
 name = "init-wgpu"
 version = "0.1.0"
 dependencies = [
- "tokio",
+ "pollster",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -1292,6 +1311,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "pollster"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f3a9f18d041e6d0e102a0a46750538147e5e8992d3b4873aaafee2520b00ce3"
+
+[[package]]
 name = "portable-atomic"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1535,6 +1560,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "shaders"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "framework",
+ "wgpu",
+ "winit",
+]
+
+[[package]]
 name = "sharded-slab"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1736,16 +1771,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tokio"
-version = "1.52.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fc7f01b389ac15039e4dc9531aa973a135d7a4135281b12d7c1bc79fd57fffe"
-dependencies = [
- "parking_lot",
- "pin-project-lite",
-]
-
-[[package]]
 name = "toml_datetime"
 version = "1.1.1+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1867,6 +1892,16 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "vertex-buffers"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "framework",
+ "wgpu",
+ "winit",
+]
 
 [[package]]
 name = "walkdir"

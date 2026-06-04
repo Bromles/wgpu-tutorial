@@ -2,8 +2,6 @@
 
 use std::sync::Arc;
 
-use tokio::runtime;
-use tokio::runtime::Runtime;
 use tracing::warn;
 use wgpu::CurrentSurfaceTexture::{
     Lost, Occluded, Outdated, Suboptimal, Success, Timeout, Validation,
@@ -38,7 +36,7 @@ struct Renderer {
 }
 
 impl Renderer {
-    fn new(window: Arc<Window>, runtime: Arc<Runtime>) -> Self {
+    fn new(window: Arc<Window>) -> Self {
         let mut physical_size = window.inner_size();
         physical_size.width = physical_size.width.max(1);
         physical_size.height = physical_size.height.max(1);
@@ -52,30 +50,22 @@ impl Renderer {
             .create_surface(window)
             .expect("Failed to create surface");
 
-        let adapter = runtime.block_on(async {
-            instance
-                .request_adapter(&RequestAdapterOptions {
-                    power_preference: PowerPreference::default(),
-                    force_fallback_adapter: false,
-                    compatible_surface: Some(&surface),
-                })
-                .await
-                .expect("Failed to request adapter")
-        });
+        let adapter = pollster::block_on(instance.request_adapter(&RequestAdapterOptions {
+            power_preference: PowerPreference::default(),
+            force_fallback_adapter: false,
+            compatible_surface: Some(&surface),
+        }))
+        .expect("Failed to request adapter");
 
-        let (device, queue) = runtime.block_on(async {
-            adapter
-                .request_device(&DeviceDescriptor {
-                    label: Some("Main device"),
-                    required_features: adapter.features() & Features::default(),
-                    required_limits: Limits::default().using_resolution(adapter.limits()),
-                    memory_hints: MemoryHints::Performance,
-                    trace: Default::default(),
-                    experimental_features: ExperimentalFeatures::disabled(),
-                })
-                .await
-                .expect("Failed to request device")
-        });
+        let (device, queue) = pollster::block_on(adapter.request_device(&DeviceDescriptor {
+            label: Some("Main device"),
+            required_features: adapter.features() & Features::default(),
+            required_limits: Limits::default().using_resolution(adapter.limits()),
+            memory_hints: MemoryHints::Performance,
+            trace: Default::default(),
+            experimental_features: ExperimentalFeatures::disabled(),
+        }))
+        .expect("Failed to request device");
 
         let surface_config = surface
             .get_default_config(&adapter, physical_size.width, physical_size.height)
@@ -103,7 +93,12 @@ impl Renderer {
 
     fn render(&mut self, window: Arc<Window>) {
         let frame = match self.surface.get_current_texture() {
-            Success(frame) | Suboptimal(frame) => frame,
+            Success(frame) => frame,
+            Suboptimal(frame) => {
+                warn!("Surface suboptimal, reconfiguring");
+                self.surface.configure(&self.device, &self.surface_config);
+                frame
+            }
             Outdated | Lost => {
                 warn!("Surface lost or outdated, reconfiguring");
                 self.surface.configure(&self.device, &self.surface_config);
@@ -150,12 +145,6 @@ impl Renderer {
 impl ApplicationHandler for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if let Self::Loading = self {
-            let runtime = Arc::new(
-                runtime::Builder::new_current_thread()
-                    .build()
-                    .expect("Failed to create tokio runtime"),
-            );
-
             let window_attributes = WindowAttributes::default()
                 .with_title("WGPU Tutorial")
                 .with_visible(false);
@@ -170,7 +159,7 @@ impl ApplicationHandler for App {
 
             event_loop.set_control_flow(ControlFlow::Wait);
 
-            let renderer = Renderer::new(window.clone(), runtime.clone());
+            let renderer = Renderer::new(window.clone());
 
             *self = Self::Ready {
                 window,

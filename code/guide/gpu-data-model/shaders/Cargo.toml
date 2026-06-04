@@ -1,5 +1,5 @@
 [package]
-name = "hello-triangle"
+name = "shaders"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -9,3 +9,4 @@ license.workspace = true
 framework = { path = "../../../framework" }
 wgpu.workspace = true
 winit.workspace = true
+bytemuck.workspace = true

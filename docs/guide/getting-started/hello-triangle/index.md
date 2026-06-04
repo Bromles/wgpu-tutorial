@@ -1,118 +1,121 @@
----
-prev:
-  text: "Инициализация wgpu"
-  link: "/guide/getting-started/init-wgpu"
-next:
-  text: "Шейдеры"
-  link: "/guide/getting-started/shaders"
----
-
 # Первый треугольник
 
 [Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/getting-started/hello-triangle)
 
-В прошлой главе мы инициализировали wgpu и залили окно зеленым цветом с помощью `RenderPass`. Теперь мы нарисуем
+**Что уже должно быть понятно:**
+
+- окно, event loop, `ApplicationHandler`
+- `Instance`, `Adapter`, `Device`, `Queue`, `Surface`
+- `RenderPass`, `LoadOp::Clear`
+
+**Что появится в этой главе:**
+
+- учебный каркас (`framework`)
+- язык шейдеров WGSL
+- графический конвейер (`RenderPipeline`)
+
+**Итог:** окно с зелёным фоном и тёмно-красным треугольником в центре
+
+---
+
+В прошлой главе мы инициализировали wgpu и залили окно зелёным цветом с помощью `RenderPass`. Теперь мы нарисуем
 настоящую геометрию — треугольник. Для этого нам понадобятся новые сущности: шейдеры и графический конвейер (render
 pipeline).
 
-## Обновление структуры Renderer
+## Учебный каркас
 
-По сравнению с предыдущей главой, `Renderer` получил два новых поля:
+В предыдущих главах мы написали значительное количество кода для создания окна, инициализации wgpu, обработки событий
+и ошибок. Этот код будет одинаковым во всех следующих примерах, поэтому мы вынесли его в учебный каркас (`framework`) и
+дальше не будем каждый раз переписывать.
+
+Это не движок: здесь нет ECS, сцен, материалов, загрузчика уровней и архитектуры игры. Это только обвязка, чтобы главы
+были про графику.
+
+### trait Example
+
+Каркас определяет трейт `Example`, который мы будем реализовывать в каждой главе:
 
 ```rust
-struct Renderer {
-    device: Device,
-    queue: Queue,
-    surface: Surface<'static>,
-    surface_config: SurfaceConfiguration,
-    surface_format: TextureFormat,
-    pipeline: RenderPipeline,
+pub trait Example: 'static {
+    fn init(ctx: &GpuContext) -> Self;
+    fn resize(&mut self, ctx: &GpuContext, new_size: PhysicalSize<u32>);
+    fn render(&mut self, ctx: &GpuContext, view: &TextureView, encoder: &mut CommandEncoder);
 }
 ```
 
-- `surface_format` хранит формат кадров, выбранный при инициализации. Он нужен для создания графического конвейера
-- `pipeline` — сам графический конвейер, описывающий состояние GPU во время отрисовки
+- `init` — вызывается один раз при запуске. Получает `GpuContext`, содержащий `device`, `queue`, `surface`,
+  `surface_config` и `surface_format`. Здесь мы создаём ресурсы, живущие всё время работы примера
+- `resize` — вызывается при изменении размера окна
+- `render` — вызывается каждый кадр. Получает готовый `TextureView` (представление кадра поверхности) и
+  `CommandEncoder` (кодировщик команд). Нам остаётся только записать команды отрисовки
 
-## Возможности поверхности и выбор формата
+### GpuContext
 
-В предыдущей главе мы использовали `get_default_config` для получения конфигурации поверхности по умолчанию. Теперь мы
-создадим её вручную, чтобы контролировать параметры вроде режима отображения и формата.
-
-Сначала получим доступные возможности нашей поверхности:
-
-```rust
-let surface_capabilities = surface.get_capabilities(&adapter);
-```
-
-`get_capabilities` возвращает структуру `SurfaceCapabilities`, содержащую списки поддерживаемых форматов, режимов
-синхронизации и режимов альфа-канала. Эти возможности определяются связкой конкретного адаптера и поверхности.
-
-Далее выберем формат кадров из списка поддерживаемых:
+`GpuContext` содержит всё, что мы настраивали в прошлых главах вручную:
 
 ```rust
-let surface_format = surface_capabilities
-    .formats
-    .iter()
-    .copied()
-    .find(TextureFormat::is_srgb)
-    .or_else(|| surface_capabilities.formats.first().copied())
-    .expect("Failed to get surface format");
+pub struct GpuContext {
+    pub device: Device,
+    pub queue: Queue,
+    pub surface: Surface<'static>,
+    pub surface_config: SurfaceConfiguration,
+    pub surface_format: TextureFormat,
+}
 ```
 
-Формат определяет, как именно видеокарта будет представлять цвет каждого пикселя. Мы пытаемся выбрать формат с
-поддержкой sRGB — цветового пространства, обеспечивающего корректное отображение цветов на экране. Если такого формата
-нет, берём первый доступный. Это типичный паттерн, встречающийся в большинстве приложений на wgpu.
+Все поля публичны — каркас не скрывает типы wgpu, а лишь убирает рутину по их созданию.
 
-## Конфигурация поверхности
+### Запуск примера
 
-Теперь создадим конфигурацию поверхности вручную:
+Для запуска достаточно вызвать одну функцию:
 
 ```rust
-let surface_config = SurfaceConfiguration {
-    usage: TextureUsages::RENDER_ATTACHMENT,
-    format: surface_format,
-    width: physical_size.width,
-    height: physical_size.height,
-    present_mode: PresentMode::AutoVsync,
-    desired_maximum_frame_latency: 2,
-    alpha_mode: CompositeAlphaMode::Auto,
-    view_formats: vec![],
-};
+fn main() {
+    framework::run::<Triangle>("Hello Triangle");
+}
 ```
 
-Разберём каждое поле:
-
-- `usage` — как мы будем использовать текстуры поверхности. `RENDER_ATTACHMENT` означает, что данная текстура будет
-  использоваться как цель рендера — в неё будет выводиться картинка
-- `format` — выбранный нами формат поверхности
-- `width` и `height` — размеры поверхности в пикселях
-- `present_mode` — режим отображения кадров. `AutoVsync` включает вертикальную синхронизацию, ограничивая частоту
-  вывода кадров частотой монитора. wgpu автоматически выберет подходящий режим из поддерживаемых. Также есть
-  `AutoNoVsync` без ограничения частоты, но для учебных целей `AutoVsync` предпочтительнее — меньше лишней нагрузки
-  и шума от очень высокого FPS
-- `desired_maximum_frame_latency` — число кадров, которые могут одновременно ожидать вывода на экран. Значение `2`
-  является оптимальным для большинства случаев. Слишком низкое значение может привести к простою GPU, которому некуда
-  будет отдавать готовый кадр
-- `alpha_mode` — режим альфа-канала (прозрачности). `Auto` означает автоматический выбор из поддерживаемых
-- `view_formats` — дополнительные форматы представлений текстур, поддерживаемые данной поверхностью. Собственный формат
-  поддерживается всегда, поэтому передаём пустой список
+Каркас создаст окно, инициализирует wgpu, обработает event loop, resize, ошибки `get_current_texture`, вызовет
+`pre_present_notify` и `queue.submit`. Всё, что было описано в предыдущих главах, работает под капотом.
 
 <div class="info custom-block" style="padding-top: 8px">
-<p class="custom-block-title">Сравнение с get_default_config</p>
+<p class="custom-block-title">Что именно скрывает каркас</p>
 
-Использованный нами ранее `get_default_config` внутри себя делает то же самое — запрашивает capabilities,
-выбирает формат и составляет конфигурацию с параметрами по умолчанию. Теперь мы делаем это вручную, чтобы иметь
-возможность задать свои параметры.
+- окно — создание, скрытие до первого кадра, центрирование
+- event loop — `ApplicationHandler`, `ControlFlow::Wait`, `request_redraw`
+- инициализация wgpu — `Instance`, `Adapter`, `Device`, `Queue`, `Surface`
+- обработка ошибок — `Outdated`/`Lost`/`Suboptimal` → переконфигурация, `Occluded`/`Timeout` → пропуск кадра
+- получение кадра — `get_current_texture`, создание `TextureView` и `CommandEncoder`
+- отправка — `queue.submit`, `pre_present_notify`, `frame.present`
+- выход по Escape
 
 </div>
 
+## Графический конвейер: что происходит внутри
+
+Прежде чем писать код, разберёмся, как GPU превращает три точки в заполненный треугольник на экране:
+
+```mermaid
+flowchart LR
+    V[Вершины] --> VS[Вершинный шейдер]
+    VS --> R[Растеризация]
+    R --> FS[Фрагментный шейдер]
+    FS --> FB[Framebuffer]
+```
+
+1. **Вершинный шейдер** — вызывается для каждой вершины. Преобразует координаты в clip space (-1 до 1)
+2. **Растеризация** — GPU определяет, какие пиксели находятся внутри треугольника
+3. **Фрагментный шейдер** — вызывается для каждого пикселя. Определяет его цвет
+4. **Framebuffer** — результат записывается в текстуру поверхности
+
+Всё остальное, что мы настраиваем при создании конвейера — это параметры этих четырёх этапов.
+
 ## Шейдеры
 
-Шейдеры — это программы, выполняемые на видеокарте. В WebGPU для их написания используется язык WGSL (WebGPU Shading
-Language), синтаксис которого во многом схож с Rust.
+Шейдеры — программы, выполняемые на GPU. Пишутся на WGSL (WebGPU Shading Language) — языке с синтаксисом, похожим
+на Rust.
 
-Для отрисовки треугольника нам понадобятся два шейдера — вершинный и фрагментный. Создадим файл `shader.wgsl` рядом
-с `main.rs`:
+Для треугольника нужны два шейдера. Создадим `shader.wgsl` рядом с `main.rs`:
 
 ```wgsl
 @vertex
@@ -143,13 +146,33 @@ fn fs_main() -> @location(0) vec4<f32> {
 
 Вычислим позиции трёх вершин:
 
-| vertex_index | x | y |
-|:---:|:---:|:---:|
-| 0 | (0 - 1) / 2 = -0.5 | (0 × 2 - 1) / 2 = -0.5 |
-| 1 | (1 - 1) / 2 = 0 | (1 × 2 - 1) / 2 = 0.5 |
-| 2 | (2 - 1) / 2 = 0.5 | (0 × 2 - 1) / 2 = -0.5 |
+| vertex_index |         x          |           y            |
+|:------------:|:------------------:|:----------------------:|
+|      0       | (0 - 1) / 2 = -0.5 | (0 × 2 - 1) / 2 = -0.5 |
+|      1       |  (1 - 1) / 2 = 0   | (1 × 2 - 1) / 2 = 0.5  |
+|      2       | (2 - 1) / 2 = 0.5  | (0 × 2 - 1) / 2 = -0.5 |
 
 Получаем треугольник с вершинами в точках (-0.5, -0.5), (0, 0.5) и (0.5, -0.5) — расположенный в центре экрана.
+
+```
+Clip space (-1 до 1):
+
+      y
+      ▲
+  1.0 ┤
+      │         • (0, 0.5)
+      │        /\
+      │       /  \
+  0.0 ┤─────/────\──────► x
+      │    /      \
+      │   /        \
+ -0.5 ┤  •──────────•
+      │ (-0.5,-0.5)  (0.5,-0.5)
+ -1.0 ┤
+```
+
+Координаты от -1 до 1 — это clip space. Левый нижний угол экрана = (-1, -1), правый верхний = (1, 1). GPU
+автоматически переводит их в пиксели экрана.
 
 <div class="info custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Примечание</p>
@@ -175,29 +198,31 @@ fn fs_main() -> @location(0) vec4<f32> {
 должна иметь GPU во время отрисовки: какие шейдеры использовать, в каком формате выводить цвет, как обрабатывать
 геометрию и многое другое.
 
-Сначала мы создаём объект шейдерного модуля из нашего файла:
+Конвейер создаётся один раз в `Example::init` и хранится в структуре `Triangle`:
 
 ```rust
-let shader_module = device.create_shader_module(include_wgsl!("shader.wgsl"));
+struct Triangle {
+    pipeline: RenderPipeline,
+}
+```
+
+### Создание шейдерного модуля
+
+```rust
+let shader_module = ctx.device.create_shader_module(include_wgsl!("shader.wgsl"));
 ```
 
 Макрос `include_wgsl!` встраивает файл в бинарник на этапе компиляции и проверяет синтаксис WGSL.
 
-Затем создаём сам конвейер:
-
-```rust
-let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
-```
-
 ### Вершинная стадия
 
 ```rust
-    vertex: VertexState {
-        module: &shader_module,
-        entry_point: Some("vs_main"),
-        buffers: &[],
-        compilation_options: PipelineCompilationOptions::default(),
-    },
+vertex: VertexState {
+    module: &shader_module,
+    entry_point: Some("vs_main"),
+    buffers: &[],
+    compilation_options: PipelineCompilationOptions::default(),
+},
 ```
 
 - `module` — ссылка на шейдерный модуль, из которого берётся функция
@@ -209,38 +234,38 @@ let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
 ### Фрагментная стадия
 
 ```rust
-    fragment: Some(FragmentState {
-        module: &shader_module,
-        entry_point: Some("fs_main"),
-        targets: &[Some(ColorTargetState {
-            format: surface_format,
-            blend: Some(BlendState {
-                color: BlendComponent::REPLACE,
-                alpha: BlendComponent::REPLACE,
-            }),
-            write_mask: ColorWrites::ALL,
-        })],
-        compilation_options: PipelineCompilationOptions::default(),
-    }),
+fragment: Some(FragmentState {
+    module: &shader_module,
+    entry_point: Some("fs_main"),
+    targets: &[Some(ColorTargetState {
+        format: ctx.surface_format,
+        blend: Some(BlendState {
+            color: BlendComponent::REPLACE,
+            alpha: BlendComponent::REPLACE,
+        }),
+        write_mask: ColorWrites::ALL,
+    })],
+    compilation_options: PipelineCompilationOptions::default(),
+}),
 ```
 
 Фрагментная стадия обёрнута в `Some`, поскольку она может отсутствовать (например, при рендере только в глубину).
 
 - `module` и `entry_point` — те же, что и в вершинной стадии, но указывают на `fs_main`
 - `targets` — массив описаний цветовых целей, в которые будет выводиться результат. У нас одна цель — поверхность окна
-  - `format` — формат цвета, должен совпадать с форматом поверхности
-  - `blend` — режим смешивания. `REPLACE` означает, что новый цвет полностью заменяет предыдущий без смешивания
-  - `write_mask` — какие каналы цвета записывать. `ALL` — все (красный, зелёный, синий, альфа)
+    - `format` — формат цвета, должен совпадать с форматом поверхности
+    - `blend` — режим смешивания. `REPLACE` означает, что новый цвет полностью заменяет предыдущий без смешивания
+    - `write_mask` — какие каналы цвета записывать. `ALL` — все (красный, зелёный, синий, альфа)
 
 ### Примитивы
 
 ```rust
-    primitive: PrimitiveState {
-        topology: PrimitiveTopology::TriangleList,
-        front_face: FrontFace::Ccw,
-        polygon_mode: PolygonMode::Fill,
-        ..Default::default()
-    },
+primitive: PrimitiveState {
+    topology: PrimitiveTopology::TriangleList,
+    front_face: FrontFace::Ccw,
+    polygon_mode: PolygonMode::Fill,
+    ..Default::default()
+},
 ```
 
 - `topology` — тип примитивов. `TriangleList` означает, что каждые 3 вершины образуют отдельный треугольник.
@@ -253,14 +278,14 @@ let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
 ### Мультисэмплирование и остальные поля
 
 ```rust
-    multisample: MultisampleState {
-        count: 1,
-        mask: !0,
-        alpha_to_coverage_enabled: false,
-    },
-    depth_stencil: None,
-    cache: None,
-    multiview_mask: None,
+multisample: MultisampleState {
+    count: 1,
+    mask: !0,
+    alpha_to_coverage_enabled: false,
+},
+depth_stencil: None,
+cache: None,
+multiview_mask: None,
 ```
 
 - `multisample` — настройки сглаживания (MSAA). `count: 1` — без мультисэмплирования
@@ -270,15 +295,15 @@ let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
 
 ## Отрисовка
 
-По сравнению с предыдущей главой, метод `render` значительно изменился. Главные отличия — обработка ошибок получения
-текстуры, а также два новых вызова внутри render pass:
+Метод `render` из трейта `Example` получает от каркаса готовые `TextureView` и `CommandEncoder`. Нам остаётся только
+записать команды отрисовки:
 
 ```rust
-{
+fn render(&mut self, _ctx: &GpuContext, view: &TextureView, encoder: &mut CommandEncoder) {
     let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
         label: Some("Main Render Pass"),
         color_attachments: &[Some(RenderPassColorAttachment {
-            view: &view,
+            view,
             resolve_target: None,
             ops: Operations {
                 load: LoadOp::Clear(Color::GREEN),
@@ -297,10 +322,10 @@ let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
 }
 ```
 
-Обратите внимание, что `rpass` обёрнут в отдельный блок `{ }`. Это необходимо, поскольку `RenderPass` заимствует
-`encoder`, и мы должны завершить его (drop) до вызова `encoder.finish()`.
+Каркас уже создал `TextureView` (представление текущего кадра поверхности) и `CommandEncoder`. После возврата из
+`render` каркас вызовет `queue.submit`, `pre_present_notify` и `frame.present`.
 
-Два новых вызова:
+Два ключевых вызова на `RenderPass`:
 
 - `set_pipeline` — указывает GPU, какой конвейер использовать для последующих команд отрисовки
 - `draw(0..3, 0..1)` — отрисовывает 3 вершины (индексы 0, 1, 2), 1 экземпляр. Первый параметр — диапазон вершин,
@@ -321,7 +346,17 @@ let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
 
 ## Результаты работы
 
-В результате выполнения данного кода мы должны увидеть окно с зелёным фоном, на котором нарисован тёмно-красный
-треугольник в центре. Внешний вид будет различаться в зависимости от операционной системы.
+Окно с зелёным фоном и тёмно-красным треугольником в центре. Внешний вид будет различаться в зависимости от
+операционной системы.
+
+<div class="tip custom-block" style="padding-top: 8px">
+<p class="custom-block-title">Попробуйте сами</p>
+
+- Поменяйте цвет треугольника в `fs_main` — подставьте другие значения RGBA
+- Измените координаты вершин в `vs_main` — сдвиньте треугольник в сторону или сделайте его больше
+- Поменяйте `Color::GREEN` на другой цвет фона
+- Попробуйте `PolygonMode::Line` вместо `Fill` — увидите только рёбра треугольника
+
+</div>
 
 [Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/getting-started/hello-triangle)
