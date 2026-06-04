@@ -9,17 +9,17 @@ use encase::ShaderType;
 use glam::Mat4;
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, BindGroup, BindGroupDescriptor, BindGroupEntry,
-    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, BlendComponent, BlendState, Buffer,
-    BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState,
-    ColorWrites, CommandEncoder, FragmentState, IndexFormat, LoadOp, MultisampleState,
-    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
-    RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, TextureView,
-    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingType, BlendComponent, BlendState, Buffer, BufferAddress,
+    BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState, ColorWrites,
+    CommandEncoder, FragmentState, IndexFormat, LoadOp, MultisampleState, Operations,
+    PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode, PrimitiveState,
+    PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline,
+    RenderPipelineDescriptor, ShaderStages, StoreOp, TextureView, VertexAttribute,
+    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
 };
 
-use framework::{run, Example, GpuContext};
+use framework::{Example, GpuContext, run};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]

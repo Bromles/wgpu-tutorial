@@ -9,22 +9,22 @@ use encase::ShaderType;
 use glam::{Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
-    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState,
-    Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, DepthBiasState, DepthStencilState, Extent3d,
-    FilterMode, FragmentState, IndexFormat, LoadOp, MipmapFilterMode, MultisampleState,
-    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
-    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
-    SamplerBindingType, SamplerDescriptor, ShaderStages, StencilState, StoreOp, TexelCopyBufferLayout,
-    Texture, TextureDescriptor, TextureDimension, TextureFormat, TextureSampleType,
-    TextureUsages, TextureView, TextureViewDescriptor, TextureViewDimension, VertexAttribute,
-    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState, Buffer,
+    BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState,
+    ColorWrites, CommandEncoder, DepthBiasState, DepthStencilState, Extent3d, FilterMode,
+    FragmentState, IndexFormat, LoadOp, MipmapFilterMode, MultisampleState, Operations,
+    PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode, PrimitiveState,
+    PrimitiveTopology, RenderPassColorAttachment, RenderPassDepthStencilAttachment,
+    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, SamplerBindingType,
+    SamplerDescriptor, ShaderStages, StencilState, StoreOp, TexelCopyBufferLayout, Texture,
+    TextureDescriptor, TextureDimension, TextureFormat, TextureSampleType, TextureUsages,
+    TextureView, TextureViewDescriptor, TextureViewDimension, VertexAttribute, VertexBufferLayout,
+    VertexFormat, VertexState, VertexStepMode, include_wgsl,
 };
 use winit::dpi::PhysicalSize;
 
-use framework::{run, Example, GpuContext};
+use framework::{Example, GpuContext, run};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]

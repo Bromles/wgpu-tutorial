@@ -40,7 +40,7 @@ impl GpuContext {
 
         let (device, queue) = pollster::block_on(adapter.request_device(&DeviceDescriptor {
             label: Some("Main device"),
-            required_features: adapter.features() & Features::default(),
+            required_features: Features::empty(),
             required_limits: Limits::default().using_resolution(adapter.limits()),
             memory_hints: MemoryHints::Performance,
             trace: Default::default(),

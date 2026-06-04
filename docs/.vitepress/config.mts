@@ -123,8 +123,8 @@ const vitePressConfig = defineConfig({
                         text: "Нормали и базовый свет",
                         link: "/guide/lighting/basics/",
                     },
-                    {text: "Материалы и свет 🚧", link: "/guide/lighting/materials/"},
-                    {text: "Тени 🚧", link: "/guide/lighting/shadows/"},
+                    {text: "Материалы и свет", link: "/guide/lighting/materials/"},
+                    {text: "Тени", link: "/guide/lighting/shadows/"},
                 ],
             },
             {
@@ -135,8 +135,8 @@ const vitePressConfig = defineConfig({
                         text: "Render-to-texture",
                         link: "/guide/advanced/render-to-texture/",
                     },
-                    {text: "Загрузка моделей 🚧", link: "/guide/advanced/model-loading/"},
-                    {text: "MSAA 🚧", link: "/guide/advanced/msaa/"},
+                    {text: "Несколько мешей", link: "/guide/advanced/model-loading/"},
+                    {text: "MSAA", link: "/guide/advanced/msaa/"},
                 ],
             },
             {
