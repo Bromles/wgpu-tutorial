@@ -350,12 +350,12 @@ fn render(&mut self, _ctx: &GpuContext, view: &TextureView, encoder: &mut Comman
 операционной системы.
 
 <div class="tip custom-block" style="padding-top: 8px">
-<p class="custom-block-title">Попробуйте сами</p>
+<p class="custom-block-title">Попробуем</p>
 
-- Поменяйте цвет треугольника в `fs_main` — подставьте другие значения RGBA
-- Измените координаты вершин в `vs_main` — сдвиньте треугольник в сторону или сделайте его больше
-- Поменяйте `Color::GREEN` на другой цвет фона
-- Попробуйте `PolygonMode::Line` вместо `Fill` — увидите только рёбра треугольника
+- Поменяем цвет треугольника в `fs_main` — подставим другие значения RGBA
+- Изменим координаты вершин в `vs_main` — сдвинем треугольник в сторону или сделаем его больше
+- Поменяем `Color::GREEN` на другой цвет фона
+- Попробуем `PolygonMode::Line` вместо `Fill` — увидим только рёбра треугольника
 
 </div>
 
