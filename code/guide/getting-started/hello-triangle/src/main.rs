@@ -1,13 +1,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use framework::{Example, GpuContext, run};
+use framework::{run, Example, GpuContext};
 use wgpu::{
-    BlendComponent, BlendState, Color, ColorTargetState, ColorWrites, CommandEncoder,
-    FragmentState, LoadOp, MultisampleState, Operations, PipelineCompilationOptions, PolygonMode,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
-    RenderPipeline, RenderPipelineDescriptor, StoreOp, TextureView, VertexState, include_wgsl,
+    include_wgsl, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites,
+    CommandEncoder, FragmentState, LoadOp, MultisampleState, Operations, PipelineCompilationOptions,
+    PolygonMode, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
+    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, StoreOp, TextureView, VertexState,
 };
-use winit::dpi::PhysicalSize;
 
 struct Triangle {
     pipeline: RenderPipeline,
@@ -61,8 +60,6 @@ impl Example for Triangle {
 
         Self { pipeline }
     }
-
-    fn resize(&mut self, _ctx: &GpuContext, _new_size: PhysicalSize<u32>) {}
 
     fn render(&mut self, _ctx: &GpuContext, view: &TextureView, encoder: &mut CommandEncoder) {
         let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {

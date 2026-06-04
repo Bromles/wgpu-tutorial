@@ -214,6 +214,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "camera"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "encase",
+ "framework",
+ "glam",
+ "wgpu",
+ "winit",
+]
+
+[[package]]
 name = "cc"
 version = "1.2.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -342,6 +354,18 @@ name = "cursor-icon"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f"
+
+[[package]]
+name = "depth-buffer"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "encase",
+ "framework",
+ "glam",
+ "wgpu",
+ "winit",
+]
 
 [[package]]
 name = "dispatch"
@@ -547,6 +571,16 @@ dependencies = [
  "khronos_api",
  "log",
  "xml-rs",
+]
+
+[[package]]
+name = "glam"
+version = "0.33.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fb167719045debebe9f532320accc7b5c993c5a3b813f5696a11d5ca7bdc57b"
+dependencies = [
+ "bytemuck",
+ "encase",
 ]
 
 [[package]]
@@ -1905,6 +1939,18 @@ dependencies = [
  "thread_local",
  "tracing-core",
  "tracing-log",
+]
+
+[[package]]
+name = "transformations"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "encase",
+ "framework",
+ "glam",
+ "wgpu",
+ "winit",
 ]
 
 [[package]]

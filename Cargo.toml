@@ -4,7 +4,8 @@ resolver = "2"
 members = [
     "code/framework",
     "code/guide/getting-started/*",
-    "code/guide/gpu-data-model/*"
+    "code/guide/gpu-data-model/*",
+    "code/guide/3d/*"
 ]
 
 [workspace.package]

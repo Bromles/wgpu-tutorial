@@ -7,7 +7,6 @@ const vitePressConfig = defineConfig({
     lang: "ru",
     base: "/wgpu-tutorial/",
     cleanUrls: true,
-    ignoreDeadLinks: true,
     markdown: {
         math: true,
     },
@@ -91,34 +90,34 @@ const vitePressConfig = defineConfig({
             },
             {
                 text: "Математика для графики",
-                collapsed: true,
+                collapsed: false,
                 items: [
                     {
-                        text: "Векторы и матрицы 🚧",
+                        text: "Векторы и матрицы",
                         link: "/guide/math/vectors-matrices/",
                     },
                     {
-                        text: "Система координат 🚧",
+                        text: "Система координат",
                         link: "/guide/math/coordinate-system/",
                     },
                 ],
             },
             {
                 text: "3D и камера",
-                collapsed: true,
+                collapsed: false,
                 items: [
                     {
-                        text: "Трансформации MVP 🚧",
+                        text: "Трансформации MVP",
                         link: "/guide/3d/transformations/",
                     },
-                    {text: "Depth buffer 🚧", link: "/guide/3d/depth-buffer/"},
-                    {text: "Камера 🚧", link: "/guide/3d/camera/"},
+                    {text: "Depth buffer", link: "/guide/3d/depth-buffer/"},
+                    {text: "Камера", link: "/guide/3d/camera/"},
                     {text: "Instancing 🚧", link: "/guide/3d/instancing/"},
                 ],
             },
             {
                 text: "Освещение",
-                collapsed: true,
+                collapsed: false,
                 items: [
                     {
                         text: "Нормали и базовый свет 🚧",
@@ -128,7 +127,7 @@ const vitePressConfig = defineConfig({
             },
             {
                 text: "Продвинутый рендер",
-                collapsed: true,
+                collapsed: false,
                 items: [
                     {
                         text: "Render-to-texture 🚧",
@@ -138,7 +137,7 @@ const vitePressConfig = defineConfig({
             },
             {
                 text: "Приложение",
-                collapsed: true,
+                collapsed: false,
                 items: [
                     {text: "Почему WebGPU и Rust", link: "/appendix/why-wgpu/"},
                     {text: "Глоссарий 🚧", link: "/guide/glossary/"},

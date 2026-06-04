@@ -1,10 +1,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::f32::consts::FRAC_PI_4;
 use std::mem::size_of;
 use std::time::Instant;
 
 use bytemuck::{Pod, Zeroable};
 use encase::ShaderType;
+use glam::Mat4;
 use wgpu::util::DeviceExt;
 use wgpu::{
     include_wgsl, BindGroup, BindGroupDescriptor, BindGroupEntry,
@@ -22,7 +24,7 @@ use framework::{run, Example, GpuContext};
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
-    position: [f32; 2],
+    position: [f32; 3],
     color: [f32; 3],
 }
 
@@ -31,10 +33,10 @@ impl Vertex {
         VertexAttribute {
             offset: 0,
             shader_location: 0,
-            format: VertexFormat::Float32x2,
+            format: VertexFormat::Float32x3,
         },
         VertexAttribute {
-            offset: size_of::<[f32; 2]>() as BufferAddress,
+            offset: size_of::<[f32; 3]>() as BufferAddress,
             shader_location: 1,
             format: VertexFormat::Float32x3,
         },
@@ -51,31 +53,50 @@ impl Vertex {
 
 const VERTICES: &[Vertex] = &[
     Vertex {
-        position: [-0.5, -0.5],
+        position: [-0.5, -0.5, 0.5],
         color: [1.0, 0.0, 0.0],
     },
     Vertex {
-        position: [-0.5, 0.5],
+        position: [0.5, -0.5, 0.5],
         color: [0.0, 1.0, 0.0],
     },
     Vertex {
-        position: [0.5, 0.5],
+        position: [0.5, 0.5, 0.5],
         color: [0.0, 0.0, 1.0],
     },
     Vertex {
-        position: [0.5, -0.5],
+        position: [-0.5, 0.5, 0.5],
         color: [1.0, 1.0, 0.0],
+    },
+    Vertex {
+        position: [-0.5, -0.5, -0.5],
+        color: [1.0, 0.0, 1.0],
+    },
+    Vertex {
+        position: [0.5, -0.5, -0.5],
+        color: [0.0, 1.0, 1.0],
+    },
+    Vertex {
+        position: [0.5, 0.5, -0.5],
+        color: [0.5, 0.5, 0.5],
+    },
+    Vertex {
+        position: [-0.5, 0.5, -0.5],
+        color: [1.0, 0.5, 0.0],
     },
 ];
 
-const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
+const INDICES: &[u16] = &[
+    0, 1, 2, 2, 3, 0, 1, 5, 6, 6, 2, 1, 5, 4, 7, 7, 6, 5, 4, 0, 3, 3, 7, 4, 3, 2, 6, 6, 7, 3, 4, 5,
+    1, 1, 0, 4,
+];
 
 #[derive(ShaderType)]
 struct ShaderUniforms {
-    time: f32,
+    mvp: Mat4,
 }
 
-struct AnimatedQuad {
+struct RotatingCube {
     pipeline: RenderPipeline,
     vertex_buffer: Buffer,
     index_buffer: Buffer,
@@ -84,7 +105,7 @@ struct AnimatedQuad {
     start_time: Instant,
 }
 
-impl Example for AnimatedQuad {
+impl Example for RotatingCube {
     fn init(ctx: &GpuContext) -> Self {
         let shader_module = ctx
             .device
@@ -119,7 +140,7 @@ impl Example for AnimatedQuad {
                 label: Some("Bind Group Layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: ShaderStages::FRAGMENT,
+                    visibility: ShaderStages::VERTEX,
                     ty: BindingType::Buffer {
                         ty: BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -174,6 +195,7 @@ impl Example for AnimatedQuad {
                     topology: PrimitiveTopology::TriangleList,
                     front_face: wgpu::FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
+                    cull_mode: Some(wgpu::Face::Back),
                     ..Default::default()
                 },
                 depth_stencil: None,
@@ -199,10 +221,20 @@ impl Example for AnimatedQuad {
     fn render(&mut self, ctx: &GpuContext, view: &TextureView, encoder: &mut CommandEncoder) {
         let time = self.start_time.elapsed().as_secs_f32();
 
+        let aspect = ctx.surface_config.width as f32 / ctx.surface_config.height as f32;
+        let projection = Mat4::perspective_rh(FRAC_PI_4, aspect, 0.1, 100.0);
+        let view_mat = Mat4::look_at_rh(
+            glam::Vec3::new(2.0, 1.5, 2.0),
+            glam::Vec3::ZERO,
+            glam::Vec3::Y,
+        );
+        let model = Mat4::from_rotation_y(time);
+        let mvp = projection * view_mat * model;
+
         let mut uniform_data = encase::UniformBuffer::new(Vec::new());
-        uniform_data.write(&ShaderUniforms { time }).unwrap();
-        let data = uniform_data.into_inner();
-        ctx.queue.write_buffer(&self.uniform_buffer, 0, &data);
+        uniform_data.write(&ShaderUniforms { mvp }).unwrap();
+        ctx.queue
+            .write_buffer(&self.uniform_buffer, 0, &uniform_data.into_inner());
 
         let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
             label: Some("Render Pass"),
@@ -225,10 +257,10 @@ impl Example for AnimatedQuad {
         rpass.set_bind_group(0, &self.bind_group, &[]);
         rpass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         rpass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
-        rpass.draw_indexed(0..6, 0, 0..1);
+        rpass.draw_indexed(0..36, 0, 0..1);
     }
 }
 
 fn main() {
-    run::<AnimatedQuad>("Uniform Bind Groups");
+    run::<RotatingCube>("MVP Transformations");
 }

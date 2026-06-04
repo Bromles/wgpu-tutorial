@@ -5,20 +5,19 @@ use std::mem::size_of;
 use bytemuck::{Pod, Zeroable};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState, Buffer,
-    BufferAddress, BufferUsages, Color, ColorTargetState, ColorWrites, CommandEncoder, Extent3d,
-    FilterMode, FragmentState, IndexFormat, LoadOp, MipmapFilterMode, MultisampleState, Operations,
-    PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode, PrimitiveState,
-    PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline,
-    RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor, ShaderStages, StoreOp,
-    TexelCopyBufferLayout, TextureDescriptor, TextureDimension, TextureFormat, TextureSampleType,
-    TextureUsages, TextureView, TextureViewDescriptor, TextureViewDimension, VertexAttribute,
-    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
+    include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
+    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState,
+    Buffer, BufferAddress, BufferUsages, Color, ColorTargetState, ColorWrites, CommandEncoder,
+    Extent3d, FilterMode, FragmentState, IndexFormat, LoadOp, MipmapFilterMode, MultisampleState,
+    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
+    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
+    RenderPipeline, RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor, ShaderStages,
+    StoreOp, TexelCopyBufferLayout, TextureDescriptor, TextureDimension, TextureFormat,
+    TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor, TextureViewDimension,
+    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
 };
-use winit::dpi::PhysicalSize;
 
-use framework::{Example, GpuContext, run};
+use framework::{run, Example, GpuContext};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -256,8 +255,6 @@ impl Example for TexturedQuad {
             bind_group,
         }
     }
-
-    fn resize(&mut self, _ctx: &GpuContext, _new_size: PhysicalSize<u32>) {}
 
     fn render(&mut self, _ctx: &GpuContext, view: &TextureView, encoder: &mut CommandEncoder) {
         let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
