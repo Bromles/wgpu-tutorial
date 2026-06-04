@@ -112,7 +112,7 @@ const vitePressConfig = defineConfig({
                     },
                     {text: "Depth buffer", link: "/guide/3d/depth-buffer/"},
                     {text: "Камера", link: "/guide/3d/camera/"},
-                    {text: "Instancing 🚧", link: "/guide/3d/instancing/"},
+                    {text: "Instancing", link: "/guide/3d/instancing/"},
                 ],
             },
             {
@@ -120,9 +120,11 @@ const vitePressConfig = defineConfig({
                 collapsed: false,
                 items: [
                     {
-                        text: "Нормали и базовый свет 🚧",
+                        text: "Нормали и базовый свет",
                         link: "/guide/lighting/basics/",
                     },
+                    {text: "Материалы и свет 🚧", link: "/guide/lighting/materials/"},
+                    {text: "Тени 🚧", link: "/guide/lighting/shadows/"},
                 ],
             },
             {
@@ -130,9 +132,11 @@ const vitePressConfig = defineConfig({
                 collapsed: false,
                 items: [
                     {
-                        text: "Render-to-texture 🚧",
+                        text: "Render-to-texture",
                         link: "/guide/advanced/render-to-texture/",
                     },
+                    {text: "Загрузка моделей 🚧", link: "/guide/advanced/model-loading/"},
+                    {text: "MSAA 🚧", link: "/guide/advanced/msaa/"},
                 ],
             },
             {
@@ -140,7 +144,7 @@ const vitePressConfig = defineConfig({
                 collapsed: false,
                 items: [
                     {text: "Почему WebGPU и Rust", link: "/appendix/why-wgpu/"},
-                    {text: "Глоссарий 🚧", link: "/guide/glossary/"},
+                    {text: "Глоссарий", link: "/guide/glossary/"},
                 ],
             },
         ],

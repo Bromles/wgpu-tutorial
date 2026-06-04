@@ -304,15 +304,145 @@ code/framework          // общий учебный runtime
 ### Framework
 
 > **Сделано:** `code/framework/` с `GpuContext`, `trait Example`, `run::<E>()`. pollster вместо tokio.
+> Добавлен `input.rs` (Input struct: pressed_keys, mouse_delta, mouse_buttons). Трейт Example расширен:
+> `fn update(&mut self, _ctx, _dt: Duration, _input: &Input)` с дефолтной пустой реализацией.
+> `fn resize` тоже с дефолтной реализацией. `ControlFlow::Poll` вместо `Wait`.
 
 ### Навигация
 
 > **Сделано:** sidebar переструктурирован по карте курса.
 
+### Модель данных GPU
+
+> **Сделано:** Шейдеры и WGSL, Вершинные буферы, Индексные буферы, Uniform и bind groups, Текстуры и сэмплеры.
+
+### Математика для графики
+
+> **Сделано:** Векторы и матрицы, Система координат. LaTeX ($...$ и $$...$$) для формул.
+
+### 3D и камера
+
+> **Сделано:**
+> - Трансформации MVP (вращающийся куб, backface culling)
+> - Depth buffer (3 куба, несколько bind groups, depth test)
+> - Камера (free-fly: WASD + мышь, yaw/pitch, look_to_rh)
+> - Instancing (сетка 5×5×5 = 125 кубов, один draw call, VertexStepMode::Instance)
+
+### Освещение
+
+> **Сделано:** Нормали и базовый свет (24 вершины с нормалями, направленный свет, ambient, normal matrix, два bind groups).
+
+### Продвинутый рендер
+
+> **Сделано:** Render-to-texture и постпроцессинг (offscreen текстура, два render pass, полноэкранный квад через vertex_index,
+> grayscale/инверсия, несколько pipeline).
+
+### Глоссарий
+
+> **Сделано:** расширенный глоссарий (~150 терминов) с разделами: конвейер, координаты, шейдеры, буферы, геометрия,
+> bind groups, текстуры, поверхность, трансформации, камера, освещение, depth buffer, рендеринг.
+
 ### Прочее
 
 > **Сделано:** `Option<RenderPipeline>` убран, `AutoNoVsync` → `AutoVsync`, error handling в render, опечатки,
-> `<p>` в `<p>` исправлены, версия winit, версии Safari.
+> `<p>` в `<p>` исправлены, версия winit, версии Safari. AI-маркеры убраны из всех статей.
+> Diagrams: SVG для памяти/геометрии/осей, mermaid flowchart TB для pipeline.
+> Info/warning блоки: uniform 16KB limit, bind group ordering, texture limits.
+> VitePress build проходит без ошибок.
+
+## Что нужно сделать дальше
+
+### Приоритет 1: Дописать основную линейку (по аналогии с LearnOpenGL)
+
+По структуре LearnOpenGL (https://learnopengl.com), после текущих глав должны идти:
+
+```
+Освещение — материалы и множественные источники
+  └ visual result: несколько источников света разных цветов, объекты с разными свойствами материала
+  └ концепция: структура Material (ambient/diffuse/specular/shininess), uniform-массив источников
+  └ аналог LearnOpenGL: Lighting Maps + Multiple Lights
+
+Текстурные карты (Texture Maps)
+  └ visual result: diffuse map, specular map на кубах
+  └ концепция: несколько текстур в одном bind group, separate texture for diffuse vs specular
+  └ аналог LearnOpenGL: Lighting Maps
+
+Тени (Shadow Mapping)
+  └ visual result: объекты отбрасывают тени на плоскость
+  └ концепция: orthographic projection light, depth-from-light pass, shadow comparison
+  └ аналог LearnOpenGL: Shadow Mapping
+
+Нормальные карты (Normal Mapping)
+  └ visual result: детализация поверхности без лишней геометрии (плоский квадрат выглядит рельефным)
+  └ концепция: tangent space, normal map texture, TBN matrix
+  └ аналог LearnOpenGL: Normal Mapping
+```
+
+### Приоритет 2: Продвинутый рендер
+
+```
+MSAA (Multisampling)
+  └ visual result: гладкие края без лесенки
+  └ концепция: sample count, resolve target, multisampled texture
+
+Загрузка моделей (Model Loading)
+  └ visual result: загруженная 3D-модель (например,.obj или glTF)
+  └ концепция: mesh data, материалы, множественные текстуры
+  └ аналог LearnOpenGL: Model Loading
+```
+
+### Приоритет 3: Лаборатории
+
+```
+Compute passes
+  └ visual result: compute-фильтр (blur), particles, или GPU culling
+  └ концепция: compute pipeline, dispatch, storage buffers, compute shader
+
+HDR, tone mapping
+  └ visual result: яркие источники света не выжигают сцену
+
+Bloom
+  └ visual result: светящиеся ореолы вокруг ярких объектов
+
+Particles
+  └ visual result: система частиц на compute shader
+```
+
+### Приоритет 4: PBR Track
+
+```
+PBR: Metallic-Roughness
+  └ visual result: реалистичные материалы (металл, пластик, дерево)
+
+IBL, Environment Maps
+  └ visual result: отражения окружения на объектах
+
+glTF Loading
+  └ visual result: загруженная модель с PBR-материалами
+
+Mini-viewer
+  └ финальный проект: просмотрщик glTF-моделей
+```
+
+### Концептуальные страницы (линкуемые из нескольких глав)
+
+```
+Gamma, sRGB, linear color
+  └ conceptual page
+  └ linked from: Textures, Lighting, HDR
+
+WGSL layout и alignment
+  └ conceptual page
+  └ linked from: Uniform bind groups, Storage buffers
+
+Present modes и VSync
+  └ conceptual page
+  └ linked from: Init wgpu
+
+GPU/CPU synchronization
+  └ conceptual page
+  └ linked from: compute passes, staging buffers
+```
 
 ## Главный вывод
 

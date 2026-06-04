@@ -5,7 +5,9 @@ members = [
     "code/framework",
     "code/guide/getting-started/*",
     "code/guide/gpu-data-model/*",
-    "code/guide/3d/*"
+    "code/guide/3d/*",
+    "code/guide/lighting/*",
+    "code/guide/advanced/*"
 ]
 
 [workspace.package]
