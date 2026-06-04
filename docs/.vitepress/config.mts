@@ -80,11 +80,11 @@ const vitePressConfig = defineConfig({
                         link: "/guide/gpu-data-model/index-buffers/",
                     },
                     {
-                        text: "Uniform и bind groups 🚧",
+                        text: "Uniform и bind groups",
                         link: "/guide/gpu-data-model/uniform-bind-groups/",
                     },
                     {
-                        text: "Текстуры и сэмплеры 🚧",
+                        text: "Текстуры и сэмплеры",
                         link: "/guide/gpu-data-model/textures/",
                     },
                 ],

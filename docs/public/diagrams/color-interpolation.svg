@@ -1,0 +1,27 @@
+<svg viewBox="0 0 440 360" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif" font-size="13">
+  <rect width="440" height="360" fill="#fff" rx="8"/>
+  <defs>
+    <linearGradient id="triGrad" x1="0%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" stop-color="#ff4444" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#44ff44" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#4444ff" stop-opacity="0.3"/>
+    </linearGradient>
+  </defs>
+  <polygon points="220,50 70,280 370,280" fill="url(#triGrad)" stroke="#555" stroke-width="1.5"/>
+  <circle cx="220" cy="50" r="6" fill="#1a8a1a"/>
+  <circle cx="70" cy="280" r="6" fill="#b32020"/>
+  <circle cx="370" cy="280" r="6" fill="#2020b3"/>
+  <text x="220" y="38" text-anchor="middle" fill="#1a8a1a" font-weight="bold" font-size="14">зелёный</text>
+  <text x="220" y="52" text-anchor="middle" fill="#555" font-size="11">(0, 0.5)</text>
+  <text x="55" y="268" text-anchor="end" fill="#b32020" font-weight="bold" font-size="14">красный</text>
+  <text x="55" y="282" text-anchor="end" fill="#555" font-size="11">(-0.5, -0.5)</text>
+  <text x="385" y="268" text-anchor="start" fill="#2020b3" font-weight="bold" font-size="14">синий</text>
+  <text x="385" y="282" text-anchor="start" fill="#555" font-size="11">(0.5, -0.5)</text>
+  <circle cx="220" cy="203" r="4" fill="#555"/>
+  <text x="232" y="198" fill="#444" font-size="12">серый (интерполяция)</text>
+  <g stroke="#999" stroke-width="1" stroke-dasharray="4,3">
+    <line x1="220" y1="56" x2="220" y2="198"/>
+    <line x1="76" y1="274" x2="216" y2="206"/>
+    <line x1="364" y1="274" x2="224" y2="206"/>
+  </g>
+</svg>

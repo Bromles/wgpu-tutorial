@@ -32,13 +32,12 @@
 sequenceDiagram
     participant CPU
     participant GPU
-
-    CPU->>CPU: Подготовка ресурсов
-    CPU->>CPU: Кодирование команд
-    CPU->>GPU: queue.submit()
-    GPU->>GPU: Исполнение команд
-    GPU->>CPU: Кадр готов (неявно)
-    CPU->>GPU: frame.present()
+    CPU ->> CPU: Подготовка ресурсов
+    CPU ->> CPU: Кодирование команд
+    CPU ->> GPU: queue.submit()
+    GPU ->> GPU: Исполнение команд
+    GPU ->> CPU: Кадр готов (неявно)
+    CPU ->> GPU: frame.present()
 ```
 
 Ключевой момент: на нативных платформах `queue.submit` не блокирует CPU. Мы можем готовить данные для следующего кадра,
@@ -60,7 +59,7 @@ wgpu на нативных платформах — автоматическая
 
 ## Ключевые сущности
 
-Прежде чем писать код, познакомимся с главными объектами wgpu:
+Вот главные объекты wgpu:
 
 ```mermaid
 flowchart LR
@@ -189,9 +188,9 @@ fn new(window: Arc<Window>) -> Self {
 
 ```rust
     let instance = Instance::new(InstanceDescriptor {
-        backends: Backends::PRIMARY,
-        ..InstanceDescriptor::new_without_display_handle()
-    });
+backends: Backends::PRIMARY,
+..InstanceDescriptor::new_without_display_handle()
+});
 ```
 
 Типичный паттерн wgpu: конструкторы принимают дескрипторы (struct с параметрами), обычно реализующие `Default`. Здесь
@@ -201,8 +200,8 @@ fn new(window: Arc<Window>) -> Self {
 
 ```rust
     let surface = instance
-        .create_surface(window)
-        .expect("Failed to create surface");
+.create_surface(window)
+.expect("Failed to create surface");
 ```
 
 Привязываем поверхность к нашему окну winit.
@@ -215,6 +214,8 @@ fn new(window: Arc<Window>) -> Self {
 в скрытую, а когда кадр готов — меняем их местами. Отсюда термин «swapchain» — в старых API он был отдельным объектом,
 в wgpu скрыт внутри `Surface`.
 
+<img src="/diagrams/double-buffering.svg" alt="Двойная буферизация: Front/Back swap" style="width: 100%;" />
+
 Когда мы вызываем `surface.get_current_texture()`, получаем текущую свободную текстуру для отрисовки.
 
 </details>
@@ -222,12 +223,12 @@ fn new(window: Arc<Window>) -> Self {
 ### Adapter
 
 ```rust
-    let adapter = pollster::block_on(instance.request_adapter(&RequestAdapterOptions {
-        power_preference: PowerPreference::default(),
-        force_fallback_adapter: false,
-        compatible_surface: Some(&surface),
-    }))
-    .expect("Failed to request adapter");
+    let adapter = pollster::block_on(instance.request_adapter( & RequestAdapterOptions {
+power_preference: PowerPreference::default (),
+force_fallback_adapter: false,
+compatible_surface: Some( & surface),
+}))
+.expect("Failed to request adapter");
 ```
 
 Запрашиваем адаптер (видеокарту). `request_adapter` — async-функция (так требует стандарт WebGPU для совместимости
@@ -240,15 +241,15 @@ fn new(window: Arc<Window>) -> Self {
 ### Device и Queue
 
 ```rust
-    let (device, queue) = pollster::block_on(adapter.request_device(&DeviceDescriptor {
-        label: Some("Main device"),
-        required_features: adapter.features() & Features::default(),
-        required_limits: Limits::default().using_resolution(adapter.limits()),
-        memory_hints: MemoryHints::Performance,
-        trace: Default::default(),
-        experimental_features: ExperimentalFeatures::disabled(),
-    }))
-    .expect("Failed to request device");
+    let (device, queue) = pollster::block_on(adapter.request_device( & DeviceDescriptor {
+label: Some("Main device"),
+required_features: adapter.features() & Features::default (),
+required_limits: Limits::default ().using_resolution(adapter.limits()),
+memory_hints: MemoryHints::Performance,
+trace: Default::default (),
+experimental_features: ExperimentalFeatures::disabled(),
+}))
+.expect("Failed to request device");
 ```
 
 `Device` и `Queue` создаются вместе — это главные объекты для работы с GPU.
@@ -343,12 +344,12 @@ fn render(&mut self, window: Arc<Window>) {
 
 ```rust
     let mut encoder = self
-        .device
-        .create_command_encoder(&CommandEncoderDescriptor {
-            label: Some("Main command encoder"),
-        });
+.device
+.create_command_encoder( & CommandEncoderDescriptor {
+label: Some("Main command encoder"),
+});
 
-    let view = frame.texture.create_view(&TextureViewDescriptor::default());
+let view = frame.texture.create_view( & TextureViewDescriptor::default ());
 ```
 
 `CommandEncoder` записывает команды для GPU. `TextureView` — «ссылка» на текстуру, понятная видеокарте.
@@ -356,22 +357,22 @@ fn render(&mut self, window: Arc<Window>) {
 ### Render Pass
 
 ```rust
-    encoder.begin_render_pass(&RenderPassDescriptor {
-        label: Some("Clear render pass"),
-        color_attachments: &[Some(RenderPassColorAttachment {
-            view: &view,
-            resolve_target: None,
-            ops: Operations {
-                load: LoadOp::Clear(Color::GREEN),
-                store: StoreOp::Store,
-            },
-            depth_slice: None,
-        })],
-        depth_stencil_attachment: None,
-        timestamp_writes: None,
-        occlusion_query_set: None,
-        multiview_mask: None,
-    });
+    encoder.begin_render_pass( & RenderPassDescriptor {
+label: Some("Clear render pass"),
+color_attachments: & [Some(RenderPassColorAttachment {
+view: & view,
+resolve_target: None,
+ops: Operations {
+load: LoadOp::Clear(Color::GREEN),
+store: StoreOp::Store,
+},
+depth_slice: None,
+})],
+depth_stencil_attachment: None,
+timestamp_writes: None,
+occlusion_query_set: None,
+multiview_mask: None,
+});
 ```
 
 Render pass — операция рендера. Здесь мы:
@@ -381,14 +382,15 @@ Render pass — операция рендера. Здесь мы:
 - `StoreOp::Store` — сохраняем результат
 - Остальные параметры (`depth_stencil_attachment`, `timestamp_writes`, ...) — пока не нужны
 
-Пока мы только заливаем экран цветом — других команд в render pass нет. В следующей главе добавим отрисовку геометрии.
+Пока мы только заливаем экран цветом — других команд в проходе рендера нет. В следующей главе добавим отрисовку
+геометрии.
 
 ### Отправка и отображение
 
 ```rust
-    self.queue.submit([encoder.finish()]);
-    window.pre_present_notify();
-    frame.present();
+    self .queue.submit([encoder.finish()]);
+window.pre_present_notify();
+frame.present();
 }
 ```
 
@@ -409,7 +411,7 @@ flowchart LR
 <div class="tip custom-block">
 <p class="custom-block-title">Оптимизации</p>
 
-1. На мобильных и Apple Silicon завершение `RenderPass` дорого. Старайтесь переиспользовать passes, где возможно.
+1. На мобильных и Apple Silicon завершение `RenderPass` дорого. Старайтесь переиспользовать проходы, где возможно.
 
 2. `Queue::submit` затратна — она отслеживает ресурсы и синхронизирует их под капотом. Но принимает список
    `CommandBuffer`. Лучше собрать буферы из разных частей программы и отправить одним вызовом, чем вызывать `submit`

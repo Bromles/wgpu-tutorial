@@ -1,0 +1,17 @@
+<svg viewBox="0 0 300 220" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif" font-size="14">
+  <rect width="300" height="220" fill="#fff" rx="8"/>
+  <polygon points="50,180 50,50 250,50 250,180" fill="none" stroke="#333" stroke-width="2"/>
+  <line x1="50" y1="180" x2="250" y2="50" stroke="#777" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <circle cx="50" cy="180" r="8" fill="#b32020"/>
+  <circle cx="50" cy="50" r="8" fill="#1a8a1a"/>
+  <circle cx="250" cy="50" r="8" fill="#2020b3"/>
+  <circle cx="250" cy="180" r="8" fill="#b39920"/>
+  <g font-weight="bold" font-size="15">
+    <text x="25" y="200" fill="#b32020">0</text>
+    <text x="25" y="45" fill="#1a8a1a">1</text>
+    <text x="260" y="45" fill="#2020b3">2</text>
+    <text x="260" y="200" fill="#b39920">3</text>
+  </g>
+  <text x="90" y="130" fill="#555" font-size="12">△₁</text>
+  <text x="190" y="130" fill="#555" font-size="12">△₂</text>
+</svg>

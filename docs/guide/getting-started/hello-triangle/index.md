@@ -93,22 +93,36 @@ fn main() {
 
 ## Графический конвейер: что происходит внутри
 
-Прежде чем писать код, разберёмся, как GPU превращает три точки в заполненный треугольник на экране:
+Разберёмся, как GPU превращает три точки в заполненный треугольник на экране. Этот процесс
+называется **графическим конвейером** (render pipeline) — данные проходят через несколько стадий, каждая из которых
+выполняет свою задачу:
 
 ```mermaid
-flowchart LR
-    V[Вершины] --> VS[Вершинный шейдер]
-    VS --> R[Растеризация]
-    R --> FS[Фрагментный шейдер]
-    FS --> FB[Framebuffer]
+flowchart TB
+    A["**Vertex Buffer** — 3 вершины"] --> B["**Вершинный шейдер** — 3 вызова"]
+    B --> C["**Сборка примитивов** — 1 треугольник"]
+    C --> D["**Растеризация** — треугольник → пиксели"]
+    D --> E["**Фрагментный шейдер** — 1 вызов на пиксель"]
+    E --> F["**Framebuffer** — запись в текстуру"]
 ```
 
-1. **Вершинный шейдер** — вызывается для каждой вершины. Преобразует координаты в clip space (-1 до 1)
-2. **Растеризация** — GPU определяет, какие пиксели находятся внутри треугольника
-3. **Фрагментный шейдер** — вызывается для каждого пикселя. Определяет его цвет
-4. **Framebuffer** — результат записывается в текстуру поверхности
+1. **Вершинный шейдер** — наша программа на WGSL, вызывается один раз для каждой вершины. Принимает данные вершины
+   (позицию, цвет, и т.д.) и возвращает позицию в clip space — координатах от -1 до 1. Это единственная обязательная
+   стадия — без неё GPU не знает, где рисовать
+2. **Сборка примитивов** — GPU группирует вершины в геометрические примитивы. Мы указываем `TriangleList`, поэтому
+   каждые три вершины образуют один треугольник
+3. **Растеризация** — GPU определяет, какие пиксели экрана находятся внутри треугольника. Каждый такой пиксель
+   называется **фрагментом**. На этом этапе также выполняется интерполяция — значения, заданные в вершинах (например,
+   цвет), плавно размазываются по всем фрагментам
+4. **Фрагментный шейдер** — наша программа на WGSL, вызывается один раз для каждого фрагмента. Возвращает цвет
+   пикселя. Если фрагмент находится за другим объектом (depth test) или за пределами экрана — он отбрасывается
+5. **Framebuffer** — результат записывается в текстуру поверхности, которая выводится на экран
 
-Всё остальное, что мы настраиваем при создании конвейера — это параметры этих четырёх этапов.
+Эта диаграмма будет расти вместе с нашим пониманием — в следующих главах мы будем добавлять к ней новые элементы
+(индексные буферы, uniform-буферы, текстуры, depth test), чтобы каждый раз видеть полную картину.
+
+Всё остальное, что мы настраиваем при создании конвейера — это параметры этих стадий: какой шейдер использовать,
+в каком формате выводить цвет, как обрабатывать геометрию.
 
 ## Шейдеры
 
@@ -152,24 +166,9 @@ fn fs_main() -> @location(0) vec4<f32> {
 |      1       |  (1 - 1) / 2 = 0   | (1 × 2 - 1) / 2 = 0.5  |
 |      2       | (2 - 1) / 2 = 0.5  | (0 × 2 - 1) / 2 = -0.5 |
 
-Получаем треугольник с вершинами в точках (-0.5, -0.5), (0, 0.5) и (0.5, -0.5) — расположенный в центре экрана.
+Получаем треугольник с вершинами в точках (-0.5, -0.5), (0, 0.5) и (0.5, -0.5) — расположенный в центре экрана:
 
-```
-Clip space (-1 до 1):
-
-      y
-      ▲
-  1.0 ┤
-      │         • (0, 0.5)
-      │        /\
-      │       /  \
-  0.0 ┤─────/────\──────► x
-      │    /      \
-      │   /        \
- -0.5 ┤  •──────────•
-      │ (-0.5,-0.5)  (0.5,-0.5)
- -1.0 ┤
-```
+<img src="/diagrams/clip-space-triangle.svg" alt="Clip space: треугольник в координатах от -1 до 1" style="width: 100%;" />
 
 Координаты от -1 до 1 — это clip space. Левый нижний угол экрана = (-1, -1), правый верхний = (1, 1). GPU
 автоматически переводит их в пиксели экрана.
@@ -218,10 +217,10 @@ let shader_module = ctx.device.create_shader_module(include_wgsl!("shader.wgsl")
 
 ```rust
 vertex: VertexState {
-    module: &shader_module,
-    entry_point: Some("vs_main"),
-    buffers: &[],
-    compilation_options: PipelineCompilationOptions::default(),
+module: & shader_module,
+entry_point: Some("vs_main"),
+buffers: & [],
+compilation_options: PipelineCompilationOptions::default (),
 },
 ```
 
@@ -235,17 +234,17 @@ vertex: VertexState {
 
 ```rust
 fragment: Some(FragmentState {
-    module: &shader_module,
-    entry_point: Some("fs_main"),
-    targets: &[Some(ColorTargetState {
-        format: ctx.surface_format,
-        blend: Some(BlendState {
-            color: BlendComponent::REPLACE,
-            alpha: BlendComponent::REPLACE,
-        }),
-        write_mask: ColorWrites::ALL,
-    })],
-    compilation_options: PipelineCompilationOptions::default(),
+module: & shader_module,
+entry_point: Some("fs_main"),
+targets: & [Some(ColorTargetState {
+format: ctx.surface_format,
+blend: Some(BlendState {
+color: BlendComponent::REPLACE,
+alpha: BlendComponent::REPLACE,
+}),
+write_mask: ColorWrites::ALL,
+})],
+compilation_options: PipelineCompilationOptions::default (),
 }),
 ```
 
@@ -261,10 +260,10 @@ fragment: Some(FragmentState {
 
 ```rust
 primitive: PrimitiveState {
-    topology: PrimitiveTopology::TriangleList,
-    front_face: FrontFace::Ccw,
-    polygon_mode: PolygonMode::Fill,
-    ..Default::default()
+topology: PrimitiveTopology::TriangleList,
+front_face: FrontFace::Ccw,
+polygon_mode: PolygonMode::Fill,
+..Default::default ()
 },
 ```
 
@@ -279,9 +278,9 @@ primitive: PrimitiveState {
 
 ```rust
 multisample: MultisampleState {
-    count: 1,
-    mask: !0,
-    alpha_to_coverage_enabled: false,
+count: 1,
+mask: ! 0,
+alpha_to_coverage_enabled: false,
 },
 depth_stencil: None,
 cache: None,

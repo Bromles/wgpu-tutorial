@@ -1,0 +1,40 @@
+<svg viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,-apple-system,sans-serif" font-size="13">
+  <rect width="520" height="340" fill="#fff" rx="8"/>
+  <g stroke="#ddd" stroke-width="0.5">
+    <line x1="60" y1="20" x2="60" y2="310"/>
+    <line x1="180" y1="20" x2="180" y2="310"/>
+    <line x1="300" y1="20" x2="300" y2="310"/>
+    <line x1="420" y1="20" x2="420" y2="310"/>
+    <line x1="20" y1="60" x2="500" y2="60"/>
+    <line x1="20" y1="140" x2="500" y2="140"/>
+    <line x1="20" y1="220" x2="500" y2="220"/>
+  </g>
+  <g stroke="#333" stroke-width="1.5">
+    <line x1="60" y1="310" x2="60" y2="25"/>
+    <polygon points="60,20 55,32 65,32" fill="#333"/>
+    <line x1="20" y1="220" x2="495" y2="220"/>
+    <polygon points="500,220 488,215 488,225" fill="#333"/>
+  </g>
+  <text x="505" y="224" fill="#333" font-size="14" font-weight="bold">x</text>
+  <text x="55" y="16" fill="#333" font-size="14" font-weight="bold">y</text>
+  <g fill="#555" font-size="11" text-anchor="middle">
+    <text x="60" y="235">-1</text>
+    <text x="180" y="235">-0.5</text>
+    <text x="300" y="235">0</text>
+    <text x="420" y="235">0.5</text>
+    <text x="53" y="207" text-anchor="end">0.5</text>
+    <text x="53" y="207" dy="80" text-anchor="end">-0.5</text>
+  </g>
+  <polygon points="180,220 300,60 420,220" fill="rgba(180,60,60,0.2)" stroke="#b33c3c" stroke-width="2"/>
+  <g fill="#b33c3c">
+    <circle cx="180" cy="220" r="5"/>
+    <circle cx="300" cy="60" r="5"/>
+    <circle cx="420" cy="220" r="5"/>
+  </g>
+  <g font-size="12" fill="#333">
+    <text x="155" y="240">(-0.5, -0.5)</text>
+    <text x="305" y="52">(0, 0.5)</text>
+    <text x="425" y="240">(0.5, -0.5)</text>
+  </g>
+  <text x="260" y="335" text-anchor="middle" fill="#555" font-size="11">Clip space: координаты от -1 до 1</text>
+</svg>

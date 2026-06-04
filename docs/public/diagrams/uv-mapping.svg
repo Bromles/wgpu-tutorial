@@ -1,0 +1,61 @@
+<svg viewBox="0 0 560 230" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="11">
+  <rect width="560" height="230" fill="#fff" rx="8"/>
+
+  <text x="95" y="18" text-anchor="middle" fill="#444" font-size="11">Текстура (UV)</text>
+  <text x="395" y="18" text-anchor="middle" fill="#444" font-size="11">Квадрат (clip space)</text>
+
+  <line x1="20" y1="30" x2="320" y2="30" stroke="#ddd" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="170" y1="30" x2="470" y2="30" stroke="#ddd" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="20" y1="180" x2="320" y2="180" stroke="#ddd" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="170" y1="180" x2="470" y2="180" stroke="#ddd" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <rect x="20" y="30" width="150" height="150" fill="#f0f4ff" stroke="#3070c0" stroke-width="1.5"/>
+  <g stroke="#c8d8f0" stroke-width="0.5">
+    <line x1="57.5" y1="30" x2="57.5" y2="180"/>
+    <line x1="95" y1="30" x2="95" y2="180"/>
+    <line x1="132.5" y1="30" x2="132.5" y2="180"/>
+    <line x1="20" y1="67.5" x2="170" y2="67.5"/>
+    <line x1="20" y1="105" x2="170" y2="105"/>
+    <line x1="20" y1="142.5" x2="170" y2="142.5"/>
+  </g>
+
+  <rect x="320" y="30" width="150" height="150" fill="#fff4f0" stroke="#c04040" stroke-width="1.5"/>
+
+  <path d="M228,105 L262,105 M256,99 L262,105 L256,111" fill="none" stroke="#888" stroke-width="1.5"/>
+
+  <circle cx="20" cy="30" r="3" fill="#3070c0"/>
+  <text x="25" y="26" fill="#3070c0" font-size="9">(0, 0)</text>
+  <circle cx="170" cy="30" r="3" fill="#3070c0"/>
+  <text x="130" y="26" fill="#3070c0" font-size="9">(1, 0)</text>
+  <circle cx="20" cy="180" r="3" fill="#3070c0"/>
+  <text x="25" y="196" fill="#3070c0" font-size="9">(0, 1)</text>
+  <circle cx="170" cy="180" r="3" fill="#3070c0"/>
+  <text x="130" y="196" fill="#3070c0" font-size="9">(1, 1)</text>
+
+  <text x="32" y="48" fill="#3070c0" font-size="10" font-weight="bold">#1</text>
+  <text x="148" y="48" fill="#3070c0" font-size="10" font-weight="bold">#2</text>
+  <text x="32" y="174" fill="#3070c0" font-size="10" font-weight="bold">#0</text>
+  <text x="148" y="174" fill="#3070c0" font-size="10" font-weight="bold">#3</text>
+
+  <circle cx="320" cy="30" r="3" fill="#c04040"/>
+  <text x="316" y="26" fill="#c04040" font-size="9" text-anchor="end">(-0.5, 0.5)</text>
+  <circle cx="470" cy="30" r="3" fill="#c04040"/>
+  <text x="475" y="26" fill="#c04040" font-size="9">(0.5, 0.5)</text>
+  <circle cx="320" cy="180" r="3" fill="#c04040"/>
+  <text x="316" y="196" fill="#c04040" font-size="9" text-anchor="end">(-0.5, -0.5)</text>
+  <circle cx="470" cy="180" r="3" fill="#c04040"/>
+  <text x="475" y="196" fill="#c04040" font-size="9">(0.5, -0.5)</text>
+
+  <text x="332" y="48" fill="#c04040" font-size="10" font-weight="bold">#1</text>
+  <text x="448" y="48" fill="#c04040" font-size="10" font-weight="bold">#2</text>
+  <text x="332" y="174" fill="#c04040" font-size="10" font-weight="bold">#0</text>
+  <text x="448" y="174" fill="#c04040" font-size="10" font-weight="bold">#3</text>
+
+  <text x="95" y="206" text-anchor="middle" fill="#3070c0" font-size="9">U →</text>
+  <text x="8" y="110" fill="#3070c0" font-size="9" transform="rotate(-90, 8, 110)">↓ V</text>
+
+  <rect x="220" y="213" width="8" height="8" fill="#3070c0" rx="1"/>
+  <text x="232" y="221" fill="#555" font-size="9">UV-координата</text>
+  <rect x="330" y="213" width="8" height="8" fill="#c04040" rx="1"/>
+  <text x="342" y="221" fill="#555" font-size="9">позиция вершины</text>
+</svg>
