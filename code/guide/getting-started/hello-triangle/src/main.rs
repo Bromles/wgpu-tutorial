@@ -4,17 +4,20 @@ use std::sync::Arc;
 
 use tokio::runtime;
 use tokio::runtime::Runtime;
-use wgpu::{
-    include_wgsl, Backends, BlendComponent, BlendState, Color, ColorTargetState,
-    ColorWrites, CommandEncoderDescriptor, CompositeAlphaMode, Device, DeviceDescriptor,
-    ExperimentalFeatures, Features, FragmentState, FrontFace, Instance, InstanceDescriptor, Limits, LoadOp,
-    MemoryHints, MultisampleState, Operations, PipelineCompilationOptions, PolygonMode,
-    PowerPreference, PresentMode, PrimitiveState, PrimitiveTopology, Queue,
-    RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, RequestAdapterOptions,
-    StoreOp, Surface, SurfaceConfiguration, TextureFormat, TextureUsages,
-    TextureViewDescriptor, VertexState,
+use tracing::warn;
+use wgpu::CurrentSurfaceTexture::{
+    Lost, Occluded, Outdated, Suboptimal, Success, Timeout, Validation,
 };
-use wgpu::CurrentSurfaceTexture::Success;
+use wgpu::{
+    Backends, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites,
+    CommandEncoderDescriptor, CompositeAlphaMode, Device, DeviceDescriptor, ExperimentalFeatures,
+    Features, FragmentState, FrontFace, Instance, InstanceDescriptor, Limits, LoadOp, MemoryHints,
+    MultisampleState, Operations, PipelineCompilationOptions, PolygonMode, PowerPreference,
+    PresentMode, PrimitiveState, PrimitiveTopology, Queue, RenderPassColorAttachment,
+    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, RequestAdapterOptions, StoreOp,
+    Surface, SurfaceConfiguration, TextureFormat, TextureUsages, TextureViewDescriptor,
+    VertexState, include_wgsl,
+};
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, KeyEvent, WindowEvent};
@@ -37,7 +40,7 @@ struct Renderer {
     surface: Surface<'static>,
     surface_config: SurfaceConfiguration,
     surface_format: TextureFormat,
-    pipeline: Option<RenderPipeline>,
+    pipeline: RenderPipeline,
 }
 
 impl Renderer {
@@ -94,68 +97,62 @@ impl Renderer {
             format: surface_format,
             width: physical_size.width,
             height: physical_size.height,
-            present_mode: PresentMode::AutoNoVsync,
+            present_mode: PresentMode::AutoVsync,
             desired_maximum_frame_latency: 2,
             alpha_mode: CompositeAlphaMode::Auto,
             view_formats: vec![],
         };
 
-        let mut renderer = Self {
+        surface.configure(&device, &surface_config);
+
+        let shader_module = device.create_shader_module(include_wgsl!("shader.wgsl"));
+
+        let pipeline = device.create_render_pipeline(&RenderPipelineDescriptor {
+            label: Some("Main Render Pipeline"),
+            layout: None,
+            vertex: VertexState {
+                module: &shader_module,
+                entry_point: Some("vs_main"),
+                buffers: &[],
+                compilation_options: PipelineCompilationOptions::default(),
+            },
+            fragment: Some(FragmentState {
+                module: &shader_module,
+                entry_point: Some("fs_main"),
+                targets: &[Some(ColorTargetState {
+                    format: surface_format,
+                    blend: Some(BlendState {
+                        color: BlendComponent::REPLACE,
+                        alpha: BlendComponent::REPLACE,
+                    }),
+                    write_mask: ColorWrites::ALL,
+                })],
+                compilation_options: PipelineCompilationOptions::default(),
+            }),
+            primitive: PrimitiveState {
+                topology: PrimitiveTopology::TriangleList,
+                front_face: FrontFace::Ccw,
+                polygon_mode: PolygonMode::Fill,
+                ..Default::default()
+            },
+            depth_stencil: None,
+            multisample: MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+            cache: None,
+            multiview_mask: None,
+        });
+
+        Self {
             device,
             queue,
             surface,
             surface_config,
             surface_format,
-            pipeline: None,
-        };
-
-        renderer.resize_surface(physical_size);
-
-        let shader_module = renderer
-            .device
-            .create_shader_module(include_wgsl!("shader.wgsl"));
-
-        renderer.pipeline = Some(renderer.device.create_render_pipeline(
-            &RenderPipelineDescriptor {
-                label: Some("Main Render Pipeline"),
-                layout: None,
-                vertex: VertexState {
-                    module: &shader_module,
-                    entry_point: Some("vs_main"),
-                    buffers: &[],
-                    compilation_options: PipelineCompilationOptions::default(),
-                },
-                fragment: Some(FragmentState {
-                    module: &shader_module,
-                    entry_point: Some("fs_main"),
-                    targets: &[Some(ColorTargetState {
-                        format: renderer.surface_format,
-                        blend: Some(BlendState {
-                            color: BlendComponent::REPLACE,
-                            alpha: BlendComponent::REPLACE,
-                        }),
-                        write_mask: ColorWrites::ALL,
-                    })],
-                    compilation_options: PipelineCompilationOptions::default(),
-                }),
-                primitive: PrimitiveState {
-                    topology: PrimitiveTopology::TriangleList,
-                    front_face: FrontFace::Ccw,
-                    polygon_mode: PolygonMode::Fill,
-                    ..Default::default()
-                },
-                depth_stencil: None,
-                multisample: MultisampleState {
-                    count: 1,
-                    mask: !0,
-                    alpha_to_coverage_enabled: false,
-                },
-                cache: None,
-                multiview_mask: None,
-            },
-        ));
-
-        renderer
+            pipeline,
+        }
     }
 
     fn resize_surface(&mut self, size: PhysicalSize<u32>) {
@@ -169,46 +166,53 @@ impl Renderer {
     }
 
     fn render(&mut self, window: Arc<Window>) {
-        match self.surface.get_current_texture() {
-            Success(frame) => {
-                let mut encoder = self
-                    .device
-                    .create_command_encoder(&CommandEncoderDescriptor {
-                        label: Some("Main command encoder"),
-                    });
-
-                let view = frame.texture.create_view(&TextureViewDescriptor::default());
-
-                {
-                    let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
-                        label: Some("Main Render Pass"),
-                        color_attachments: &[Some(RenderPassColorAttachment {
-                            view: &view,
-                            resolve_target: None,
-                            ops: Operations {
-                                load: LoadOp::Clear(Color::GREEN),
-                                store: StoreOp::Store,
-                            },
-                            depth_slice: None,
-                        })],
-                        depth_stencil_attachment: None,
-                        timestamp_writes: None,
-                        occlusion_query_set: None,
-                        multiview_mask: None,
-                    });
-
-                    rpass.set_pipeline(self.pipeline.as_ref().expect("Failed to get pipeline"));
-                    rpass.draw(0..3, 0..1);
-                }
-
-                self.queue.submit([encoder.finish()]);
-                window.pre_present_notify();
-                frame.present();
+        let frame = match self.surface.get_current_texture() {
+            Success(frame) | Suboptimal(frame) => frame,
+            Outdated | Lost => {
+                warn!("Surface lost or outdated, reconfiguring");
+                self.surface.configure(&self.device, &self.surface_config);
+                return;
             }
-            _ => {
-                panic!("can't get current surface texture")
+            Timeout | Occluded => return,
+            Validation => {
+                warn!("Surface texture validation error");
+                return;
             }
         };
+
+        let mut encoder = self
+            .device
+            .create_command_encoder(&CommandEncoderDescriptor {
+                label: Some("Main command encoder"),
+            });
+
+        let view = frame.texture.create_view(&TextureViewDescriptor::default());
+
+        {
+            let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
+                label: Some("Main Render Pass"),
+                color_attachments: &[Some(RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: Operations {
+                        load: LoadOp::Clear(Color::GREEN),
+                        store: StoreOp::Store,
+                    },
+                    depth_slice: None,
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+                multiview_mask: None,
+            });
+
+            rpass.set_pipeline(&self.pipeline);
+            rpass.draw(0..3, 0..1);
+        }
+
+        self.queue.submit([encoder.finish()]);
+        window.pre_present_notify();
+        frame.present();
     }
 }
 

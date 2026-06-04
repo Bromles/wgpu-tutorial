@@ -58,7 +58,7 @@ const vitePressConfig = defineConfig({
                   link: "/guide/getting-started/init-wgpu",
                 },
                 {
-                  text: "Первый треугольник 🚧",
+                  text: "Первый треугольник",
                   link: "/guide/getting-started/hello-triangle",
                 },
                 { text: "Шейдеры 🚧", link: "/guide/getting-started/shaders" },
@@ -113,7 +113,7 @@ const vitePressConfig = defineConfig({
 
         footer: {
           message: "Опубликовано под лицензией CC-BY-4.0",
-          copyright: "© Bromles, 2025",
+          copyright: "© Bromles, 2025–2026",
         },
 
         notFound: {

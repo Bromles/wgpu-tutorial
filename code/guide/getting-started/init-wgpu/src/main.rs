@@ -4,7 +4,10 @@ use std::sync::Arc;
 
 use tokio::runtime;
 use tokio::runtime::Runtime;
-use wgpu::CurrentSurfaceTexture::Success;
+use tracing::warn;
+use wgpu::CurrentSurfaceTexture::{
+    Lost, Occluded, Outdated, Suboptimal, Success, Timeout, Validation,
+};
 use wgpu::{
     Backends, Color, CommandEncoderDescriptor, Device, DeviceDescriptor, ExperimentalFeatures,
     Features, Instance, InstanceDescriptor, Limits, LoadOp, MemoryHints, Operations,
@@ -99,41 +102,48 @@ impl Renderer {
     }
 
     fn render(&mut self, window: Arc<Window>) {
-        match self.surface.get_current_texture() {
-            Success(frame) => {
-                let mut encoder = self
-                    .device
-                    .create_command_encoder(&CommandEncoderDescriptor {
-                        label: Some("Main command encoder"),
-                    });
-
-                let view = frame.texture.create_view(&TextureViewDescriptor::default());
-
-                encoder.begin_render_pass(&RenderPassDescriptor {
-                    label: Some("Clear render pass"),
-                    color_attachments: &[Some(RenderPassColorAttachment {
-                        view: &view,
-                        resolve_target: None,
-                        ops: Operations {
-                            load: LoadOp::Clear(Color::GREEN),
-                            store: StoreOp::Store,
-                        },
-                        depth_slice: None,
-                    })],
-                    depth_stencil_attachment: None,
-                    timestamp_writes: None,
-                    occlusion_query_set: None,
-                    multiview_mask: None,
-                });
-
-                self.queue.submit([encoder.finish()]);
-                window.pre_present_notify();
-                frame.present();
+        let frame = match self.surface.get_current_texture() {
+            Success(frame) | Suboptimal(frame) => frame,
+            Outdated | Lost => {
+                warn!("Surface lost or outdated, reconfiguring");
+                self.surface.configure(&self.device, &self.surface_config);
+                return;
             }
-            _ => {
-                panic!("can't get current surface texture")
+            Timeout | Occluded => return,
+            Validation => {
+                warn!("Surface texture validation error");
+                return;
             }
         };
+
+        let mut encoder = self
+            .device
+            .create_command_encoder(&CommandEncoderDescriptor {
+                label: Some("Main command encoder"),
+            });
+
+        let view = frame.texture.create_view(&TextureViewDescriptor::default());
+
+        encoder.begin_render_pass(&RenderPassDescriptor {
+            label: Some("Clear render pass"),
+            color_attachments: &[Some(RenderPassColorAttachment {
+                view: &view,
+                resolve_target: None,
+                ops: Operations {
+                    load: LoadOp::Clear(Color::GREEN),
+                    store: StoreOp::Store,
+                },
+                depth_slice: None,
+            })],
+            depth_stencil_attachment: None,
+            timestamp_writes: None,
+            occlusion_query_set: None,
+            multiview_mask: None,
+        });
+
+        self.queue.submit([encoder.finish()]);
+        window.pre_present_notify();
+        frame.present();
     }
 }
 
