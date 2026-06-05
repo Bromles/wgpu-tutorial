@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 650 300" width="100%" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <rect width="650" height="300" fill="#1a1a2e" rx="8"/>
+
+  <!-- Title -->
+  <text x="325" y="28" text-anchor="middle" fill="#ccc" font-size="14" font-weight="600">Как GPU читает vertex и instance буферы</text>
+
+  <!-- Vertex Buffer -->
+  <text x="80" y="60" fill="#5588aa" font-size="12" font-weight="600">Vertex Buffer (step = Vertex)</text>
+
+  <g transform="translate(30, 70)">
+    <rect x="0" y="0" width="80" height="40" rx="3" fill="#1a2a3a" stroke="#5588aa" stroke-width="1"/>
+    <text x="40" y="17" text-anchor="middle" fill="#88bbdd" font-size="10">V₀</text>
+    <text x="40" y="32" text-anchor="middle" fill="#667788" font-size="8">pos+uv</text>
+
+    <rect x="82" y="0" width="80" height="40" rx="3" fill="#1a2a3a" stroke="#5588aa" stroke-width="1"/>
+    <text x="122" y="17" text-anchor="middle" fill="#88bbdd" font-size="10">V₁</text>
+    <text x="122" y="32" text-anchor="middle" fill="#667788" font-size="8">pos+uv</text>
+
+    <rect x="164" y="0" width="80" height="40" rx="3" fill="#1a2a3a" stroke="#5588aa" stroke-width="1"/>
+    <text x="204" y="17" text-anchor="middle" fill="#88bbdd" font-size="10">V₂</text>
+    <text x="204" y="32" text-anchor="middle" fill="#667788" font-size="8">pos+uv</text>
+
+    <rect x="246" y="0" width="80" height="40" rx="3" fill="#1a2a3a" stroke="#5588aa" stroke-width="1"/>
+    <text x="286" y="17" text-anchor="middle" fill="#88bbdd" font-size="10">V₃</text>
+    <text x="286" y="32" text-anchor="middle" fill="#667788" font-size="8">pos+uv</text>
+
+    <text x="340" y="25" fill="#555" font-size="14">...</text>
+  </g>
+
+  <text x="80" y="140" fill="#555" font-size="10">← stride = sizeof(Vertex) →</text>
+
+  <!-- Instance Buffer -->
+  <text x="500" y="60" fill="#aa5588" font-size="12" font-weight="600">Instance Buffer (step = Instance)</text>
+
+  <g transform="translate(400, 70)">
+    <rect x="0" y="0" width="100" height="40" rx="3" fill="#2a1a2a" stroke="#aa5588" stroke-width="1"/>
+    <text x="50" y="17" text-anchor="middle" fill="#cc88aa" font-size="10">I₀</text>
+    <text x="50" y="32" text-anchor="middle" fill="#775566" font-size="8">model matrix</text>
+
+    <rect x="104" y="0" width="100" height="40" rx="3" fill="#2a1a2a" stroke="#aa5588" stroke-width="1"/>
+    <text x="154" y="17" text-anchor="middle" fill="#cc88aa" font-size="10">I₁</text>
+    <text x="154" y="32" text-anchor="middle" fill="#775566" font-size="8">model matrix</text>
+
+    <text x="218" y="25" fill="#555" font-size="14">...</text>
+  </g>
+
+  <!-- GPU reading pattern -->
+  <text x="325" y="160" text-anchor="middle" fill="#ccc" font-size="12" font-weight="600">Паттерн чтения GPU (draw_indexed 0..3, 0..2 instances)</text>
+
+  <g transform="translate(50, 175)" font-size="11">
+    <!-- Row headers -->
+    <text x="0" y="15" fill="#666">Instance 0:</text>
+    <text x="0" y="40" fill="#666">Instance 0:</text>
+    <text x="0" y="65" fill="#666">Instance 1:</text>
+    <text x="0" y="90" fill="#666">Instance 1:</text>
+
+    <!-- Draw calls -->
+    <rect x="100" y="2" width="40" height="18" rx="2" fill="#1a2a3a" stroke="#5588aa" stroke-width="0.5"/>
+    <text x="120" y="15" text-anchor="middle" fill="#88bbdd" font-size="10">V₀</text>
+    <rect x="145" y="2" width="20" height="18" rx="2" fill="#2a1a2a" stroke="#aa5588" stroke-width="0.5"/>
+    <text x="155" y="15" text-anchor="middle" fill="#cc88aa" font-size="10">I₀</text>
+
+    <rect x="170" y="2" width="40" height="18" rx="2" fill="#1a2a3a" stroke="#5588aa" stroke-width="0.5"/>
+    <text x="190" y="15" text-anchor="middle" fill="#88bbdd" font-size="10">V₁</text>
+    <rect x="215" y="2" width="20" height="18" rx="2" fill="#2a1a2a" stroke="#aa5588" stroke-width="0.5"/>
+    <text x="225" y="15" text-anchor="middle" fill="#cc88aa" font-size="10">I₀</text>
+
+    <rect x="240" y="2" width="40" height="18" rx="2" fill="#1a2a3a" stroke="#5588aa" stroke-width="0.5"/>
+    <text x="260" y="15" text-anchor="middle" fill="#88bbdd" font-size="10">V₂</text>
+    <rect x="285" y="2" width="20" height="18" rx="2" fill="#2a1a2a" stroke="#aa5588" stroke-width="0.5"/>
+    <text x="295" y="15" text-anchor="middle" fill="#cc88aa" font-size="10">I₀</text>
+
+    <text x="315" y="15" fill="#555" font-size="11">→ triangle 0</text>
+
+    <!-- Row 2: same instance, different vertex -->
+    <rect x="100" y="27" width="40" height="18" rx="2" fill="#1a2a3a" stroke="#5588aa" stroke-width="0.5"/>
+    <text x="120" y="40" text-anchor="middle" fill="#88bbdd" font-size="10">V₃</text>
+    <rect x="145" y="27" width="20" height="18" rx="2" fill="#2a1a2a" stroke="#aa5588" stroke-width="0.5"/>
+    <text x="155" y="40" text-anchor="middle" fill="#cc88aa" font-size="10">I₀</text>
+
+    <rect x="170" y="27" width="40" height="18" rx="2" fill="#1a2a3a" stroke="#5588aa" stroke-width="0.5"/>
+    <text x="190" y="40" text-anchor="middle" fill="#88bbdd" font-size="10">V₀</text>
+    <rect x="215" y="27" width="20" height="18" rx="2" fill="#2a1a2a" stroke="#aa5588" stroke-width="0.5"/>
+    <text x="225" y="40" text-anchor="middle" fill="#cc88aa" font-size="10">I₀</text>
+
+    <rect x="240" y="27" width="40" height="18" rx="2" fill="#1a2a3a" stroke="#5588aa" stroke-width="0.5"/>
+    <text x="260" y="40" text-anchor="middle" fill="#88bbdd" font-size="10">V₂</text>
+    <rect x="285" y="27" width="20" height="18" rx="2" fill="#2a1a2a" stroke="#aa5588" stroke-width="0.5"/>
+    <text x="295" y="40" text-anchor="middle" fill="#cc88aa" font-size="10">I₀</text>
+
+    <text x="315" y="40" fill="#555" font-size="11">→ triangle 1</text>
+
+    <!-- Instance advances -->
+    <rect x="100" y="52" width="40" height="18" rx="2" fill="#1a2a3a" stroke="#5588aa" stroke-width="0.5"/>
+    <text x="120" y="65" text-anchor="middle" fill="#88bbdd" font-size="10">V₀</text>
+    <rect x="145" y="52" width="20" height="18" rx="2" fill="#2a1a2a" stroke="#aa5588" stroke-width="0.5"/>
+    <text x="155" y="65" text-anchor="middle" fill="#cc88aa" font-size="10">I₁</text>
+
+    <rect x="170" y="52" width="40" height="18" rx="2" fill="#1a2a3a" stroke="#5588aa" stroke-width="0.5"/>
+    <text x="190" y="65" text-anchor="middle" fill="#88bbdd" font-size="10">V₁</text>
+    <rect x="215" y="52" width="20" height="18" rx="2" fill="#2a1a2a" stroke="#aa5588" stroke-width="0.5"/>
+    <text x="225" y="65" text-anchor="middle" fill="#cc88aa" font-size="10">I₁</text>
+
+    <rect x="240" y="52" width="40" height="18" rx="2" fill="#1a2a3a" stroke="#5588aa" stroke-width="0.5"/>
+    <text x="260" y="65" text-anchor="middle" fill="#88bbdd" font-size="10">V₂</text>
+    <rect x="285" y="52" width="20" height="18" rx="2" fill="#2a1a2a" stroke="#aa5588" stroke-width="0.5"/>
+    <text x="295" y="65" text-anchor="middle" fill="#cc88aa" font-size="10">I₁</text>
+
+    <text x="315" y="65" fill="#555" font-size="11">→ triangle 2</text>
+
+    <rect x="100" y="77" width="40" height="18" rx="2" fill="#1a2a3a" stroke="#5588aa" stroke-width="0.5"/>
+    <text x="120" y="90" text-anchor="middle" fill="#88bbdd" font-size="10">V₃</text>
+    <rect x="145" y="77" width="20" height="18" rx="2" fill="#2a1a2a" stroke="#aa5588" stroke-width="0.5"/>
+    <text x="155" y="90" text-anchor="middle" fill="#cc88aa" font-size="10">I₁</text>
+
+    <rect x="170" y="77" width="40" height="18" rx="2" fill="#1a2a3a" stroke="#5588aa" stroke-width="0.5"/>
+    <text x="190" y="90" text-anchor="middle" fill="#88bbdd" font-size="10">V₀</text>
+    <rect x="215" y="77" width="20" height="18" rx="2" fill="#2a1a2a" stroke="#aa5588" stroke-width="0.5"/>
+    <text x="225" y="90" text-anchor="middle" fill="#cc88aa" font-size="10">I₁</text>
+
+    <rect x="240" y="77" width="40" height="18" rx="2" fill="#1a2a3a" stroke="#5588aa" stroke-width="0.5"/>
+    <text x="260" y="90" text-anchor="middle" fill="#88bbdd" font-size="10">V₂</text>
+    <rect x="285" y="77" width="20" height="18" rx="2" fill="#2a1a2a" stroke="#aa5588" stroke-width="0.5"/>
+    <text x="295" y="90" text-anchor="middle" fill="#cc88aa" font-size="10">I₁</text>
+
+    <text x="315" y="90" fill="#555" font-size="11">→ triangle 3</text>
+  </g>
+
+  <text x="325" y="290" text-anchor="middle" fill="#888" font-size="10">Vertex buffer повторяется для каждого instance. Instance buffer сдвигается на 1 каждый instance.</text>
+</svg>

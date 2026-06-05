@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 420" width="100%" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <rect width="500" height="420" fill="#1a1a2e" rx="8"/>
+
+  <!-- Title -->
+  <text x="250" y="28" text-anchor="middle" fill="#ccc" font-size="14" font-weight="600">Генерация сферы: stacks и slices</text>
+
+  <!-- Sphere wireframe -->
+  <g transform="translate(250, 210)">
+    <!-- Outer circle (equator silhouette) -->
+    <ellipse cx="0" cy="0" rx="140" ry="140" fill="none" stroke="#5588aa" stroke-width="1"/>
+
+    <!-- Horizontal slices (latitude lines) -->
+    <ellipse cx="0" cy="-105" rx="70" ry="15" fill="none" stroke="#44aa66" stroke-width="1" opacity="0.7"/>
+    <ellipse cx="0" cy="-52" rx="120" ry="20" fill="none" stroke="#44aa66" stroke-width="1" opacity="0.7"/>
+    <ellipse cx="0" cy="0" rx="140" ry="25" fill="none" stroke="#44aa66" stroke-width="1.5"/>
+    <ellipse cx="0" cy="52" rx="120" ry="20" fill="none" stroke="#44aa66" stroke-width="1" opacity="0.7"/>
+    <ellipse cx="0" cy="105" rx="70" ry="15" fill="none" stroke="#44aa66" stroke-width="1" opacity="0.7"/>
+
+    <!-- Vertical meridians (longitude lines) -->
+    <ellipse cx="0" cy="0" rx="25" ry="140" fill="none" stroke="#ddaa44" stroke-width="1" opacity="0.7"/>
+    <ellipse cx="0" cy="0" rx="100" ry="140" fill="none" stroke="#ddaa44" stroke-width="1" opacity="0.7"/>
+    <line x1="0" y1="-140" x2="0" y2="140" stroke="#ddaa44" stroke-width="1.5"/>
+    <ellipse cx="0" cy="0" rx="140" ry="140" fill="none" stroke="#ddaa44" stroke-width="1" opacity="0.5" transform="rotate(90)"/>
+
+    <!-- Pole dots -->
+    <circle cx="0" cy="-140" r="4" fill="#dd5555"/>
+    <text x="10" y="-142" fill="#dd5555" font-size="10">north pole</text>
+    <circle cx="0" cy="140" r="4" fill="#dd5555"/>
+    <text x="10" y="145" fill="#dd5555" font-size="10">south pole</text>
+
+    <!-- Highlight one quad -->
+    <path d="M 97,-47 L 120,-52 L 125,0 L 103,0 Z" fill="#ddaa44" fill-opacity="0.15" stroke="#ddaa44" stroke-width="1.5"/>
+    <text x="150" y="-20" fill="#ddaa44" font-size="9">один quad</text>
+    <line x1="130" y1="-20" x2="112" y2="-20" stroke="#ddaa44" stroke-width="0.5"/>
+  </g>
+
+  <!-- Legend -->
+  <g transform="translate(30, 50)">
+    <line x1="0" y1="0" x2="25" y2="0" stroke="#44aa66" stroke-width="2"/>
+    <text x="30" y="4" fill="#44aa66" font-size="11">stacks (ширина, 6)</text>
+    <text x="30" y="18" fill="#667766" font-size="9">горизонтальные кольца</text>
+  </g>
+
+  <g transform="translate(30, 90)">
+    <line x1="0" y1="0" x2="25" y2="0" stroke="#ddaa44" stroke-width="2"/>
+    <text x="30" y="4" fill="#ddaa44" font-size="11">slices (высота, 8)</text>
+    <text x="30" y="18" fill="#776644" font-size="9">вертикальные меридианы</text>
+  </g>
+
+  <!-- Formula -->
+  <g transform="translate(30, 340)">
+    <rect x="0" y="0" width="440" height="65" rx="4" fill="#1e1e30" stroke="#555" stroke-width="0.5"/>
+    <text x="220" y="18" text-anchor="middle" fill="#ccc" font-size="11" font-weight="600">Вершины сферы</text>
+    <text x="20" y="38" fill="#aaa" font-size="10">x = r · sin(θ) · cos(φ)</text>
+    <text x="170" y="38" fill="#aaa" font-size="10">y = r · cos(θ)</text>
+    <text x="300" y="38" fill="#aaa" font-size="10">z = r · sin(θ) · sin(φ)</text>
+    <text x="20" y="55" fill="#666" font-size="9">θ ∈ [0, π] (stack angle)    φ ∈ [0, 2π] (slice angle)    vertices = (stacks+1) × (slices+1)</text>
+  </g>
+</svg>

@@ -5,15 +5,15 @@ use std::mem::size_of;
 use bytemuck::{Pod, Zeroable};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    BlendComponent, BlendState, Buffer, BufferAddress, BufferUsages, Color, ColorTargetState,
-    ColorWrites, CommandEncoder, FragmentState, IndexFormat, LoadOp, MultisampleState, Operations,
-    PipelineCompilationOptions, PolygonMode, PrimitiveState, PrimitiveTopology,
-    RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
-    StoreOp, TextureView, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState,
-    VertexStepMode, include_wgsl,
+    include_wgsl, BlendComponent, BlendState, Buffer, BufferAddress, BufferUsages, Color,
+    ColorTargetState, ColorWrites, CommandEncoder, FragmentState, IndexFormat, LoadOp, MultisampleState,
+    Operations, PipelineCompilationOptions, PolygonMode, PrimitiveState,
+    PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline,
+    RenderPipelineDescriptor, StoreOp, TextureView, VertexAttribute, VertexBufferLayout, VertexFormat,
+    VertexState, VertexStepMode,
 };
 
-use framework::{Example, GpuContext, run};
+use framework::{run, Example, GpuContext};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 320" width="100%" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <rect width="600" height="320" fill="#1a1a2e" rx="8"/>
+
+  <!-- Title -->
+  <text x="300" y="30" text-anchor="middle" fill="#ccc" font-size="14" font-weight="600">Архитектура bind groups</text>
+
+  <!-- Pipeline box -->
+  <rect x="220" y="50" width="160" height="40" rx="6" fill="#2a2a4a" stroke="#888" stroke-width="1"/>
+  <text x="300" y="75" text-anchor="middle" fill="#eee" font-size="13" font-weight="600">Render Pipeline</text>
+
+  <!-- Group 0: Camera -->
+  <rect x="30" y="140" width="220" height="150" rx="6" fill="#1a2a3a" stroke="#5588aa" stroke-width="1.5"/>
+  <text x="140" y="165" text-anchor="middle" fill="#5588aa" font-size="13" font-weight="600">Bind Group 0 (camera)</text>
+
+  <rect x="50" y="180" width="180" height="30" rx="4" fill="#1a2030" stroke="#446688" stroke-width="0.5"/>
+  <text x="60" y="200" fill="#88bbdd" font-size="11">@binding(0)</text>
+  <text x="160" y="200" fill="#aaa" font-size="11">view_proj: mat4x4</text>
+
+  <text x="50" y="230" fill="#667788" font-size="10">visibility: VERTEX</text>
+  <text x="50" y="248" fill="#667788" font-size="10">обновление: каждый кадр</text>
+  <text x="50" y="266" fill="#667788" font-size="10">buffer: Uniform</text>
+
+  <!-- Group 1: Light + Texture -->
+  <rect x="340" y="140" width="230" height="150" rx="6" fill="#2a1a2a" stroke="#aa5588" stroke-width="1.5"/>
+  <text x="455" y="165" text-anchor="middle" fill="#aa5588" font-size="13" font-weight="600">Bind Group 1 (light + texture)</text>
+
+  <rect x="360" y="180" width="190" height="24" rx="4" fill="#1a1020" stroke="#664455" stroke-width="0.5"/>
+  <text x="370" y="197" fill="#cc88aa" font-size="10">@binding(0)</text>
+  <text x="450" y="197" fill="#aaa" font-size="10">light_uniforms: LightUniforms</text>
+
+  <rect x="360" y="210" width="190" height="24" rx="4" fill="#1a1020" stroke="#664455" stroke-width="0.5"/>
+  <text x="370" y="227" fill="#cc88aa" font-size="10">@binding(1)</text>
+  <text x="450" y="227" fill="#aaa" font-size="10">diffuse_texture: texture_2d</text>
+
+  <rect x="360" y="240" width="190" height="24" rx="4" fill="#1a1020" stroke="#664455" stroke-width="0.5"/>
+  <text x="370" y="257" fill="#cc88aa" font-size="10">@binding(2)</text>
+  <text x="450" y="257" fill="#aaa" font-size="10">diffuse_sampler: sampler</text>
+
+  <text x="360" y="283" fill="#775566" font-size="10">visibility: FRAGMENT | обновление: редко/никогда</text>
+
+  <!-- Arrows from pipeline to groups -->
+  <line x1="260" y1="90" x2="140" y2="138" stroke="#5588aa" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <line x1="340" y1="90" x2="455" y2="138" stroke="#aa5588" stroke-width="1.5" stroke-dasharray="4,2"/>
+
+  <text x="180" y="118" text-anchor="middle" fill="#5588aa" font-size="10">group 0</text>
+  <text x="410" y="118" text-anchor="middle" fill="#aa5588" font-size="10">group 1</text>
+</svg>

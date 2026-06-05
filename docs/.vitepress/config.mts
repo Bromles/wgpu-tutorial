@@ -42,6 +42,7 @@ const vitePressConfig = defineConfig({
         },
         sidebar: [
             {
+                text: "Введение",
                 items: [{text: "О руководстве", link: "/"}],
             },
             {
@@ -125,6 +126,10 @@ const vitePressConfig = defineConfig({
                     },
                     {text: "Материалы и свет", link: "/guide/lighting/materials/"},
                     {text: "Тени", link: "/guide/lighting/shadows/"},
+                    {
+                        text: "Normal Mapping",
+                        link: "/guide/lighting/normal-mapping/",
+                    },
                 ],
             },
             {
@@ -135,8 +140,24 @@ const vitePressConfig = defineConfig({
                         text: "Render-to-texture",
                         link: "/guide/advanced/render-to-texture/",
                     },
-                    {text: "Несколько мешей", link: "/guide/advanced/model-loading/"},
+                    {text: "Несколько мешей", link: "/guide/advanced/multiple-meshes/"},
                     {text: "MSAA", link: "/guide/advanced/msaa/"},
+                    {
+                        text: "HDR и Tone Mapping",
+                        link: "/guide/advanced/hdr/",
+                    },
+                    {
+                        text: "Compute Passes",
+                        link: "/guide/advanced/compute/",
+                    },
+                    {
+                        text: "Bloom",
+                        link: "/guide/advanced/bloom/",
+                    },
+                    {
+                        text: "Particles",
+                        link: "/guide/advanced/particles/",
+                    },
                 ],
             },
             {
@@ -144,7 +165,7 @@ const vitePressConfig = defineConfig({
                 collapsed: false,
                 items: [
                     {text: "Почему WebGPU и Rust", link: "/appendix/why-wgpu/"},
-                    {text: "Глоссарий", link: "/guide/glossary/"},
+                    {text: "Глоссарий", link: "/appendix/glossary/"},
                 ],
             },
         ],

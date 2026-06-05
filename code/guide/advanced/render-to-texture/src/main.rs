@@ -9,22 +9,22 @@ use encase::ShaderType;
 use glam::{Mat3, Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor, BindGroupLayoutEntry,
-    BindingType, BlendComponent, BlendState, Buffer, BufferAddress, BufferBindingType,
-    BufferDescriptor, BufferUsages, Color, ColorTargetState, ColorWrites, CommandEncoder,
-    DepthBiasState, DepthStencilState, Extent3d, FilterMode, FragmentState, IndexFormat, LoadOp,
-    MipmapFilterMode, MultisampleState, Operations, PipelineCompilationOptions,
-    PipelineLayoutDescriptor, PolygonMode, PrimitiveState, PrimitiveTopology,
-    RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
-    RenderPipeline, RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor, ShaderStages,
-    StencilState, StoreOp, Texture, TextureDescriptor, TextureDimension, TextureFormat,
-    TextureUsages, TextureView, TextureViewDescriptor, VertexAttribute, VertexBufferLayout,
-    VertexFormat, VertexState, VertexStepMode, include_wgsl,
+    include_wgsl, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingType, BlendComponent, BlendState, Buffer, BufferAddress,
+    BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState, ColorWrites,
+    CommandEncoder, DepthBiasState, DepthStencilState, Extent3d, FilterMode, FragmentState, IndexFormat,
+    LoadOp, MipmapFilterMode, MultisampleState, Operations,
+    PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode, PrimitiveState,
+    PrimitiveTopology, RenderPassColorAttachment, RenderPassDepthStencilAttachment,
+    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor,
+    ShaderStages, StencilState, StoreOp, Texture, TextureDescriptor, TextureDimension,
+    TextureFormat, TextureUsages, TextureView, TextureViewDescriptor, VertexAttribute,
+    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
 };
 use winit::dpi::PhysicalSize;
 use winit::keyboard::KeyCode;
 
-use framework::{Example, GpuContext, Input, run};
+use framework::{run, Example, GpuContext, Input};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]

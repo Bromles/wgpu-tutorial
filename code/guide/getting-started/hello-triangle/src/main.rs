@@ -1,11 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use framework::{Example, GpuContext, run};
+use framework::{run, Example, GpuContext};
 use wgpu::{
-    BlendComponent, BlendState, Color, ColorTargetState, ColorWrites, CommandEncoder,
-    FragmentState, LoadOp, MultisampleState, Operations, PipelineCompilationOptions, PolygonMode,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
-    RenderPipeline, RenderPipelineDescriptor, StoreOp, TextureView, VertexState, include_wgsl,
+    include_wgsl, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites,
+    CommandEncoder, FragmentState, LoadOp, MultisampleState, Operations, PipelineCompilationOptions,
+    PolygonMode, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
+    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, StoreOp, TextureView, VertexState,
 };
 
 struct Triangle {

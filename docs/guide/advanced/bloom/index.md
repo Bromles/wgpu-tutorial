@@ -1,0 +1,167 @@
+---
+editLink: false
+---
+
+# Bloom
+
+[Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/advanced/bloom)
+
+**Что уже должно быть понятно:**
+
+- compute passes, storage textures, `textureLoad`/`textureStore`
+- HDR и tone mapping
+- render-to-texture
+
+**Что появится в этой главе:**
+
+- bright extraction — выделение пикселей ярче порога
+- separable Gaussian blur — размытие в два прохода (горизонтальный + вертикальный)
+- аддитивное наложение: `scene + bloom`
+- пять проходов: scene, bright extract, H-blur, V-blur, composite
+
+**Итог:** ярко освещённые грани кубов «светятся» — ореол разливается за их границы
+
+---
+
+Bloom — эффект, при котором яркие объекты испускают ореол света, «разливаясь» за свои границы.
+В реальности это происходит из-за рассеивания света в линзе камеры или глазу.
+
+## Алгоритм bloom
+
+Bloom состоит из трёх этапов:
+
+1. **Bright extraction** — выделить из HDR-изображения пиксели с яркостью выше порога
+2. **Blur** — размыть выделенные яркие области (Gaussian blur)
+3. **Composite** — добавить размытое свечение к оригинальному изображению
+
+```
+Scene (HDR) ──→ Bright Extract ──→ H-Blur ──→ V-Blur ──┐
+       │                                                 │
+       └──────────────── scene + bloom ──── tone map ────┘→ Screen
+```
+
+## Bright extraction
+
+Compute-шейдер проверяет каждый пиксель: если яркость (luminance) выше порога — пиксель
+попадает в «яркую» текстуру, иначе записывается чёрный:
+
+```wgsl
+let brightness = dot(color.rgb, vec3<f32>(0.2126, 0.7152, 0.0722));
+if (brightness > params.threshold) {
+    textureStore(output_tex, vec2<i32>(id.xy), color);
+} else {
+    textureStore(output_tex, vec2<i32>(id.xy), vec4<f32>(0.0));
+}
+```
+
+Luminance — стандартный Rec. 709: $L = 0.2126 R + 0.7152 G + 0.0722 B$. Порог `threshold = 1.0`
+означает, что выбираются только HDR-значения (те, что не влезли бы в LDR).
+
+## Separable Gaussian blur
+
+Полный 2D Gaussian blur с ядром $9\times9$ требует 81 сэмпл на пиксель.
+Separable blur разбивает его на два 1D прохода: горизонтальный ($9$ сэмплов) и вертикальный ($9$ сэмплов) —
+всего 18 вместо 81.
+
+Веса для 5-точечного 1D Gaussian:
+
+```wgsl
+let weights = array<f32, 5>(0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
+```
+
+Для каждого пикселя суммируются взвешенные значения из соседних текселей:
+
+```wgsl
+var result = textureLoad(input_tex, vec2<i32>(id.xy), 0) * weights[0];
+for (var i: i32 = 1; i < 5; i++) {
+    let offset = params.direction * f32(i);
+    // сэмпл в +offset и -offset
+    result += textureLoad(input_tex, coord1, 0) * weights[i];
+    result += textureLoad(input_tex, coord2, 0) * weights[i];
+}
+```
+
+Направление передаётся через uniform-буфер: `(1/width, 0)` для горизонтального, `(0, 1/height)`
+для вертикального. Два прохода используют один и тот же шейдер — разница только в bind group.
+
+## Ping-pong между двумя текстурами
+
+Два прохода размытия чередуются между двумя текстурами:
+
+| Pass | Input | Output |
+|------|-------|--------|
+| Bright extraction | scene | bright |
+| H-blur | bright | blur |
+| V-blur | blur | bright |
+
+После V-blur результат оказывается в текстуре `bright`. Это позволяет не создавать третью текстуру.
+
+## Composite
+
+Финальный полноэкранный квад складывает оригинальную сцену и bloom:
+
+```wgsl
+let combined = scene.rgb + bloom.rgb;
+let mapped = aces(combined);
+return vec4<f32>(mapped, 1.0);
+```
+
+Аддитивное сложение (`+`) — ключевой момент: bloom не заменяет сцену, а добавляет свечение.
+Tone mapping (ACES) сжимает результат для вывода на монитор.
+
+## Uniform-буферы для параметров
+
+Bright extraction и blur используют uniform-буферы для передачи параметров:
+
+```rust
+#[repr(C)]
+#[derive(Clone, Copy, Pod, Zeroable)]
+struct BlurParams { direction: [f32; 2], _pad1: [f32; 2] }
+```
+
+Паддинг до 16 байт обязателен — WGSL выравнивает uniform-структуры.
+
+Два bind group для blur создаются с разными направлениями:
+
+```rust
+// Horizontal: bright → blur
+let hblur_bg = ... direction: [1.0/width, 0.0] ...
+// Vertical: blur → bright
+let vblur_bg = ... direction: [0.0, 1.0/height] ...
+```
+
+## Пять проходов в render
+
+Порядок в `render()`:
+
+1. **Render pass**: сцена → `scene_texture` (HDR)
+2. **Compute pass**: bright extraction → `bright_texture`
+3. **Compute pass**: H-blur: `bright` → `blur`
+4. **Compute pass**: V-blur: `blur` → `bright`
+5. **Render pass**: composite + ACES → screen
+
+Все пять проходов записываются в один `CommandEncoder` и выполняются GPU последовательно.
+
+## Типичные ошибки
+
+- **Забыли tone mapping** — без ACES аддитивное сложение `scene + bloom` легко даёт значения
+  $> 3.0$, и на LDR-мониторе всё будет белым.
+- **Используют одну текстуру для input/output** — compute-шейдер может читать и писать
+  одну и ту же текстуру только с `read_write` доступом и соответствующим GPU feature.
+  Проще использовать ping-pong.
+- **Неправильные веса Gaussian** — веса должны суммироваться ≈ 1.0, иначе яркость изменится.
+- **Забыли паддинг в uniform** — `BlurParams` без `_pad1` займёт 8 байт, WGSL выровняет
+  до 16, и `min_binding_size` не совпадёт.
+- **Порог 0.0** — всё изображение попадёт в bloom, и размытие «завалит» контраст.
+  Начинайте с `threshold = 1.0`.
+
+## Итог
+
+- Bloom = **bright extraction** + **separable Gaussian blur** + **аддитивное наложение**.
+- **Separable blur** разбивает 2D на два 1D прохода, уменьшая число сэмплов с $N^2$ до $2N$.
+- **Ping-pong** между двумя текстурами позволяет обойтись без третьей.
+- **Tone mapping** обязателен — аддитивное сложение HDR-значений без сжатия даст белый экран.
+- Пять GPU-проходов (2 render + 3 compute) в одном `CommandEncoder`.
+
+Bloom — один из самых эффектных постпроцесс-эффектов и классический пример
+комбинирования render и compute passes.

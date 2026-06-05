@@ -1,0 +1,33 @@
+<svg viewBox="0 0 420 280" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="13">
+  <rect width="420" height="280" fill="#fff" rx="8"/>
+
+  <!-- Surface -->
+  <line x1="60" y1="200" x2="360" y2="200" stroke="#333" stroke-width="2"/>
+  <text x="175" y="225" fill="#333" text-anchor="middle" font-size="12">поверхность</text>
+
+  <!-- Normal N (pointing up) -->
+  <line x1="200" y1="200" x2="200" y2="80" stroke="#2563eb" stroke-width="2.5" marker-end="url(#arrowBlue)"/>
+  <text x="210" y="75" fill="#2563eb" font-size="14" font-weight="bold">N</text>
+
+  <!-- Light direction L (coming from upper left) -->
+  <line x1="130" y1="110" x2="200" y2="200" stroke="#dc2626" stroke-width="2.5" marker-end="url(#arrowRed)"/>
+  <text x="115" y="105" fill="#dc2626" font-size="14" font-weight="bold">L</text>
+  <text x="105" y="120" fill="#dc2626" font-size="11">(направление на источник)</text>
+
+  <!-- Angle arc θ -->
+  <path d="M 200 170 A 30 30 0 0 1 185 178" fill="none" stroke="#555" stroke-width="1.5"/>
+  <text x="175" y="165" fill="#555" font-size="14" font-style="italic">θ</text>
+
+  <!-- Formula -->
+  <text x="210" y="260" fill="#333" font-size="13">diffuse = max(dot(N, L), 0.0)</text>
+  <text x="210" y="275" fill="#666" font-size="11">= cos(θ) — максимально при θ=0°</text>
+
+  <defs>
+    <marker id="arrowBlue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+    </marker>
+  </defs>
+</svg>

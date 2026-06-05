@@ -1,0 +1,220 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 300" width="100%" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <!-- Background -->
+  <rect width="720" height="300" fill="#1a1a2e" rx="8"/>
+
+  <!-- Title -->
+  <text x="360" y="28" text-anchor="middle" fill="#ccc" font-size="14" font-weight="600">Aliasing vs MSAA: сравнение краёв</text>
+
+  <!-- Without MSAA (left) -->
+  <text x="175" y="55" text-anchor="middle" fill="#dd6644" font-size="13" font-weight="600">Без MSAA</text>
+
+  <!-- Pixel grid - no MSAA -->
+  <g transform="translate(30, 65)">
+    <!-- Grid 10x10 pixels -->
+    <!-- Row 0 -->
+    <rect x="0" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="29" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="58" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="87" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="116" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="145" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="174" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="203" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="232" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="261" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+
+    <!-- Row 1 -->
+    <rect x="0" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="29" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="58" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="87" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="116" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="145" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="174" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="203" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="232" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="261" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+
+    <!-- Row 2 -->
+    <rect x="0" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="29" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="58" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="87" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="116" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="145" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="174" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="203" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="232" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="261" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+
+    <!-- Row 3 -->
+    <rect x="0" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="29" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="58" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="87" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="116" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="145" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="174" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="203" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="232" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="261" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+
+    <!-- Row 4 -->
+    <rect x="0" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="29" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="58" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="87" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="116" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="145" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="174" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="203" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="232" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="261" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+
+    <!-- Row 5 -->
+    <rect x="0" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="29" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="58" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="87" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="116" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="145" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="174" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="203" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="232" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="261" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+
+    <!-- Triangle edge: staircase aliasing -->
+    <!-- Fill pixels inside triangle: harsh binary on/off -->
+    <!-- Diagonal from top-left to bottom-right area -->
+    <rect x="0" y="0" width="29" height="29" fill="#4488aa"/>
+    <rect x="29" y="0" width="29" height="29" fill="#4488aa"/>
+    <rect x="58" y="0" width="29" height="29" fill="#4488aa"/>
+    <rect x="87" y="0" width="29" height="29" fill="#4488aa"/>
+    <rect x="116" y="0" width="29" height="29" fill="#4488aa"/>
+    <rect x="29" y="29" width="29" height="29" fill="#4488aa"/>
+    <rect x="58" y="29" width="29" height="29" fill="#4488aa"/>
+    <rect x="87" y="29" width="29" height="29" fill="#4488aa"/>
+    <rect x="116" y="29" width="29" height="29" fill="#4488aa"/>
+    <rect x="145" y="29" width="29" height="29" fill="#4488aa"/>
+    <rect x="58" y="58" width="29" height="29" fill="#4488aa"/>
+    <rect x="87" y="58" width="29" height="29" fill="#4488aa"/>
+    <rect x="116" y="58" width="29" height="29" fill="#4488aa"/>
+    <rect x="145" y="58" width="29" height="29" fill="#4488aa"/>
+    <rect x="174" y="58" width="29" height="29" fill="#4488aa"/>
+    <rect x="87" y="87" width="29" height="29" fill="#4488aa"/>
+    <rect x="116" y="87" width="29" height="29" fill="#4488aa"/>
+    <rect x="145" y="87" width="29" height="29" fill="#4488aa"/>
+    <rect x="174" y="87" width="29" height="29" fill="#4488aa"/>
+    <rect x="203" y="87" width="29" height="29" fill="#4488aa"/>
+    <rect x="116" y="116" width="29" height="29" fill="#4488aa"/>
+    <rect x="145" y="116" width="29" height="29" fill="#4488aa"/>
+    <rect x="174" y="116" width="29" height="29" fill="#4488aa"/>
+    <rect x="203" y="116" width="29" height="29" fill="#4488aa"/>
+    <rect x="232" y="116" width="29" height="29" fill="#4488aa"/>
+    <rect x="145" y="145" width="29" height="29" fill="#4488aa"/>
+    <rect x="174" y="145" width="29" height="29" fill="#4488aa"/>
+    <rect x="203" y="145" width="29" height="29" fill="#4488aa"/>
+    <rect x="232" y="145" width="29" height="29" fill="#4488aa"/>
+    <rect x="261" y="145" width="29" height="29" fill="#4488aa"/>
+
+    <!-- Ideal diagonal line overlay -->
+    <line x1="0" y1="0" x2="290" y2="174" stroke="#fff" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+
+    <!-- Label -->
+    <text x="145" y="195" text-anchor="middle" fill="#dd6644" font-size="11">Ступенчатый край</text>
+  </g>
+
+  <!-- With MSAA (right) -->
+  <text x="535" y="55" text-anchor="middle" fill="#44aa66" font-size="13" font-weight="600">MSAA ×4</text>
+
+  <g transform="translate(400, 65)">
+    <!-- Same grid but with blended edge pixels -->
+    <!-- Row 0 -->
+    <rect x="0" y="0" width="29" height="29" fill="#4488aa"/>
+    <rect x="29" y="0" width="29" height="29" fill="#4488aa"/>
+    <rect x="58" y="0" width="29" height="29" fill="#4488aa"/>
+    <rect x="87" y="0" width="29" height="29" fill="#4488aa"/>
+    <rect x="116" y="0" width="29" height="29" fill="#4488aa"/>
+    <rect x="145" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="174" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="203" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="232" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="261" y="0" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+
+    <!-- Row 1 - partial coverage at edge -->
+    <rect x="0" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="29" y="29" width="29" height="29" fill="#4488aa"/>
+    <rect x="58" y="29" width="29" height="29" fill="#4488aa"/>
+    <rect x="87" y="29" width="29" height="29" fill="#4488aa"/>
+    <rect x="116" y="29" width="29" height="29" fill="#4488aa"/>
+    <rect x="145" y="29" width="29" height="29" fill="#4488aa"/>
+    <rect x="174" y="29" width="29" height="29" fill="#3a7a96"/>
+    <rect x="203" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="232" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="261" y="29" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+
+    <!-- Row 2 -->
+    <rect x="0" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="29" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="58" y="58" width="29" height="29" fill="#4488aa"/>
+    <rect x="87" y="58" width="29" height="29" fill="#4488aa"/>
+    <rect x="116" y="58" width="29" height="29" fill="#4488aa"/>
+    <rect x="145" y="58" width="29" height="29" fill="#4488aa"/>
+    <rect x="174" y="58" width="29" height="29" fill="#4488aa"/>
+    <rect x="203" y="58" width="29" height="29" fill="#3a7a96"/>
+    <rect x="232" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="261" y="58" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+
+    <!-- Row 3 -->
+    <rect x="0" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="29" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="58" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="87" y="87" width="29" height="29" fill="#4488aa"/>
+    <rect x="116" y="87" width="29" height="29" fill="#4488aa"/>
+    <rect x="145" y="87" width="29" height="29" fill="#4488aa"/>
+    <rect x="174" y="87" width="29" height="29" fill="#4488aa"/>
+    <rect x="203" y="87" width="29" height="29" fill="#4488aa"/>
+    <rect x="232" y="87" width="29" height="29" fill="#3a7a96"/>
+    <rect x="261" y="87" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+
+    <!-- Row 4 -->
+    <rect x="0" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="29" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="58" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="87" y="116" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="116" y="116" width="29" height="29" fill="#4488aa"/>
+    <rect x="145" y="116" width="29" height="29" fill="#4488aa"/>
+    <rect x="174" y="116" width="29" height="29" fill="#4488aa"/>
+    <rect x="203" y="116" width="29" height="29" fill="#4488aa"/>
+    <rect x="232" y="116" width="29" height="29" fill="#4488aa"/>
+    <rect x="261" y="116" width="29" height="29" fill="#3a7a96"/>
+
+    <!-- Row 5 -->
+    <rect x="0" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="29" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="58" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="87" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="116" y="145" width="29" height="29" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <rect x="145" y="145" width="29" height="29" fill="#4488aa"/>
+    <rect x="174" y="145" width="29" height="29" fill="#4488aa"/>
+    <rect x="203" y="145" width="29" height="29" fill="#4488aa"/>
+    <rect x="232" y="145" width="29" height="29" fill="#4488aa"/>
+    <rect x="261" y="145" width="29" height="29" fill="#4488aa"/>
+
+    <!-- Ideal diagonal line overlay -->
+    <line x1="0" y1="0" x2="290" y2="174" stroke="#fff" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+
+    <!-- Label -->
+    <text x="145" y="195" text-anchor="middle" fill="#44aa66" font-size="11">Сглаженный край</text>
+  </g>
+
+  <!-- Legend at bottom -->
+  <g transform="translate(0, 270)">
+    <rect x="220" y="0" width="16" height="12" rx="2" fill="#4488aa"/>
+    <text x="242" y="11" fill="#aaa" font-size="11">внутри треугольника</text>
+    <rect x="380" y="0" width="16" height="12" rx="2" fill="#3a7a96"/>
+    <text x="402" y="11" fill="#aaa" font-size="11">частичное покрытие (50%)</text>
+    <rect x="540" y="0" width="16" height="12" rx="2" fill="#1e1e30" stroke="#333" stroke-width="0.5"/>
+    <text x="562" y="11" fill="#aaa" font-size="11">снаружи</text>
+  </g>
+</svg>

@@ -58,6 +58,11 @@ struct InstanceData {
 
 `[[f32; 4]; 4]` — это 4×4 матрица в column-major порядке. `Mat4::to_cols_array_2d()` из glam возвращает именно его.
 
+Почему не `Mat4` напрямую? `InstanceData` используется с `bytemuck::cast_slice` для записи в GPU-буфер.
+Для этого нужен трейт `Pod` (plain old data), а `Mat4` из glam не реализует `Pod`. `[[f32; 4]; 4]` — массив
+простых типов, `Pod` реализован автоматически. Для uniform-буферов, где `Pod` не нужен, используется
+`encase::ShaderType` — и там `Mat4` работает напрямую.
+
 Описание буфера для pipeline:
 
 ```rust
@@ -72,6 +77,8 @@ fn desc() -> VertexBufferLayout<'static> {
 
 `VertexStepMode::Instance` — GPU считывает один элемент instance buffer на каждый экземпляр, а не на каждую вершину.
 Для 125 экземпляров будет считано 125 элементов, каждый из которых используется для всех 36 вершин куба.
+
+<img src="/diagrams/vertex-instance-step.svg" alt="Паттерн чтения vertex и instance буферов" style="width: 100%;" />
 
 ## Данные экземпляров
 
@@ -208,6 +215,14 @@ rpass.draw_indexed(0..36, 0, 0..NUM_INSTANCES as u32);
 `0..NUM_INSTANCES` — 125 экземпляров. GPU нарисует 36 × 125 = 4500 треугольников за один вызов.
 
 ## Что получилось
+
+## Что получилось
+
+::: warning Типичные ошибки
+- `step_mode: VertexStepMode::Instance` забыли — GPU будет читать instance buffer как вершинный, данные сместятся
+- `draw_indexed(0..36, 0, 0..0)` — третий параметр 0 = 0 экземпляров = ничего не нарисуется
+- `[[f32; 4]; 4]` в column-major — `to_cols_array_2d()` даёт правильный порядок, `to_rows_array_2d()` — нет
+:::
 
 125 кубов в виде сетки 5×5×5. Камера свободно перемещается между ними — WASD, мышь (правая кнопка),
 Space/Shift. Все кубы нарисованы одним `draw_indexed`.

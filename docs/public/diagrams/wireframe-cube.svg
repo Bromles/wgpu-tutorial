@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400" width="100%" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <rect width="500" height="400" fill="#1a1a2e" rx="8"/>
+
+  <!-- Title -->
+  <text x="250" y="30" text-anchor="middle" fill="#ccc" font-size="14" font-weight="600">Куб: вершины и индексы</text>
+
+  <!-- Back face edges (dashed) -->
+  <g stroke="#444" stroke-width="1" stroke-dasharray="4,3" fill="none">
+    <line x1="130" y1="120" x2="320" y2="100"/>
+    <line x1="130" y1="250" x2="320" y2="230"/>
+    <line x1="130" y1="120" x2="130" y2="250"/>
+  </g>
+
+  <!-- Front face -->
+  <polygon points="170,80 370,60 370,200 170,220" fill="none" stroke="#5588aa" stroke-width="1.5"/>
+
+  <!-- Back-to-front edges -->
+  <line x1="170" y1="80" x2="130" y2="120" stroke="#5588aa" stroke-width="1.5"/>
+  <line x1="370" y1="60" x2="320" y2="100" stroke="#5588aa" stroke-width="1.5"/>
+  <line x1="370" y1="200" x2="320" y2="230" stroke="#5588aa" stroke-width="1.5"/>
+  <line x1="170" y1="220" x2="130" y2="250" stroke="#5588aa" stroke-width="1.5"/>
+
+  <!-- Back face -->
+  <polygon points="130,120 320,100 320,230 130,250" fill="none" stroke="#5588aa" stroke-width="1.5"/>
+
+  <!-- Vertex dots with labels -->
+  <!-- 0: front-bottom-left -->
+  <circle cx="170" cy="220" r="4" fill="#dd5555"/>
+  <text x="148" y="235" fill="#dd5555" font-size="11" font-weight="600">0</text>
+
+  <!-- 1: front-bottom-right -->
+  <circle cx="370" cy="200" r="4" fill="#dd5555"/>
+  <text x="375" y="215" fill="#dd5555" font-size="11" font-weight="600">1</text>
+
+  <!-- 2: front-top-right -->
+  <circle cx="370" cy="60" r="4" fill="#55aa55"/>
+  <text x="375" y="55" fill="#55aa55" font-size="11" font-weight="600">2</text>
+
+  <!-- 3: front-top-left -->
+  <circle cx="170" cy="80" r="4" fill="#55aa55"/>
+  <text x="148" y="75" fill="#55aa55" font-size="11" font-weight="600">3</text>
+
+  <!-- 4: back-bottom-left -->
+  <circle cx="130" cy="250" r="4" fill="#dd5555"/>
+  <text x="108" y="265" fill="#dd5555" font-size="11" font-weight="600">4</text>
+
+  <!-- 5: back-bottom-right -->
+  <circle cx="320" cy="230" r="4" fill="#dd5555"/>
+  <text x="325" y="245" fill="#dd5555" font-size="11" font-weight="600">5</text>
+
+  <!-- 6: back-top-right -->
+  <circle cx="320" cy="100" r="4" fill="#55aa55"/>
+  <text x="325" y="95" fill="#55aa55" font-size="11" font-weight="600">6</text>
+
+  <!-- 7: back-top-left -->
+  <circle cx="130" cy="120" r="4" fill="#55aa55"/>
+  <text x="108" y="115" fill="#55aa55" font-size="11" font-weight="600">7</text>
+
+  <!-- Position labels -->
+  <g font-size="9" fill="#777">
+    <text x="170" y="248">(-0.5, -0.5, 0.5)</text>
+    <text x="300" y="198">(0.5, -0.5, 0.5)</text>
+    <text x="310" y="52">(0.5, 0.5, 0.5)</text>
+    <text x="100" y="90">(-0.5, 0.5, 0.5)</text>
+  </g>
+
+  <!-- Index table -->
+  <text x="250" y="295" text-anchor="middle" fill="#ccc" font-size="12" font-weight="600">Индексы (36 на куб)</text>
+
+  <g font-size="10" fill="#aaa">
+    <text x="50" y="315">Front:</text>
+    <text x="100" y="315" fill="#5588aa">0, 1, 2, 2, 3, 0</text>
+    <text x="270" y="315">Right:</text>
+    <text x="320" y="315" fill="#5588aa">1, 5, 6, 6, 2, 1</text>
+
+    <text x="50" y="335">Back:</text>
+    <text x="100" y="335" fill="#5588aa">5, 4, 7, 7, 6, 5</text>
+    <text x="270" y="335">Left:</text>
+    <text x="320" y="335" fill="#5588aa">4, 0, 3, 3, 7, 4</text>
+
+    <text x="50" y="355">Top:</text>
+    <text x="100" y="355" fill="#5588aa">3, 2, 6, 6, 7, 3</text>
+    <text x="270" y="355">Bottom:</text>
+    <text x="320" y="355" fill="#5588aa">4, 5, 1, 1, 0, 4</text>
+  </g>
+
+  <text x="250" y="385" text-anchor="middle" fill="#888" font-size="10">CCW winding order = front face (видимый)</text>
+</svg>

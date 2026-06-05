@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 350" width="100%" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <rect width="600" height="350" fill="#1a1a2e" rx="8"/>
+
+  <!-- Title -->
+  <text x="300" y="28" text-anchor="middle" fill="#ccc" font-size="14" font-weight="600">Векторное сложение: правило треугольника (tip-to-tail)</text>
+
+  <!-- Vector a -->
+  <line x1="100" y1="250" x2="250" y2="130" stroke="#5588aa" stroke-width="2.5"/>
+  <polygon points="250,130 238,142 245,148" fill="#5588aa"/>
+  <text x="155" y="175" fill="#5588aa" font-size="14" font-weight="700">a⃗</text>
+  <text x="130" y="190" fill="#5588aa" font-size="10">(3, 2)</text>
+
+  <!-- Origin dot -->
+  <circle cx="100" cy="250" r="4" fill="#fff"/>
+  <text x="80" y="265" fill="#aaa" font-size="10">O</text>
+
+  <!-- Vector b from tip of a -->
+  <line x1="250" y1="130" x2="370" y2="200" stroke="#44aa66" stroke-width="2.5"/>
+  <polygon points="370,200 356,192 358,202" fill="#44aa66"/>
+  <text x="320" y="155" fill="#44aa66" font-size="14" font-weight="700">b⃗</text>
+  <text x="310" y="170" fill="#44aa66" font-size="10">(2, -1.5)</text>
+
+  <!-- Result vector a+b -->
+  <line x1="100" y1="250" x2="370" y2="200" stroke="#ddaa44" stroke-width="2.5" stroke-dasharray="6,3"/>
+  <polygon points="370,200 356,196 358,206" fill="#ddaa44"/>
+  <text x="210" y="240" fill="#ddaa44" font-size="14" font-weight="700">a⃗ + b⃗</text>
+  <text x="205" y="256" fill="#ddaa44" font-size="10">(5, 0.5)</text>
+
+  <!-- Point labels -->
+  <circle cx="250" cy="130" r="3" fill="#888"/>
+  <circle cx="370" cy="200" r="3" fill="#888"/>
+
+  <!-- Parallelogram completion -->
+  <line x1="100" y1="250" x2="220" y2="180" stroke="#44aa66" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+  <line x1="220" y1="180" x2="370" y2="200" stroke="#5588aa" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+
+  <!-- Formula section -->
+  <g transform="translate(420, 80)">
+    <rect x="0" y="0" width="160" height="130" rx="6" fill="#1e1e30" stroke="#555" stroke-width="0.5"/>
+    <text x="80" y="22" text-anchor="middle" fill="#ccc" font-size="11" font-weight="600">Компонентное сложение</text>
+    <text x="20" y="48" fill="#5588aa" font-size="11">a⃗ = (3.0, 2.0)</text>
+    <text x="20" y="68" fill="#44aa66" font-size="11">b⃗ = (2.0, -1.5)</text>
+    <line x1="20" y1="78" x2="140" y2="78" stroke="#555" stroke-width="0.5"/>
+    <text x="20" y="98" fill="#ddaa44" font-size="11">a⃗ + b⃗ = (3+2, 2+(-1.5))</text>
+    <text x="20" y="118" fill="#ddaa44" font-size="12" font-weight="600">= (5.0, 0.5)</text>
+  </g>
+
+  <!-- Subtraction note -->
+  <text x="300" y="310" text-anchor="middle" fill="#888" font-size="11">Вычитание: a⃗ − b⃗ = a⃗ + (−b⃗)</text>
+  <text x="300" y="330" text-anchor="middle" fill="#666" font-size="10">Инвертируем направление b⃗ и складываем по тому же правилу</text>
+</svg>

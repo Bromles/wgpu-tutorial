@@ -194,7 +194,11 @@ backends: Backends::PRIMARY,
 ```
 
 Типичный паттерн wgpu: конструкторы принимают дескрипторы (struct с параметрами), обычно реализующие `Default`. Здесь
-мы задаём только `backends: PRIMARY` — это Metal, Vulkan и DirectX 12, бэкенды с полными возможностями.
+мы задаём только `backends: PRIMARY` — это Metal (macOS), Vulkan (Linux/Windows/Android) и DirectX 12 (Windows),
+бэкенды с полными возможностями GPU. `Backends::all()` добавит ещё OpenGL/WebGL — запасной вариант для старых систем.
+
+`new_without_display_handle()` создаёт дескриптор без привязки к дисплею — нам не нужно, потому что surface
+привязывается отдельно через `create_surface`.
 
 ### Surface
 

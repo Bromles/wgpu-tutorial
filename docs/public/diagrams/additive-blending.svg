@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 260" width="100%" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="720" height="260" fill="#1a1a2e" rx="8"/>
+
+  <!-- Title -->
+  <text x="360" y="30" text-anchor="middle" fill="#ccc" font-size="14" font-weight="600">Аддитивное смешивание: вклад источников складывается</text>
+
+  <!-- Light 1: warm white -->
+  <rect x="30" y="60" width="180" height="80" rx="6" fill="#2a2520" stroke="#d4a855" stroke-width="1"/>
+  <text x="120" y="82" text-anchor="middle" fill="#d4a855" font-size="12" font-weight="600">Источник 1</text>
+  <text x="120" y="100" text-anchor="middle" fill="#aaa" font-size="11">тёплый белый</text>
+  <rect x="60" y="110" width="120" height="20" rx="3" fill="#1a1510"/>
+  <rect x="60" y="110" width="120" height="20" rx="3" fill="#d4a855" opacity="0.7"/>
+  <text x="120" y="125" text-anchor="middle" fill="#fff" font-size="11">(1.0, 0.95, 0.85)</text>
+
+  <!-- Light 2: blue -->
+  <rect x="270" y="60" width="180" height="80" rx="6" fill="#1a1a2e" stroke="#5588dd" stroke-width="1"/>
+  <text x="360" y="82" text-anchor="middle" fill="#5588dd" font-size="12" font-weight="600">Источник 2</text>
+  <text x="360" y="100" text-anchor="middle" fill="#aaa" font-size="11">голубой</text>
+  <rect x="300" y="110" width="120" height="20" rx="3" fill="#101520"/>
+  <rect x="300" y="110" width="120" height="20" rx="3" fill="#5588dd" opacity="0.5"/>
+  <text x="360" y="125" text-anchor="middle" fill="#fff" font-size="11">(0.3, 0.5, 1.0)</text>
+
+  <!-- Light 3: red -->
+  <rect x="510" y="60" width="180" height="80" rx="6" fill="#2a1515" stroke="#dd5555" stroke-width="1"/>
+  <text x="600" y="82" text-anchor="middle" fill="#dd5555" font-size="12" font-weight="600">Источник 3</text>
+  <text x="600" y="100" text-anchor="middle" fill="#aaa" font-size="11">красный</text>
+  <rect x="540" y="110" width="120" height="20" rx="3" fill="#1a1010"/>
+  <rect x="540" y="110" width="120" height="20" rx="3" fill="#dd5555" opacity="0.5"/>
+  <text x="600" y="125" text-anchor="middle" fill="#fff" font-size="11">(0.9, 0.3, 0.3)</text>
+
+  <!-- Arrows -->
+  <line x1="120" y1="145" x2="290" y2="175" stroke="#666" stroke-width="1" marker-end="url(#arrowhead)"/>
+  <line x1="360" y1="145" x2="360" y2="175" stroke="#666" stroke-width="1"/>
+  <line x1="600" y1="145" x2="430" y2="175" stroke="#666" stroke-width="1" marker-end="url(#arrowhead)"/>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#666"/>
+    </marker>
+  </defs>
+
+  <!-- Plus signs -->
+  <text x="195" y="170" text-anchor="middle" fill="#888" font-size="16" font-weight="bold">+</text>
+  <text x="525" y="170" text-anchor="middle" fill="#888" font-size="16" font-weight="bold">+</text>
+
+  <!-- Result -->
+  <rect x="230" y="180" width="260" height="60" rx="6" fill="#222" stroke="#777" stroke-width="1"/>
+  <text x="360" y="200" text-anchor="middle" fill="#eee" font-size="12" font-weight="600">Итоговый цвет пикселя</text>
+
+  <!-- Color bar showing blended result -->
+  <rect x="260" y="210" width="60" height="18" rx="2" fill="#2a2a2a"/>
+  <text x="290" y="223" text-anchor="middle" fill="#999" font-size="10">R</text>
+  <rect x="260" y="210" width="60" height="18" rx="2" fill="#dd6644" opacity="0.8"/>
+  <text x="290" y="223" text-anchor="middle" fill="#fff" font-size="10">1.87</text>
+
+  <rect x="330" y="210" width="60" height="18" rx="2" fill="#2a2a2a"/>
+  <text x="360" y="223" text-anchor="middle" fill="#999" font-size="10">G</text>
+  <rect x="330" y="210" width="60" height="18" rx="2" fill="#66aa44" opacity="0.8"/>
+  <text x="360" y="223" text-anchor="middle" fill="#fff" font-size="10">1.48</text>
+
+  <rect x="400" y="210" width="60" height="18" rx="2" fill="#2a2a2a"/>
+  <text x="430" y="223" text-anchor="middle" fill="#999" font-size="10">B</text>
+  <rect x="400" y="210" width="60" height="18" rx="2" fill="#4488cc" opacity="0.8"/>
+  <text x="430" y="223" text-anchor="middle" fill="#fff" font-size="10">2.05</text>
+
+  <!-- Clamped note -->
+  <text x="360" y="250" text-anchor="middle" fill="#888" font-size="10">значения > 1.0 обрезаются до 1.0 при записи в framebuffer</text>
+</svg>

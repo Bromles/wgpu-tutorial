@@ -4,7 +4,7 @@ editLink: false
 
 # Несколько мешей
 
-[Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/advanced/model-loading)
+[Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/advanced/multiple-meshes)
 
 **Что уже должно быть понятно:**
 
@@ -30,19 +30,36 @@ editLink: false
 
 Сфера генерируется параметрически: два угла (phi, theta) пробегают поверхность:
 
+<img src="/diagrams/sphere-stacks-slices.svg" alt="Генерация сферы: stacks и slices" style="width: 100%;" />
+
 ```rust
 fn generate_sphere(stacks: u32, slices: u32, radius: f32) -> (Vec<Vertex>, Vec<u16>) {
+    let mut vertices = Vec::new();
+    let mut indices = Vec::new();
+
     for stack in 0..=stacks {
         let phi = PI * stack as f32 / stacks as f32;
+        let sin_phi = phi.sin();
+        let cos_phi = phi.cos();
+
         for slice in 0..=slices {
             let theta = 2.0 * PI * slice as f32 / slices as f32;
+            let sin_theta = theta.sin();
+            let cos_theta = theta.cos();
+
             let x = cos_theta * sin_phi;
             let y = cos_phi;
             let z = sin_theta * sin_phi;
-            // position = [x * radius, y * radius, z * radius]
-            // normal = [x, y, z] (единичный вектор от центра)
+
+            vertices.push(Vertex {
+                position: [x * radius, y * radius, z * radius],
+                normal: [x, y, z],
+                uv: [slice as f32 / slices as f32, stack as f32 / stacks as f32],
+            });
         }
     }
+    // indices: каждый quad сетки → 2 треугольника
+    (vertices, indices)
 }
 ```
 
@@ -90,6 +107,13 @@ struct Uniforms {
 Model и normal matrix индивидуальны для каждого меша — каждый объект может быть сдвинут,
 повёрнут, масштабирован. `view_proj` общий, но передаётся через uniform каждого меша.
 
+::: info
+`view_proj` дублируется в uniform каждого меша — это не оптимально. Альтернатива — вынести
+`view_proj` в отдельный bind group (camera bind group), общий для всех мешей. Мы использовали
+этот подход в главе про [instancing](../../3d/instancing/). Здесь каждый меш имеет полный uniform
+для простоты — один bind group на меш вместо двух.
+:::
+
 ## Создание меша
 
 Функция `create_mesh` инкапсулирует создание буферов, uniform и bind group:
@@ -135,6 +159,14 @@ for mesh in &self.meshes {
 
 ## Что получилось
 
+## Что получилось
+
+::: warning Типичные ошибки
+- Каждый mesh должен иметь свой bind group — общий bind group не работает при разных uniform-данных
+- `index_count` в `draw_indexed` должен соответствовать реальному количеству индексов — иначе мусор или crash
+- Sphere generation: `(stacks+1) × (slices+1)` вершин, не `stacks × slices` — каждый стек имеет +1 вершину для замыкания
+:::
+
 Три сферы с разными текстурами, стоящие в ряд. Камера свободно перемещается.
 
 <div class="tip custom-block" style="padding-top: 8px">
@@ -147,4 +179,4 @@ for mesh in &self.meshes {
 
 </div>
 
-[Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/advanced/model-loading)
+[Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/advanced/multiple-meshes)

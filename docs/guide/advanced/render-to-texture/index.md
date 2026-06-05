@@ -32,6 +32,8 @@ editLink: false
 
 Рендер разбит на два прохода:
 
+<img src="/diagrams/render-to-texture-two-pass.svg" alt="Двухпроходный рендер: scene → post → screen" style="width: 100%;" />
+
 1. **Scene pass** — рисуем кубы с освещением в offscreen-текстуру
 2. **Post pass** — рисуем полноэкранный квад, сэмплируя offscreen-текстуру и применяя эффект
 
@@ -181,7 +183,10 @@ let post_bgl = ctx.device.create_bind_group_layout(&BindGroupLayoutDescriptor {
 ```
 
 Сэмплер использует `ClampToEdge` и `FilterMode::Nearest` — для постпроцессинга не нужна фильтрация
-и повторение текстуры.
+и повторение текстуры. `Nearest` берёт ближайший тексель без интерполяции — это точно, потому что
+размер offscreen-текстуры совпадает с размером quad'а. `Linear` дал бы лёгкое размытие на границах
+текселей. `ClampToEdge` предотвращает артефакты на краях, если UV чуть выходит за [0, 1] из-за
+погрешности.
 
 ## Post pass
 
@@ -204,6 +209,15 @@ rpass.draw(0..6, 0..1);
 `draw` без индексов — 6 вершин, 1 экземпляр. Depth/stencil не нужен: квад всегда на переднем плане.
 
 ## Что получилось
+
+## Что получилось
+
+::: warning Типичные ошибки
+- Offscreen-текстура не пересоздана при resize — чёрный экран или panic
+- `StoreOp::Discard` вместо `Store` в scene pass — post pass получит пустую текстуру
+- Post pipeline `buffers: &[]` обязателен — вершинных буферов нет, координаты из `vertex_index`
+- Формат offscreen ≠ формат pipeline target — validation error
+:::
 
 Сцена из 125 освещённых кубов. Нажмите 1 — обычный вид, 2 — оттенки серого, 3 — инверсия цветов.
 Камера перемещается как обычно.

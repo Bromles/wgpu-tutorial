@@ -1,0 +1,43 @@
+<svg viewBox="0 0 420 320" xmlns="http://www.w3.org/2000/svg" font-family="monospace" font-size="12">
+  <rect width="420" height="320" fill="#fff" rx="8"/>
+
+  <!-- Camera -->
+  <rect x="30" y="130" width="50" height="30" fill="none" stroke="#333" stroke-width="2" rx="4"/>
+  <text x="55" y="150" text-anchor="middle" fill="#333" font-size="11">камера</text>
+
+  <!-- Frustum from camera -->
+  <polygon points="80,135 220,60 220,230" fill="#2563eb" fill-opacity="0.08" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="140" y="50" text-anchor="middle" fill="#2563eb" font-size="11">frustum камеры</text>
+
+  <!-- Light source -->
+  <circle cx="350" cy="40" r="8" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+  <text x="350" y="25" text-anchor="middle" fill="#92400e" font-size="11">☀ источник</text>
+
+  <!-- Light frustum -->
+  <polygon points="340,48 220,90 220,200 340,240" fill="#dc2626" fill-opacity="0.06" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="290" y="85" fill="#dc2626" font-size="11">frustum света</text>
+
+  <!-- Shadow map -->
+  <rect x="228" y="95" width="4" height="100" fill="#dc2626" rx="1"/>
+  <text x="248" y="148" fill="#dc2626" font-size="10">shadow</text>
+  <text x="248" y="162" fill="#dc2626" font-size="10">map</text>
+  <text x="248" y="176" fill="#dc2626" font-size="10">(depth)</text>
+
+  <!-- Objects -->
+  <rect x="180" y="145" width="25" height="35" fill="#6b7280" stroke="#333" rx="2"/>
+  <rect x="140" y="160" width="25" height="20" fill="#6b7280" stroke="#333" rx="2"/>
+
+  <!-- Floor -->
+  <line x1="100" y1="250" x2="300" y2="250" stroke="#333" stroke-width="2"/>
+  <text x="200" y="270" text-anchor="middle" fill="#555" font-size="11">пол</text>
+
+  <!-- Shadow on floor -->
+  <rect x="160" y="248" width="70" height="4" fill="#1f2937" fill-opacity="0.3" rx="1"/>
+  <text x="195" y="290" text-anchor="middle" fill="#555" font-size="10">тень</text>
+
+  <!-- Step labels -->
+  <text x="30" y="305" fill="#333" font-size="12" font-weight="bold">Pass 1:</text>
+  <text x="85" y="305" fill="#555" font-size="12">рендер depth из frustum света → shadow map</text>
+  <text x="30" y="320" fill="#333" font-size="12" font-weight="bold">Pass 2:</text>
+  <text x="85" y="320" fill="#555" font-size="12">рендер сцены, сравнение depth с shadow map</text>
+</svg>

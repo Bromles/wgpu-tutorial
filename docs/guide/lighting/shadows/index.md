@@ -28,6 +28,8 @@ editLink: false
 рендерим глубину сцены с точки зрения света, затем при отрисовке сцены сравниваем глубину фрагмента
 с записанной.
 
+<img src="/diagrams/shadow-mapping.svg" alt="Принцип shadow mapping: два прохода" style="width: 100%;" />
+
 ## Принцип
 
 1. **Shadow pass** — рисуем сцену в depth-текстуру, используя view/projection матрицу источника света.
@@ -96,6 +98,13 @@ bias: DepthBiasState { constant: 2, slope_scale: 2.0, clamp: 0.0 },
 
 `slope_scale` увеличивает bias для поверхностей, расположенных под углом к лучу света.
 
+Если bias слишком большой, возникает **Peter Panning** — тень «отрывается» от объекта, как будто
+он парит над поверхностью. Значение нужно подбирать: минимальное, устраняющее acne.
+
+Сглаживание краёв теней (soft shadows) достигается через **PCF** (Percentage Closer Filtering) —
+несколько сэмплов shadow map вокруг текущей точки с усреднением. Наша реализация использует
+один сэмпл, но `textureSampleCompare` с comparison sampler уже обеспечивает базовое сглаживание.
+
 ## Shadow pass
 
 Render pass без цветового вложения — только depth:
@@ -127,6 +136,8 @@ let shadow_uv = vec3<f32>(
 
 Координаты из clip space (−1…1) преобразуются в UV (0…1). Y инвертируется: в clip space Y вверх,
 в текстурах — вниз. `shadow_uv.z - 0.005` — дополнительный bias для устранения acne.
+
+<img src="/diagrams/shadow-coordinate-transform.svg" alt="Координатный трансформ для shadow mapping" style="width: 100%;" />
 
 В vertex shader позиция в пространстве света вычисляется с perspective divide — делением на `w`:
 
@@ -168,6 +179,21 @@ let intensity = light.ambient + diffuse * shadow * (1.0 - light.ambient);
 с отдельной текстурой и свои вершинные данные:
 
 ```rust
+const FLOOR_VERTICES: &[Vertex] = &[
+    Vertex { position: [-5.0, -0.5, -5.0], normal: [0.0, 1.0, 0.0], uv: [0.0, 0.0] },
+    Vertex { position: [ 5.0, -0.5, -5.0], normal: [0.0, 1.0, 0.0], uv: [5.0, 0.0] },
+    Vertex { position: [ 5.0, -0.5,  5.0], normal: [0.0, 1.0, 0.0], uv: [5.0, 5.0] },
+    Vertex { position: [-5.0, -0.5,  5.0], normal: [0.0, 1.0, 0.0], uv: [0.0, 5.0] },
+];
+
+const FLOOR_INDICES: &[u16] = &[0, 2, 1, 0, 3, 2];
+```
+
+4 вершины, 2 треугольника. Нормаль `(0, 1, 0)` — вверх. UV-координаты повторяют текстуру 5 раз
+(UV от 0 до 5 вместо 0 до 1). Порядок индексов `0, 2, 1, 0, 3, 2` — CCW с учётом того, что
+камера смотрит на пол сверху:
+
+```rust
 rpass.set_vertex_buffer(0, self.floor_vertex_buffer.slice(..));
 rpass.set_vertex_buffer(1, self.floor_instance_buffer.slice(..));
 rpass.set_index_buffer(self.floor_index_buffer.slice(..), IndexFormat::Uint16);
@@ -176,6 +202,13 @@ rpass.draw_indexed(0..6, 0, 0..1);
 ```
 
 ## Что получилось
+
+::: warning Типичные ошибки
+- `orthographic_rh_gl` вместо `orthographic_rh` — Z range будет [-1,1] вместо [0,1], тени сломаются
+- Без perspective divide (`light_clip.xyz / light_clip.w`) координаты тени неправильные
+- `fragment: None` в shadow pipeline — это depth-only rendering, фрагментный шейдер не нужен
+- Слишком большой bias → Peter Panning (тень «отрывается» от объекта)
+:::
 
 Три куба на плоской поверхности. Каждый отбрасывает тень на пол. Камера свободно перемещается —
 можно посмотреть на тени с разных сторон.

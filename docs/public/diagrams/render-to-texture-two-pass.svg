@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 650 280" width="100%" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <rect width="650" height="280" fill="#1a1a2e" rx="8"/>
+
+  <text x="325" y="28" text-anchor="middle" fill="#ccc" font-size="14" font-weight="600">Двухпроходный рендер: scene → post → screen</text>
+
+  <!-- Scene pass -->
+  <g transform="translate(20, 55)">
+    <rect x="0" y="0" width="200" height="190" rx="6" fill="#1a2a3a" stroke="#5588aa" stroke-width="1.5"/>
+    <text x="100" y="25" text-anchor="middle" fill="#5588aa" font-size="13" font-weight="600">Pass 1: Scene</text>
+
+    <!-- Input resources -->
+    <rect x="15" y="40" width="80" height="25" rx="3" fill="#1a2030" stroke="#446688" stroke-width="0.5"/>
+    <text x="55" y="57" text-anchor="middle" fill="#88bbdd" font-size="9">Vertex Buffer</text>
+    <rect x="105" y="40" width="80" height="25" rx="3" fill="#1a2030" stroke="#446688" stroke-width="0.5"/>
+    <text x="145" y="57" text-anchor="middle" fill="#88bbdd" font-size="9">Uniform (MVP)</text>
+
+    <rect x="15" y="72" width="80" height="25" rx="3" fill="#1a2030" stroke="#446688" stroke-width="0.5"/>
+    <text x="55" y="89" text-anchor="middle" fill="#88bbdd" font-size="9">Index Buffer</text>
+    <rect x="105" y="72" width="80" height="25" rx="3" fill="#1a2030" stroke="#446688" stroke-width="0.5"/>
+    <text x="145" y="89" text-anchor="middle" fill="#88bbdd" font-size="9">Textures</text>
+
+    <!-- Pipeline -->
+    <rect x="15" y="108" width="170" height="30" rx="4" fill="#223344" stroke="#5588aa" stroke-width="1"/>
+    <text x="100" y="128" text-anchor="middle" fill="#aaccee" font-size="10">Scene Pipeline</text>
+
+    <!-- Output -->
+    <rect x="15" y="148" width="80" height="30" rx="4" fill="#2a4a3a" stroke="#44aa66" stroke-width="1"/>
+    <text x="55" y="168" text-anchor="middle" fill="#66cc88" font-size="9">Offscreen Color</text>
+    <rect x="105" y="148" width="80" height="30" rx="4" fill="#2a4a3a" stroke="#44aa66" stroke-width="1"/>
+    <text x="145" y="168" text-anchor="middle" fill="#66cc88" font-size="9">Offscreen Depth</text>
+  </g>
+
+  <!-- Arrow between passes -->
+  <line x1="230" y1="190" x2="270" y2="190" stroke="#888" stroke-width="2" marker-end="url(#arw)"/>
+  <defs><marker id="arw" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#888"/></marker></defs>
+  <text x="250" y="180" text-anchor="middle" fill="#66cc88" font-size="9">offscreen</text>
+  <text x="250" y="210" text-anchor="middle" fill="#66cc88" font-size="9">texture</text>
+
+  <!-- Post pass -->
+  <g transform="translate(280, 55)">
+    <rect x="0" y="0" width="180" height="190" rx="6" fill="#2a1a2a" stroke="#aa5588" stroke-width="1.5"/>
+    <text x="90" y="25" text-anchor="middle" fill="#aa5588" font-size="13" font-weight="600">Pass 2: Post</text>
+
+    <rect x="15" y="40" width="150" height="25" rx="3" fill="#1a1020" stroke="#664455" stroke-width="0.5"/>
+    <text x="90" y="57" text-anchor="middle" fill="#cc88aa" font-size="9">vertex_index → fullscreen quad</text>
+
+    <rect x="15" y="72" width="150" height="25" rx="3" fill="#1a1020" stroke="#664455" stroke-width="0.5"/>
+    <text x="90" y="89" text-anchor="middle" fill="#cc88aa" font-size="9">Offscreen tex + sampler + mode</text>
+
+    <rect x="15" y="108" width="150" height="30" rx="4" fill="#332244" stroke="#aa5588" stroke-width="1"/>
+    <text x="90" y="128" text-anchor="middle" fill="#ccaadd" font-size="10">Post Pipeline</text>
+
+    <rect x="25" y="148" width="130" height="30" rx="4" fill="#4a3a1a" stroke="#ddaa44" stroke-width="1"/>
+    <text x="90" y="168" text-anchor="middle" fill="#ddbb66" font-size="10">Surface View → экран</text>
+  </g>
+
+  <!-- Arrow to screen -->
+  <line x1="470" y1="190" x2="510" y2="190" stroke="#888" stroke-width="2" marker-end="url(#arw)"/>
+
+  <!-- Screen -->
+  <g transform="translate(520, 100)">
+    <rect x="0" y="0" width="110" height="80" rx="6" fill="#1e1e30" stroke="#ddd" stroke-width="1.5"/>
+    <text x="55" y="25" text-anchor="middle" fill="#ddd" font-size="11" font-weight="600">Экран</text>
+    <rect x="10" y="35" width="90" height="35" rx="3" fill="#223344" stroke="#446" stroke-width="0.5"/>
+    <text x="55" y="57" text-anchor="middle" fill="#888" font-size="9">пиксели</text>
+  </g>
+
+  <!-- Note -->
+  <text x="325" y="268" text-anchor="middle" fill="#888" font-size="10">Оба прохода — один CommandEncoder → один queue.submit</text>
+</svg>
