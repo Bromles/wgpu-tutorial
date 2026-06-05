@@ -117,11 +117,11 @@ fn main(@builtin(global_invocation_id) id: vec3<u32>) {
 
 ## Респаун частиц
 
-CPU каждые ~100 мс перезаписывает часть буфера новыми частицами через `write_buffer`:
+CPU каждые ~100 мс перезаписывает часть буфера новыми частицами через `write_buffer`.
+Чтобы не перезаписывать одни и те же слоты, оффсет сдвигается после каждого спауна:
 
 ```rust
-fn spawn_particles(buffer: &Buffer, ctx: &GpuContext, count: u32) {
-    let mut rng = rand::rng();
+fn spawn_particles(buffer: &Buffer, ctx: &GpuContext, count: u32, offset: u32) {
     let new: Vec<ParticleData> = (0..count)
         .map(|_| {
             let angle = rng.random_range(0.0..TAU);
@@ -140,13 +140,26 @@ fn spawn_particles(buffer: &Buffer, ctx: &GpuContext, count: u32) {
 
     let mut data = encase::StorageBuffer::new(Vec::new());
     data.write(&new).unwrap();
-    ctx.queue.write_buffer(buffer, 0, &data.into_inner());
+    ctx.queue.write_buffer(
+        buffer,
+        (offset as u64) * ParticleData::min_size().get(),
+        &data.into_inner(),
+    );
 }
 ```
 
-Это записывает первые `count` частиц буфера — «живые» частицы при этом не затрагиваются,
-поскольку compute-шейдер использует тот же буфер. Порядок выполнения гарантирует,
-что compute pass завершится до следующего кадра.
+Вызов в `render`: оффсет сдвигается на `count` и заворачивается по модулю `NUM_PARTICLES`:
+
+```rust
+if spawn_timer > 0.1 {
+    spawn_timer = 0.0;
+    spawn_particles(&particle_buffer, ctx, 64, spawn_offset);
+    spawn_offset = (spawn_offset + 64) % NUM_PARTICLES;
+}
+```
+
+Таким образом каждые 3.2 секунды (2048 / 64 × 0.1 с) весь буфер обновляется — мёртвые частицы
+получают новые данные, а живые не затрагиваются, поскольку каждый спаун пишет в свою область.
 
 ## Billboard-рендеринг
 

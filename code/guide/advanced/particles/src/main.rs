@@ -127,6 +127,7 @@ struct ParticlesDemo {
     depth_texture_view: wgpu::TextureView,
     camera: Camera,
     spawn_timer: f32,
+    spawn_offset: u32,
 }
 
 impl ParticlesDemo {
@@ -150,7 +151,7 @@ impl ParticlesDemo {
         (t, v)
     }
 
-    fn spawn_particles(buffer: &Buffer, ctx: &GpuContext, count: u32) {
+    fn spawn_particles(buffer: &Buffer, ctx: &GpuContext, count: u32, offset: u32) {
         let mut rng = rand::rng();
         let new_particles: Vec<ParticleData> = (0..count)
             .map(|_| {
@@ -171,7 +172,11 @@ impl ParticlesDemo {
 
         let mut data = encase::StorageBuffer::new(Vec::new());
         data.write(&new_particles).unwrap();
-        ctx.queue.write_buffer(buffer, 0, &data.into_inner());
+        ctx.queue.write_buffer(
+            buffer,
+            (offset as u64) * ParticleData::min_size().get(),
+            &data.into_inner(),
+        );
     }
 }
 
@@ -409,6 +414,7 @@ impl Example for ParticlesDemo {
             depth_texture_view,
             camera,
             spawn_timer: 0.0,
+            spawn_offset: 0,
         }
     }
 
@@ -426,7 +432,9 @@ impl Example for ParticlesDemo {
     fn render(&mut self, ctx: &GpuContext, view: &wgpu::TextureView, encoder: &mut CommandEncoder) {
         if self.spawn_timer > 0.1 {
             self.spawn_timer = 0.0;
-            Self::spawn_particles(&self.particle_buffer, ctx, 64);
+            let count = 64u32;
+            Self::spawn_particles(&self.particle_buffer, ctx, count, self.spawn_offset);
+            self.spawn_offset = (self.spawn_offset + count) % NUM_PARTICLES;
         }
 
         {
