@@ -7,10 +7,11 @@ use wgpu::CurrentSurfaceTexture::{
     Lost, Occluded, Outdated, Suboptimal, Success, Timeout, Validation,
 };
 use wgpu::{
-    Backends, Color, CommandEncoderDescriptor, Device, DeviceDescriptor, ExperimentalFeatures,
-    Features, Instance, InstanceDescriptor, Limits, LoadOp, MemoryHints, Operations,
-    PowerPreference, Queue, RenderPassColorAttachment, RenderPassDescriptor, RequestAdapterOptions,
-    StoreOp, Surface, SurfaceConfiguration, TextureViewDescriptor,
+    Backends, Color, CommandEncoderDescriptor, CompositeAlphaMode, Device, DeviceDescriptor,
+    ExperimentalFeatures, Instance, InstanceDescriptor, Limits, LoadOp, MemoryHints,
+    Operations, PowerPreference, PresentMode, Queue, RenderPassColorAttachment, RenderPassDescriptor,
+    RequestAdapterOptions, StoreOp, Surface, SurfaceConfiguration, TextureFormat, TextureUsages,
+    TextureViewDescriptor,
 };
 use winit::application::ApplicationHandler;
 use winit::dpi::PhysicalSize;
@@ -59,7 +60,7 @@ impl Renderer {
 
         let (device, queue) = pollster::block_on(adapter.request_device(&DeviceDescriptor {
             label: Some("Main device"),
-            required_features: adapter.features() & Features::default(),
+            required_features: adapter.features(),
             required_limits: Limits::default().using_resolution(adapter.limits()),
             memory_hints: MemoryHints::Performance,
             trace: Default::default(),
@@ -67,9 +68,26 @@ impl Renderer {
         }))
         .expect("Failed to request device");
 
-        let surface_config = surface
-            .get_default_config(&adapter, physical_size.width, physical_size.height)
-            .expect("Failed to get default surface config");
+        let surface_capabilities = surface.get_capabilities(&adapter);
+
+        let surface_format = surface_capabilities
+            .formats
+            .iter()
+            .copied()
+            .find(TextureFormat::is_srgb)
+            .or_else(|| surface_capabilities.formats.first().copied())
+            .expect("Failed to get surface format");
+
+        let surface_config = SurfaceConfiguration {
+            usage: TextureUsages::RENDER_ATTACHMENT,
+            format: surface_format,
+            width: physical_size.width,
+            height: physical_size.height,
+            present_mode: PresentMode::AutoVsync,
+            desired_maximum_frame_latency: 2,
+            alpha_mode: CompositeAlphaMode::Auto,
+            view_formats: vec![],
+        };
 
         surface.configure(&device, &surface_config);
 

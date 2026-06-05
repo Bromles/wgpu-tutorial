@@ -1,24 +1,22 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::f32::consts::FRAC_PI_2;
-use std::mem::size_of;
 use std::time::Duration;
 
-use bytemuck::{Pod, Zeroable};
 use encase::ShaderType;
 use glam::{Mat4, Vec3};
 use rand::Rng;
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor
-    , BindGroupLayoutEntry, BindingType, BlendComponent, BlendFactor, BlendOperation, BlendState
-    , Buffer, BufferBindingType, BufferDescriptor, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, ComputePassDescriptor,
-    ComputePipelineDescriptor, DepthStencilState, Extent3d, FragmentState, LoadOp, MultisampleState,
-    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PrimitiveState,
-    PrimitiveTopology, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderStages,
-    StencilState, StoreOp, TextureDescriptor, TextureDimension, TextureFormat,
-    TextureUsages, TextureViewDescriptor, VertexState,
+    include_wgsl, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingType, BlendComponent, BlendFactor, BlendOperation, BlendState,
+    Buffer, BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState,
+    ColorWrites, CommandEncoder, CompareFunction, ComputePassDescriptor,
+    ComputePipelineDescriptor, DepthStencilState, Extent3d, FragmentState, LoadOp,
+    MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
+    PrimitiveState, PrimitiveTopology, RenderPassDescriptor, RenderPipeline,
+    RenderPipelineDescriptor, ShaderStages, StencilState, StoreOp, TextureDescriptor,
+    TextureDimension, TextureFormat, TextureUsages, TextureViewDescriptor, VertexState,
 };
 use winit::dpi::PhysicalSize;
 use winit::keyboard::KeyCode;
@@ -27,24 +25,17 @@ use framework::{run, Example, GpuContext, Input};
 
 const NUM_PARTICLES: u32 = 2048;
 
-#[repr(C)]
-#[derive(Clone, Copy, Pod, Zeroable)]
+#[derive(ShaderType, Clone, Copy)]
 struct ParticleData {
-    pos: [f32; 3],
-    vel: [f32; 3],
+    pos: Vec3,
+    vel: Vec3,
     life: f32,
-    _pad1: f32,
-    _pad2: f32,
-    _pad3: f32,
 }
 
-#[repr(C)]
-#[derive(Clone, Copy, Pod, Zeroable)]
+#[derive(ShaderType)]
 struct SimParams {
     dt: f32,
     gravity: f32,
-    _pad1: f32,
-    _pad2: f32,
 }
 
 #[derive(ShaderType)]
@@ -161,22 +152,26 @@ impl ParticlesDemo {
 
     fn spawn_particles(buffer: &Buffer, ctx: &GpuContext, count: u32) {
         let mut rng = rand::rng();
-        let mut new_particles = Vec::with_capacity(count as usize);
-        for _ in 0..count {
-            let angle = rng.random_range(0.0..std::f32::consts::TAU);
-            let speed = rng.random_range(1.0..4.0);
-            let y_vel = rng.random_range(2.0..6.0);
-            new_particles.push(ParticleData {
-                pos: [0.0, 0.0, 0.0],
-                vel: [angle.cos() * speed * 0.5, y_vel, angle.sin() * speed * 0.5],
-                life: rng.random_range(1.5..3.5),
-                _pad1: 0.0,
-                _pad2: 0.0,
-                _pad3: 0.0,
-            });
-        }
-        ctx.queue
-            .write_buffer(buffer, 0, bytemuck::cast_slice(&new_particles));
+        let new_particles: Vec<ParticleData> = (0..count)
+            .map(|_| {
+                let angle = rng.random_range(0.0..std::f32::consts::TAU);
+                let speed = rng.random_range(1.0..4.0);
+                let y_vel = rng.random_range(2.0..6.0);
+                ParticleData {
+                    pos: Vec3::ZERO,
+                    vel: Vec3::new(
+                        angle.cos() * speed * 0.5,
+                        y_vel,
+                        angle.sin() * speed * 0.5,
+                    ),
+                    life: rng.random_range(1.5..3.5),
+                }
+            })
+            .collect();
+
+        let mut data = encase::StorageBuffer::new(Vec::new());
+        data.write(&new_particles).unwrap();
+        ctx.queue.write_buffer(buffer, 0, &data.into_inner());
     }
 }
 
@@ -196,27 +191,31 @@ impl Example for ParticlesDemo {
                 let speed = rng.random_range(1.0..4.0);
                 let y_vel = rng.random_range(2.0..6.0);
                 ParticleData {
-                    pos: [0.0, 0.0, 0.0],
-                    vel: [angle.cos() * speed * 0.5, y_vel, angle.sin() * speed * 0.5],
+                    pos: Vec3::ZERO,
+                    vel: Vec3::new(
+                        angle.cos() * speed * 0.5,
+                        y_vel,
+                        angle.sin() * speed * 0.5,
+                    ),
                     life: rng.random_range(1.5..3.5),
-                    _pad1: 0.0,
-                    _pad2: 0.0,
-                    _pad3: 0.0,
                 }
             })
             .collect();
+
+        let mut init_data = encase::StorageBuffer::new(Vec::new());
+        init_data.write(&initial).unwrap();
 
         let particle_buffer = ctx
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Particles"),
-                contents: bytemuck::cast_slice(&initial),
+                contents: &init_data.into_inner(),
                 usage: BufferUsages::STORAGE | BufferUsages::COPY_DST,
             });
 
         let params_buffer = ctx.device.create_buffer(&BufferDescriptor {
             label: Some("SimParams"),
-            size: size_of::<SimParams>() as u64,
+            size: SimParams::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
@@ -281,7 +280,6 @@ impl Example for ParticlesDemo {
                 cache: None,
             });
 
-        // Render: storage read + camera uniform
         let render_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
@@ -426,23 +424,21 @@ impl Example for ParticlesDemo {
     }
 
     fn render(&mut self, ctx: &GpuContext, view: &wgpu::TextureView, encoder: &mut CommandEncoder) {
-        // Respawn dead particles periodically
         if self.spawn_timer > 0.1 {
             self.spawn_timer = 0.0;
             Self::spawn_particles(&self.particle_buffer, ctx, 64);
         }
 
-        let dt = 1.0 / 60.0;
-        ctx.queue.write_buffer(
-            &self.params_buffer,
-            0,
-            bytemuck::cast_slice(&[SimParams {
-                dt,
+        {
+            let mut data = encase::UniformBuffer::new(Vec::new());
+            data.write(&SimParams {
+                dt: 1.0 / 60.0,
                 gravity: 9.8,
-                _pad1: 0.0,
-                _pad2: 0.0,
-            }]),
-        );
+            })
+            .unwrap();
+            ctx.queue
+                .write_buffer(&self.params_buffer, 0, &data.into_inner());
+        }
 
         let aspect = ctx.surface_config.width as f32 / ctx.surface_config.height as f32;
         let proj = Mat4::perspective_rh(std::f32::consts::FRAC_PI_4, aspect, 0.1, 100.0);
@@ -460,7 +456,6 @@ impl Example for ParticlesDemo {
                 .write_buffer(&self.camera_uniform_buffer, 0, &d.into_inner());
         }
 
-        // Compute: simulate
         {
             let mut cpass = encoder.begin_compute_pass(&ComputePassDescriptor {
                 label: Some("Simulate"),
@@ -471,7 +466,6 @@ impl Example for ParticlesDemo {
             cpass.dispatch_workgroups(NUM_PARTICLES / 256, 1, 1);
         }
 
-        // Render: particles
         {
             let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
                 label: Some("Particles"),

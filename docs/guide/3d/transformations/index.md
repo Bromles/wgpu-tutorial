@@ -271,6 +271,8 @@ GPU определяет переднюю грань через векторно
 
 Вращающийся куб. Backface culling убирает задние грани, цвета граней — интерполяция между вершинами.
 
+<!-- TODO: скриншот -->
+
 <div class="tip custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Попробуем</p>
 

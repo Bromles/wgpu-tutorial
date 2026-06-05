@@ -192,7 +192,7 @@ impl Camera {
 struct ShaderUniforms {
     view_proj: Mat4,
     model: Mat4,
-    normal_matrix: [[f32; 3]; 3],
+    normal_matrix: Mat3,
     light_dir: Vec3,
     ambient: f32,
     base_color: Vec4,
@@ -204,7 +204,7 @@ struct MeshDraw {
     index_count: u32,
     bind_group: wgpu::BindGroup,
     model: Mat4,
-    normal_matrix: [[f32; 3]; 3],
+    normal_matrix: Mat3,
     uniform_buffer: Buffer,
     base_color: Vec4,
 }
@@ -428,11 +428,7 @@ impl Example for ModelLoadingDemo {
                 index_count: indices.len() as u32,
                 bind_group,
                 model,
-                normal_matrix: [
-                    nm.x_axis.to_array(),
-                    nm.y_axis.to_array(),
-                    nm.z_axis.to_array(),
-                ],
+                normal_matrix: nm,
                 uniform_buffer,
                 base_color: color,
             }

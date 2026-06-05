@@ -231,13 +231,15 @@ let compute_bgl = ctx.device.create_bind_group_layout(&BindGroupLayoutDescriptor
 
 ## Итог
 
-- **Compute pipeline** выполняет произвольные вычисления на GPU вне графического конвейера.
-- `@compute @workgroup_size(X, Y)` определяет функцию и размер группы потоков.
-- `dispatch_workgroups(x, y, z)` запускает вычисления; общее число потоков = произведение
-  dispatch × workgroup_size.
-- **Storage texture** (`texture_storage_2d`) позволяет compute-шейдеру писать в текстуру.
-- `textureLoad` читает тексель по целым координатам, `textureStore` — записывает.
-- Compute pass записывается в тот же `CommandEncoder` и выполняется GPU в порядке записи.
+Разделённый экран: слева — оригинальная сцена с кубом и полом, справа — размытая версия, обработанная compute-шейдером. Мы познакомились с compute pipeline — новым типом конвейера, который выполняет произвольные вычисления на GPU вне графического конвейера. Compute-шейдер запускается через `dispatch_workgroups`, каждый поток получает свой `global_invocation_id`, а для записи результата используется `texture_storage_2d`. Compute pass записывается в тот же `CommandEncoder` и выполняется GPU в порядке записи — это позволяет комбинировать render и compute проходы произвольным образом.
 
-Compute-шейдеры — основа для размытия, фильтрации, симуляций частиц и любой обработки данных,
-которую GPU может выполнить параллельно.
+<!-- TODO: скриншот -->
+
+<div class="tip custom-block" style="padding-top: 8px">
+<p class="custom-block-title">Попробуем</p>
+
+- Увеличить `radius` до 8 — более сильное размытие
+- Изменить алгоритм на медианный фильтр — взять медиану вместо среднего
+- Добавить второй compute pass: инверсия цветов размытой половины
+
+</div>

@@ -1,10 +1,8 @@
 struct Particle {
     pos: vec3<f32>,
+    _pad0: f32,
     vel: vec3<f32>,
     life: f32,
-    _pad1: f32,
-    _pad2: f32,
-    _pad3: f32,
 }
 
 struct VertexOutput {

@@ -55,7 +55,7 @@ impl<E: Example> ApplicationHandler for App<E> {
 
             center_window(&window);
 
-            event_loop.set_control_flow(ControlFlow::Poll);
+            event_loop.set_control_flow(ControlFlow::Wait);
 
             let ctx = Box::new(GpuContext::new(window.clone()));
             let example = Box::new(E::init(&ctx));

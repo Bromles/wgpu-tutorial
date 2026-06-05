@@ -290,20 +290,14 @@ struct LightUniforms {
     intensity: f32,
 }
 
-#[repr(C)]
-#[derive(Clone, Copy, Pod, Zeroable)]
+#[derive(ShaderType)]
 struct BrightParams {
     threshold: f32,
-    _pad1: f32,
-    _pad2: f32,
-    _pad3: f32,
 }
 
-#[repr(C)]
-#[derive(Clone, Copy, Pod, Zeroable)]
+#[derive(ShaderType)]
 struct BlurParams {
-    direction: [f32; 2],
-    _pad1: [f32; 2],
+    direction: glam::Vec2,
 }
 
 const TEX_SIZE: u32 = 256;
@@ -741,20 +735,16 @@ impl Example for BloomDemo {
         let bright_bgl = Self::create_compute_bgl(&ctx.device, true);
         let bright_params_ub = ctx.device.create_buffer(&BufferDescriptor {
             label: Some("BrightParams"),
-            size: 16,
+            size: BrightParams::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        ctx.queue.write_buffer(
-            &bright_params_ub,
-            0,
-            bytemuck::cast_slice(&[BrightParams {
-                threshold: 1.0,
-                _pad1: 0.0,
-                _pad2: 0.0,
-                _pad3: 0.0,
-            }]),
-        );
+        {
+            let mut d = encase::UniformBuffer::new(Vec::new());
+            d.write(&BrightParams { threshold: 1.0 }).unwrap();
+            ctx.queue
+                .write_buffer(&bright_params_ub, 0, &d.into_inner());
+        }
         let bright_bg = ctx.device.create_bind_group(&BindGroupDescriptor {
             label: Some("BrightBG"),
             layout: &bright_bgl,
@@ -795,20 +785,21 @@ impl Example for BloomDemo {
         let blur_bgl = Self::create_compute_bgl(&ctx.device, true);
         let blur_params_ub = ctx.device.create_buffer(&BufferDescriptor {
             label: Some("BlurParams"),
-            size: 16,
+            size: BlurParams::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
         let w = ctx.surface_config.width as f32;
         let h = ctx.surface_config.height as f32;
-        ctx.queue.write_buffer(
-            &blur_params_ub,
-            0,
-            bytemuck::cast_slice(&[BlurParams {
-                direction: [1.0 / w, 0.0],
-                _pad1: [0.0, 0.0],
-            }]),
-        );
+        {
+            let mut d = encase::UniformBuffer::new(Vec::new());
+            d.write(&BlurParams {
+                direction: glam::Vec2::new(1.0 / w, 0.0),
+            })
+            .unwrap();
+            ctx.queue
+                .write_buffer(&blur_params_ub, 0, &d.into_inner());
+        }
         let hblur_bg = ctx.device.create_bind_group(&BindGroupDescriptor {
             label: Some("HBlurBG"),
             layout: &blur_bgl,
@@ -827,14 +818,15 @@ impl Example for BloomDemo {
                 },
             ],
         });
-        ctx.queue.write_buffer(
-            &blur_params_ub,
-            0,
-            bytemuck::cast_slice(&[BlurParams {
-                direction: [0.0, 1.0 / h],
-                _pad1: [0.0, 0.0],
-            }]),
-        );
+        {
+            let mut d = encase::UniformBuffer::new(Vec::new());
+            d.write(&BlurParams {
+                direction: glam::Vec2::new(0.0, 1.0 / h),
+            })
+            .unwrap();
+            ctx.queue
+                .write_buffer(&blur_params_ub, 0, &d.into_inner());
+        }
         let vblur_bg = ctx.device.create_bind_group(&BindGroupDescriptor {
             label: Some("VBlurBG"),
             layout: &blur_bgl,
@@ -854,14 +846,15 @@ impl Example for BloomDemo {
             ],
         });
         // write H direction back for first pass
-        ctx.queue.write_buffer(
-            &blur_params_ub,
-            0,
-            bytemuck::cast_slice(&[BlurParams {
-                direction: [1.0 / w, 0.0],
-                _pad1: [0.0, 0.0],
-            }]),
-        );
+        {
+            let mut d = encase::UniformBuffer::new(Vec::new());
+            d.write(&BlurParams {
+                direction: glam::Vec2::new(1.0 / w, 0.0),
+            })
+            .unwrap();
+            ctx.queue
+                .write_buffer(&blur_params_ub, 0, &d.into_inner());
+        }
         let blur_pipeline = ctx
             .device
             .create_compute_pipeline(&ComputePipelineDescriptor {
@@ -1065,14 +1058,15 @@ impl Example for BloomDemo {
         });
 
         let blur_bgl = self.blur_pipeline.get_bind_group_layout(0);
-        ctx.queue.write_buffer(
-            &self.blur_params_ub,
-            0,
-            bytemuck::cast_slice(&[BlurParams {
-                direction: [1.0 / w, 0.0],
-                _pad1: [0.0, 0.0],
-            }]),
-        );
+        {
+            let mut d = encase::UniformBuffer::new(Vec::new());
+            d.write(&BlurParams {
+                direction: glam::Vec2::new(1.0 / w, 0.0),
+            })
+            .unwrap();
+            ctx.queue
+                .write_buffer(&self.blur_params_ub, 0, &d.into_inner());
+        }
         self.hblur_bg = ctx.device.create_bind_group(&BindGroupDescriptor {
             label: Some("HBlurBG"),
             layout: &blur_bgl,
@@ -1091,14 +1085,15 @@ impl Example for BloomDemo {
                 },
             ],
         });
-        ctx.queue.write_buffer(
-            &self.blur_params_ub,
-            0,
-            bytemuck::cast_slice(&[BlurParams {
-                direction: [0.0, 1.0 / h],
-                _pad1: [0.0, 0.0],
-            }]),
-        );
+        {
+            let mut d = encase::UniformBuffer::new(Vec::new());
+            d.write(&BlurParams {
+                direction: glam::Vec2::new(0.0, 1.0 / h),
+            })
+            .unwrap();
+            ctx.queue
+                .write_buffer(&self.blur_params_ub, 0, &d.into_inner());
+        }
         self.vblur_bg = ctx.device.create_bind_group(&BindGroupDescriptor {
             label: Some("VBlurBG"),
             layout: &blur_bgl,
@@ -1117,14 +1112,15 @@ impl Example for BloomDemo {
                 },
             ],
         });
-        ctx.queue.write_buffer(
-            &self.blur_params_ub,
-            0,
-            bytemuck::cast_slice(&[BlurParams {
-                direction: [1.0 / w, 0.0],
-                _pad1: [0.0, 0.0],
-            }]),
-        );
+        {
+            let mut d = encase::UniformBuffer::new(Vec::new());
+            d.write(&BlurParams {
+                direction: glam::Vec2::new(1.0 / w, 0.0),
+            })
+            .unwrap();
+            ctx.queue
+                .write_buffer(&self.blur_params_ub, 0, &d.into_inner());
+        }
 
         let post_bgl = self.post_pipeline.get_bind_group_layout(0);
         self.post_bg = ctx.device.create_bind_group(&BindGroupDescriptor {

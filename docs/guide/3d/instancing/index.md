@@ -216,8 +216,6 @@ rpass.draw_indexed(0..36, 0, 0..NUM_INSTANCES as u32);
 
 ## Что получилось
 
-## Что получилось
-
 ::: warning Типичные ошибки
 - `step_mode: VertexStepMode::Instance` забыли — GPU будет читать instance buffer как вершинный, данные сместятся
 - `draw_indexed(0..36, 0, 0..0)` — третий параметр 0 = 0 экземпляров = ничего не нарисуется
@@ -226,6 +224,8 @@ rpass.draw_indexed(0..36, 0, 0..NUM_INSTANCES as u32);
 
 125 кубов в виде сетки 5×5×5. Камера свободно перемещается между ними — WASD, мышь (правая кнопка),
 Space/Shift. Все кубы нарисованы одним `draw_indexed`.
+
+<!-- TODO: скриншот -->
 
 <div class="tip custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Попробуем</p>

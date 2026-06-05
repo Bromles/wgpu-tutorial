@@ -9,7 +9,6 @@ license.workspace = true
 framework = { path = "../../../framework" }
 wgpu.workspace = true
 winit.workspace = true
-bytemuck.workspace = true
 encase.workspace = true
 glam.workspace = true
 rand = "0.9"

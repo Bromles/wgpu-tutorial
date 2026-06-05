@@ -159,8 +159,6 @@ for mesh in &self.meshes {
 
 ## Что получилось
 
-## Что получилось
-
 ::: warning Типичные ошибки
 - Каждый mesh должен иметь свой bind group — общий bind group не работает при разных uniform-данных
 - `index_count` в `draw_indexed` должен соответствовать реальному количеству индексов — иначе мусор или crash
@@ -168,6 +166,8 @@ for mesh in &self.meshes {
 :::
 
 Три сферы с разными текстурами, стоящие в ряд. Камера свободно перемещается.
+
+<!-- TODO: скриншот -->
 
 <div class="tip custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Попробуем</p>

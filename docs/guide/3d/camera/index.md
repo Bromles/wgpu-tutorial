@@ -191,6 +191,8 @@ let mvp = projection * view_mat * model;
 Три куба на плоскости. Зажмите правую кнопку мыши и двигайте мышь для обзора, WASD — для
 перемещения, Space и Shift — для движения вверх и вниз.
 
+<!-- TODO: скриншот -->
+
 <div class="tip custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Попробуем</p>
 

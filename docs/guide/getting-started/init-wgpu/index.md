@@ -137,11 +137,12 @@ struct Renderer {
     queue: Queue,
     surface: Surface<'static>,
     surface_config: SurfaceConfiguration,
+    surface_format: TextureFormat,
 }
 ```
 
 `SurfaceConfiguration` описывает параметры поверхности — размер и формат изображения. С её помощью мы реагируем на
-изменение размера окна.
+изменение размера окна. `surface_format` — формат пикселей поверхности, его нужно знать при создании конвейеров.
 
 Обновим и состояние приложения:
 
@@ -245,21 +246,24 @@ compatible_surface: Some( & surface),
 ### Device и Queue
 
 ```rust
-    let (device, queue) = pollster::block_on(adapter.request_device( & DeviceDescriptor {
-label: Some("Main device"),
-required_features: adapter.features() & Features::default (),
-required_limits: Limits::default ().using_resolution(adapter.limits()),
-memory_hints: MemoryHints::Performance,
-trace: Default::default (),
-experimental_features: ExperimentalFeatures::disabled(),
-}))
-.expect("Failed to request device");
+    let (device, queue) = pollster::block_on(adapter.request_device(&DeviceDescriptor {
+        label: Some("Main device"),
+        required_features: adapter.features(),
+        required_limits: Limits::default().using_resolution(adapter.limits()),
+        memory_hints: MemoryHints::Performance,
+        trace: Default::default(),
+        experimental_features: ExperimentalFeatures::disabled(),
+    }))
+    .expect("Failed to request device");
 ```
 
 `Device` и `Queue` создаются вместе — это главные объекты для работы с GPU.
 
 - `label` — отладочное имя, появится в логах. У многих сущностей wgpu есть этот параметр
-- `required_features` — запрашиваем фичи, поддерживаемые адаптером
+- `required_features: adapter.features()` — запрашиваем все фичи, которые поддерживает адаптер. wgpu — нативная
+  библиотека, и мы хотим использовать возможности GPU по полной. Если бы запрашивали `Features::empty()`, получили бы
+  только минимальный набор, определённый стандартом WebGPU — никаких push-констант, storage-текстур с чтением-записью и
+  прочих полезных вещей
 - `required_limits` — ограничения (размер текстур, количество буферов). `using_resolution` учитывает разрешение адаптера
 - `memory_hints: Performance` — подсказка менеджеру памяти: оптимизировать скорость, а не потребление
 - `trace` — запись команд в файл для отладки через [wgpu-player](https://github.com/gfx-rs/wgpu/tree/trunk/player)
@@ -268,23 +272,55 @@ experimental_features: ExperimentalFeatures::disabled(),
 ### SurfaceConfiguration
 
 ```rust
-    let surface_config = surface
-.get_default_config( & adapter, physical_size.width, physical_size.height)
-.expect("Failed to get default surface config");
+    let surface_capabilities = surface.get_capabilities(&adapter);
 
-surface.configure( & device, & surface_config);
+    let surface_format = surface_capabilities
+        .formats
+        .iter()
+        .copied()
+        .find(TextureFormat::is_srgb)
+        .or_else(|| surface_capabilities.formats.first().copied())
+        .expect("Failed to get surface format");
 
-Self {
-device,
-queue,
-surface,
-surface_config,
-}
+    let surface_config = SurfaceConfiguration {
+        usage: TextureUsages::RENDER_ATTACHMENT,
+        format: surface_format,
+        width: physical_size.width,
+        height: physical_size.height,
+        present_mode: PresentMode::AutoVsync,
+        desired_maximum_frame_latency: 2,
+        alpha_mode: CompositeAlphaMode::Auto,
+        view_formats: vec![],
+    };
+
+    surface.configure(&device, &surface_config);
+
+    Self {
+        device,
+        queue,
+        surface,
+        surface_config,
+        surface_format,
+    }
 }
 ```
 
-Конфигурация поверхности по умолчанию. В следующих главах мы научимся менять VSync и буферизацию вручную. Применяем
-конфигурацию и возвращаем готовый `Renderer`.
+Разберём по шагам:
+
+1. `get_capabilities` — спрашиваем адаптер, какие форматы, режимы презентации и альфа-режимы поддерживает поверхность.
+   Каждый монитор и ОС дают свой набор — поэтому нельзя захардкодить формат
+
+2. Выбираем формат: сначала ищем sRGB-формат (он корректно работает с цветами), а если такого нет — берём первый
+   доступный. На большинстве систем будет `Bgra8UnormSrgb`
+
+3. `SurfaceConfiguration` собираем вручную:
+   - `usage: RENDER_ATTACHMENT` — мы будем рисовать в эту текстуру
+   - `present_mode: AutoVsync` — wgpu сам выберет режим с вертикальной синхронизацией (VSync), если доступен
+   - `desired_maximum_frame_latency: 2` — сколько кадров может быть в очереди одновременно. Двойная буферизация
+   - `alpha_mode: Auto` — wgpu сам выберет режим прозрачности
+   - `view_formats: vec![]` — дополнительные форматы для TextureView, нам пока не нужны
+
+4. `surface.configure` — применяем конфигурацию. Поверхность создаёт внутренние текстуры нужного размера и формата
 
 ## Метод `resize_surface`
 

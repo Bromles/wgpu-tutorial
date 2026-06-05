@@ -183,8 +183,6 @@ let color = base_color * light.light_color * intensity;
 
 ## Что получилось
 
-## Что получилось
-
 ::: warning Типичные ошибки
 - Нормаль не нормализована после normal matrix — `normalize()` обязателен, иначе `dot(N, L)` даёт неверный результат
 - Normal matrix = `(M^-1)^T`, а не `M^T` — при неравномерном масштабе освещение будет неправильным
@@ -193,6 +191,8 @@ let color = base_color * light.light_color * intensity;
 
 125 кубов с освещением. Грани, обращённые к свету, яркие, обращённые от света — тёмные.
 Камера свободно перемещается между кубами.
+
+<!-- TODO: скриншот -->
 
 <div class="tip custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Попробуем</p>

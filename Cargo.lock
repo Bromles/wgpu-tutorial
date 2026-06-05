@@ -58,7 +58,6 @@ dependencies = [
 name = "advanced-particles"
 version = "0.1.0"
 dependencies = [
- "bytemuck",
  "encase",
  "framework",
  "glam",

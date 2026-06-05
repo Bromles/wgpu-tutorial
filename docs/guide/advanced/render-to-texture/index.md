@@ -210,8 +210,6 @@ rpass.draw(0..6, 0..1);
 
 ## Что получилось
 
-## Что получилось
-
 ::: warning Типичные ошибки
 - Offscreen-текстура не пересоздана при resize — чёрный экран или panic
 - `StoreOp::Discard` вместо `Store` в scene pass — post pass получит пустую текстуру
@@ -221,6 +219,8 @@ rpass.draw(0..6, 0..1);
 
 Сцена из 125 освещённых кубов. Нажмите 1 — обычный вид, 2 — оттенки серого, 3 — инверсия цветов.
 Камера перемещается как обычно.
+
+<!-- TODO: скриншот -->
 
 <div class="tip custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Попробуем</p>

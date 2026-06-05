@@ -1,10 +1,8 @@
 struct Particle {
     pos: vec3<f32>,
+    _pad0: f32,
     vel: vec3<f32>,
     life: f32,
-    _pad1: f32,
-    _pad2: f32,
-    _pad3: f32,
 }
 
 @group(0) @binding(0)
@@ -13,8 +11,6 @@ var<storage, read_write> particles: array<Particle>;
 struct Params {
     dt: f32,
     gravity: f32,
-    _pad1: f32,
-    _pad2: f32,
 }
 
 @group(0) @binding(1)
