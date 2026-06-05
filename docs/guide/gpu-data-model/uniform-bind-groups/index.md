@@ -85,6 +85,18 @@ flowchart TB
 
 ## Uniform-буфер и выравнивание
 
+Добавим крейт `encase` в зависимости (`Cargo.toml`) — он автоматизирует выравнивание данных
+для uniform-буферов:
+
+```toml
+[dependencies]
+framework = { path = "../../../framework" }
+wgpu.workspace = true
+winit.workspace = true
+bytemuck.workspace = true
+encase.workspace = true # [!code ++]
+```
+
 Начнём с Rust-структуры, данные которой будем передавать в шейдер:
 
 ```rust
@@ -262,7 +274,8 @@ WGSL определяет несколько адресных пространс
 | `private` | чтение/запись | Локальные переменные шейдера (аналог стека) |
 | `workgroup` | чтение/запись | Разделяемая память между потоками compute shader |
 
-Мы будем использовать `uniform` для всех глав до compute shader, где появится `storage`.
+Мы будем использовать `uniform` для всех глав до раздела про particles, где появится `var<storage>`
+для хранения массива частиц, и compute passes, где появятся storage-текстуры.
 
 Фрагментный шейдер использует `time` для создания пульсирующего эффекта:
 

@@ -116,7 +116,32 @@ struct InstanceData {
 ```
 
 Normal matrix — 3×3, 9 float, 36 байт. В шейдере она передаётся через три атрибута `@location(6)`,
-`@location(7)`, `@location(8)` и собирается в `mat3x3`.
+`@location(7)`, `@location(8)` и собирается в `mat3x3`:
+
+```wgsl
+struct InstanceInput {
+    // model — четыре vec4 (16 байт каждый), совпадает с Float32x4 в Rust
+    @location(2) model_col0: vec4<f32>,
+    @location(3) model_col1: vec4<f32>,
+    @location(4) model_col2: vec4<f32>,
+    @location(5) model_col3: vec4<f32>,
+    // normal_matrix — три vec4, но Rust передаёт Float32x3
+    @location(6) normal_col0: vec4<f32>,
+    @location(7) normal_col1: vec4<f32>,
+    @location(8) normal_col2: vec4<f32>,
+};
+
+let normal_matrix = mat3x3<f32>(
+    instance.normal_col0.xyz,
+    instance.normal_col1.xyz,
+    instance.normal_col2.xyz,
+);
+```
+
+На стороне Rust для нормальной матрицы используется формат `VertexFormat::Float32x3` —
+по три float на колонку. Шейдер ожидает `vec4<f32>`, но wgpu автоматически заполняет `.w`
+значением `1.0`. Поскольку при создании `mat3x3` мы берём только `.xyz`, это работает
+корректно — четвёртый компонент просто игнорируется.
 
 ## Два bind groups
 

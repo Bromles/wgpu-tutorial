@@ -10,7 +10,6 @@ editLink: false
 
 - нормали, направленный свет, diffuse texture
 - instancing, camera, depth buffer
-- render-to-texture (offscreen rendering)
 
 **Что появится в этой главе:**
 

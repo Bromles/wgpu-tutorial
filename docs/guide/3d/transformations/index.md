@@ -29,6 +29,22 @@ editLink: false
 определённым углом. Чтобы превратить 3D-координаты в 2D-позиции на экране, используются три матрицы — model, view и
 projection. Вместе они называются **MVP**.
 
+Для работы с матрицами добавим крейт `glam` в зависимости (`Cargo.toml`):
+
+```toml
+[dependencies]
+framework = { path = "../../../framework" }
+wgpu.workspace = true
+winit.workspace = true
+bytemuck.workspace = true
+encase.workspace = true
+glam.workspace = true # [!code ++]
+```
+
+`glam` — библиотека линейной алгебры для графики. Предоставляет `Vec3`, `Mat4`, операции с матрицами и кватернионами.
+Интегрирована с `encase` через фичу `encase/ glam` — типы `glam` можно напрямую использовать в `#[derive(ShaderType)]`
+структурах.
+
 ## Три матрицы
 
 Каждая вершина умножается на три матрицы последовательно:
@@ -210,9 +226,9 @@ let time = self.start_time.elapsed().as_secs_f32();
 let aspect = ctx.surface_config.width as f32 / ctx.surface_config.height as f32;
 
 let projection = Mat4::perspective_rh(FRAC_PI_4, aspect, 0.1, 100.0);
-let view = Mat4::look_to_rh(
+let view = Mat4::look_at_rh(
     Vec3::new(2.0, 1.5, 2.0),
-    Vec3::new(-1.0, -0.5, -1.0),
+    Vec3::ZERO,
     Vec3::Y,
 );
 let model = Mat4::from_rotation_y(time);
@@ -222,16 +238,18 @@ let mvp = projection * view * model;
 Куб вращается за счёт `Mat4::from_rotation_y(time)` — угол поворота растёт с течением времени. Projection зависит
 от соотношения сторон окна и пересчитывается каждый кадр — при resize изображение не будет растянуто.
 
-Для камеры здесь используется `look_to_rh` — он принимает позицию и **направление взгляда**,
-а не целевую точку. Обе функции создают одну и ту же view-матрицу, отличаются способом задания:
+Для камеры здесь используется `look_at_rh` — он принимает позицию глаза и **целевую точку**, на которую
+смотрим. Есть и другой вариант:
 
 ```rust
 // Целевая точка — удобно для статичных сцен
 let view = Mat4::look_at_rh(eye, target, up);
 
-// Направление взгляда — удобно для свободной камеры
+// Направление взгляда — удобно для свободной камеры (глава «Камера»)
 let view = Mat4::look_to_rh(eye, direction, up);
 ```
+
+Обе функции создают одну и ту же view-матрицу, отличаются только способом задания ориентации камеры.
 
 ## Backface culling
 
@@ -266,7 +284,7 @@ GPU определяет переднюю грань через векторно
 ::: warning Типичные ошибки
 - `near = 0` в `perspective_rh` вызовет panic или деление на ноль — ближняя плоскость всегда > 0
 - Порядок умножения матриц: `projection * view * model` — не `model * view * projection`
-- `look_to_rh` panics если direction = `Vec3::ZERO` — нормализуйте направление
+- `look_at_rh` panics если eye = target — целевая точка должна отличаться от позиции камеры
 :::
 
 Вращающийся куб. Backface culling убирает задние грани, цвета граней — интерполяция между вершинами.
@@ -277,7 +295,7 @@ GPU определяет переднюю грань через векторно
 <p class="custom-block-title">Попробуем</p>
 
 - Убрать `cull_mode: Some(Face::Back)` — увидеть задние грани
-- Изменить позицию камеры в `look_to_rh` — посмотреть с другой стороны
+- Изменить позицию камеры в `look_at_rh` — посмотреть с другой стороны
 - Добавить поворот вокруг X или Z: `Mat4::from_rotation_x(time * 0.7)`
 - Уменьшить дальнюю плоскость отсечения до 1.0 — куб будет частично обрезан
 

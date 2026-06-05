@@ -6,7 +6,7 @@ use bytemuck::{Pod, Zeroable};
 use wgpu::util::DeviceExt;
 use wgpu::{
     include_wgsl, BlendComponent, BlendState, Buffer, BufferAddress, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, FragmentState, LoadOp, MultisampleState,
+    ColorTargetState, ColorWrites, CommandEncoder, FragmentState, IndexFormat, LoadOp, MultisampleState,
     Operations, PipelineCompilationOptions, PolygonMode, PrimitiveState,
     PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline,
     RenderPipelineDescriptor, StoreOp, TextureView, VertexAttribute, VertexBufferLayout, VertexFormat,
@@ -49,35 +49,30 @@ const VERTICES: &[Vertex] = &[
     Vertex {
         position: [-0.5, -0.5],
         color: [1.0, 0.0, 0.0],
-    },
+    }, // 0
     Vertex {
         position: [-0.5, 0.5],
         color: [0.0, 1.0, 0.0],
-    },
+    }, // 1
     Vertex {
         position: [0.5, 0.5],
         color: [0.0, 0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5],
-        color: [1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5],
-        color: [0.0, 0.0, 1.0],
-    },
+    }, // 2
     Vertex {
         position: [0.5, -0.5],
         color: [1.0, 1.0, 0.0],
-    },
+    }, // 3
 ];
 
-struct Quad {
+const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
+
+struct IndexedQuad {
     pipeline: RenderPipeline,
     vertex_buffer: Buffer,
+    index_buffer: Buffer,
 }
 
-impl Example for Quad {
+impl Example for IndexedQuad {
     fn init(ctx: &GpuContext) -> Self {
         let shader_module = ctx
             .device
@@ -89,6 +84,14 @@ impl Example for Quad {
                 label: Some("Vertex Buffer"),
                 contents: bytemuck::cast_slice(VERTICES),
                 usage: BufferUsages::VERTEX,
+            });
+
+        let index_buffer = ctx
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(INDICES),
+                usage: BufferUsages::INDEX,
             });
 
         let pipeline = ctx
@@ -134,6 +137,7 @@ impl Example for Quad {
         Self {
             pipeline,
             vertex_buffer,
+            index_buffer,
         }
     }
 
@@ -157,10 +161,11 @@ impl Example for Quad {
 
         rpass.set_pipeline(&self.pipeline);
         rpass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        rpass.draw(0..6, 0..1);
+        rpass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
+        rpass.draw_indexed(0..6, 0, 0..1);
     }
 }
 
 fn main() {
-    run::<Quad>("Vertex Buffers");
+    run::<IndexedQuad>("Vertex & Index Buffers");
 }

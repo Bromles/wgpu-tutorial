@@ -72,12 +72,8 @@ const vitePressConfig = defineConfig({
                         link: "/guide/gpu-data-model/shaders/",
                     },
                     {
-                        text: "Вершинные буферы",
-                        link: "/guide/gpu-data-model/vertex-buffers/",
-                    },
-                    {
-                        text: "Индексные буферы",
-                        link: "/guide/gpu-data-model/index-buffers/",
+                        text: "Вершинные и индексные буферы",
+                        link: "/guide/gpu-data-model/buffers/",
                     },
                     {
                         text: "Uniform и bind groups",

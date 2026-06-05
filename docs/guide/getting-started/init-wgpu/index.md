@@ -137,12 +137,11 @@ struct Renderer {
     queue: Queue,
     surface: Surface<'static>,
     surface_config: SurfaceConfiguration,
-    surface_format: TextureFormat,
 }
 ```
 
 `SurfaceConfiguration` описывает параметры поверхности — размер и формат изображения. С её помощью мы реагируем на
-изменение размера окна. `surface_format` — формат пикселей поверхности, его нужно знать при создании конвейеров.
+изменение размера окна. Формат пикселей доступен как `surface_config.format` — он нужен при создании конвейеров.
 
 Обновим и состояние приложения:
 
@@ -300,7 +299,6 @@ compatible_surface: Some( & surface),
         queue,
         surface,
         surface_config,
-        surface_format,
     }
 }
 ```
