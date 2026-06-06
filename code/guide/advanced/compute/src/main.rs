@@ -192,28 +192,28 @@ impl Example for ComputeDemo {
         let cube_vertex_buffer = ctx
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Cube VB"),
+                label: Some("Cube Vertex Buffer"),
                 contents: bytemuck::cast_slice(&cube_vertices()),
                 usage: BufferUsages::VERTEX,
             });
         let cube_index_buffer = ctx
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Cube IB"),
+                label: Some("Cube Index Buffer"),
                 contents: bytemuck::cast_slice(&CUBE_INDICES),
                 usage: BufferUsages::INDEX,
             });
         let floor_vertex_buffer =
             ctx.device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Floor VB"),
+                    label: Some("Floor Vertex Buffer"),
                     contents: bytemuck::cast_slice(FLOOR_VERTICES),
                     usage: BufferUsages::VERTEX,
                 });
         let floor_index_buffer = ctx
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Floor IB"),
+                label: Some("Floor Index Buffer"),
                 contents: bytemuck::cast_slice(FLOOR_INDICES),
                 usage: BufferUsages::INDEX,
             });
@@ -299,7 +299,7 @@ impl Example for ComputeDemo {
 
         // Camera bind group (group 0 for scene)
         let camera_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Camera Uniform"),
+            label: Some("Camera Uniform Buffer"),
             size: CameraUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -307,7 +307,7 @@ impl Example for ComputeDemo {
         let camera_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Camera BGL"),
+                label: Some("Camera Bind Group Layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::VERTEX,
@@ -320,7 +320,7 @@ impl Example for ComputeDemo {
                 }],
             });
         let camera_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Camera BG"),
+            label: Some("Camera Bind Group"),
             layout: &camera_bgl,
             entries: &[BindGroupEntry {
                 binding: 0,
@@ -330,7 +330,7 @@ impl Example for ComputeDemo {
 
         // Scene bind group (group 1 for scene)
         let light_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Light Uniform"),
+            label: Some("Light Uniform Buffer"),
             size: LightUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -349,7 +349,7 @@ impl Example for ComputeDemo {
         let scene_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Scene BGL"),
+                label: Some("Scene Bind Group Layout"),
                 entries: &[
                     BindGroupLayoutEntry {
                         binding: 0,
@@ -380,7 +380,7 @@ impl Example for ComputeDemo {
                 ],
             });
         let cube_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Cube BG"),
+            label: Some("Cube Bind Group"),
             layout: &scene_bgl,
             entries: &[
                 BindGroupEntry {
@@ -398,7 +398,7 @@ impl Example for ComputeDemo {
             ],
         });
         let floor_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Floor BG"),
+            label: Some("Floor Bind Group"),
             layout: &scene_bgl,
             entries: &[
                 BindGroupEntry {
@@ -420,7 +420,7 @@ impl Example for ComputeDemo {
         let scene_layout = ctx
             .device
             .create_pipeline_layout(&PipelineLayoutDescriptor {
-                label: Some("Scene Layout"),
+                label: Some("Scene Pipeline Layout"),
                 bind_group_layouts: &[Some(&camera_bgl), Some(&scene_bgl)],
                 immediate_size: 0,
             });
@@ -478,7 +478,7 @@ impl Example for ComputeDemo {
         let compute_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Compute BGL"),
+                label: Some("Compute Bind Group Layout"),
                 entries: &[
                     BindGroupLayoutEntry {
                         binding: 0,
@@ -503,7 +503,7 @@ impl Example for ComputeDemo {
                 ],
             });
         let compute_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Compute BG"),
+            label: Some("Compute Bind Group"),
             layout: &compute_bgl,
             entries: &[
                 BindGroupEntry {
@@ -520,7 +520,7 @@ impl Example for ComputeDemo {
         let compute_layout = ctx
             .device
             .create_pipeline_layout(&PipelineLayoutDescriptor {
-                label: Some("Compute Layout"),
+                label: Some("Compute Pipeline Layout"),
                 bind_group_layouts: &[Some(&compute_bgl)],
                 immediate_size: 0,
             });
@@ -537,7 +537,7 @@ impl Example for ComputeDemo {
 
         // Post bind group (scene + blur + sampler)
         let post_sampler = ctx.device.create_sampler(&SamplerDescriptor {
-            label: Some("Post Sampler"),
+            label: Some("Post Process Sampler"),
             mag_filter: FilterMode::Nearest,
             min_filter: FilterMode::Nearest,
             ..Default::default()
@@ -545,7 +545,7 @@ impl Example for ComputeDemo {
         let post_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Post BGL"),
+                label: Some("Post Process Bind Group Layout"),
                 entries: &[
                     BindGroupLayoutEntry {
                         binding: 0,
@@ -576,7 +576,7 @@ impl Example for ComputeDemo {
                 ],
             });
         let post_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Post BG"),
+            label: Some("Post Process Bind Group"),
             layout: &post_bgl,
             entries: &[
                 BindGroupEntry {
@@ -597,14 +597,14 @@ impl Example for ComputeDemo {
         let post_layout = ctx
             .device
             .create_pipeline_layout(&PipelineLayoutDescriptor {
-                label: Some("Post Layout"),
+                label: Some("Post Process Pipeline Layout"),
                 bind_group_layouts: &[Some(&post_bgl)],
                 immediate_size: 0,
             });
         let post_pipeline = ctx
             .device
             .create_render_pipeline(&RenderPipelineDescriptor {
-                label: Some("Post Pipeline"),
+                label: Some("Post Process Render Pipeline"),
                 layout: Some(&post_layout),
                 vertex: VertexState {
                     module: &post_shader,
@@ -677,7 +677,7 @@ impl Example for ComputeDemo {
 
         let compute_bgl = self.compute_pipeline.get_bind_group_layout(0);
         self.compute_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Compute BG (resized)"),
+            label: Some("Compute Bind Group (Resized)"),
             layout: &compute_bgl,
             entries: &[
                 BindGroupEntry {
@@ -693,7 +693,7 @@ impl Example for ComputeDemo {
 
         let post_bgl = self.post_pipeline.get_bind_group_layout(0);
         self.post_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Post BG (resized)"),
+            label: Some("Post Process Bind Group (Resized)"),
             layout: &post_bgl,
             entries: &[
                 BindGroupEntry {
@@ -726,7 +726,8 @@ impl Example for ComputeDemo {
         let view_proj = projection * self.camera.view_matrix();
         {
             let mut data = encase::UniformBuffer::new(Vec::new());
-            data.write(&CameraUniforms { view_proj }).unwrap();
+            data.write(&CameraUniforms { view_proj })
+                .expect("Failed to write uniform buffer");
             ctx.queue
                 .write_buffer(&self.camera_uniform_buffer, 0, &data.into_inner());
         }

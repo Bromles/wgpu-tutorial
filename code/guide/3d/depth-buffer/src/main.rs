@@ -325,7 +325,9 @@ impl Example for DepthBufferDemo {
             let mvp = projection * view_mat * model;
 
             let mut uniform_data = encase::UniformBuffer::new(Vec::new());
-            uniform_data.write(&ShaderUniforms { mvp }).unwrap();
+            uniform_data
+                .write(&ShaderUniforms { mvp })
+                .expect("Failed to write uniform buffer");
             ctx.queue
                 .write_buffer(&cube.uniform_buffer, 0, &uniform_data.into_inner());
         }

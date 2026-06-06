@@ -17,6 +17,7 @@ struct CameraUniforms {
     view_proj: mat4x4<f32>,
     camera_right: vec4<f32>,
     camera_up: vec4<f32>,
+    max_life: f32,
 }
 
 @group(1) @binding(0)
@@ -40,7 +41,7 @@ fn vs_main(@builtin(vertex_index) vid: u32, @builtin(instance_index) iid: u32) -
 
     var output: VertexOutput;
     output.position = camera.view_proj * vec4<f32>(world_pos, 1.0);
-    let t = clamp(p.life / 3.0, 0.0, 1.0);
+    let t = clamp(p.life / camera.max_life, 0.0, 1.0);
     output.color = vec4<f32>(1.0, 0.6 * t + 0.2, 0.1, t);
     return output;
 }

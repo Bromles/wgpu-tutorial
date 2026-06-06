@@ -23,9 +23,9 @@ struct InstanceInput {
     @location(4) model_col1: vec4<f32>,
     @location(5) model_col2: vec4<f32>,
     @location(6) model_col3: vec4<f32>,
-    @location(7) normal_col0: vec4<f32>,
-    @location(8) normal_col1: vec4<f32>,
-    @location(9) normal_col2: vec4<f32>,
+    @location(7) normal_col0: vec3<f32>,
+    @location(8) normal_col1: vec3<f32>,
+    @location(9) normal_col2: vec3<f32>,
 }
 
 @vertex
@@ -37,9 +37,9 @@ fn vs_main(input: VertexInput, instance: InstanceInput) -> VertexOutput {
         instance.model_col3,
     );
     let normal_matrix = mat3x3<f32>(
-        instance.normal_col0.xyz,
-        instance.normal_col1.xyz,
-        instance.normal_col2.xyz,
+        instance.normal_col0,
+        instance.normal_col1,
+        instance.normal_col2,
     );
     var output: VertexOutput;
     let world_pos = model * vec4<f32>(input.position, 1.0);

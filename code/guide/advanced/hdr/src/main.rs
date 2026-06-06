@@ -273,7 +273,7 @@ impl Example for HdrDemo {
         });
 
         let camera_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Camera Uniform"),
+            label: Some("Camera Uniform Buffer"),
             size: CameraUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -282,7 +282,7 @@ impl Example for HdrDemo {
         let camera_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Camera BGL"),
+                label: Some("Camera Bind Group Layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::VERTEX,
@@ -295,7 +295,7 @@ impl Example for HdrDemo {
                 }],
             });
         let camera_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Camera BG"),
+            label: Some("Camera Bind Group"),
             layout: &camera_bgl,
             entries: &[BindGroupEntry {
                 binding: 0,
@@ -304,7 +304,7 @@ impl Example for HdrDemo {
         });
 
         let light_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Light Uniform"),
+            label: Some("Light Uniform Buffer"),
             size: LightUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -324,7 +324,7 @@ impl Example for HdrDemo {
         let scene_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Scene BGL"),
+                label: Some("Scene Bind Group Layout"),
                 entries: &[
                     BindGroupLayoutEntry {
                         binding: 0,
@@ -356,7 +356,7 @@ impl Example for HdrDemo {
             });
 
         let cube_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Cube Scene BG"),
+            label: Some("Cube Bind Group"),
             layout: &scene_bgl,
             entries: &[
                 BindGroupEntry {
@@ -374,7 +374,7 @@ impl Example for HdrDemo {
             ],
         });
         let floor_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Floor Scene BG"),
+            label: Some("Floor Bind Group"),
             layout: &scene_bgl,
             entries: &[
                 BindGroupEntry {
@@ -458,7 +458,7 @@ impl Example for HdrDemo {
         let hdr_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("HDR BGL"),
+                label: Some("HDR Bind Group Layout"),
                 entries: &[
                     BindGroupLayoutEntry {
                         binding: 0,
@@ -479,7 +479,7 @@ impl Example for HdrDemo {
                 ],
             });
         let hdr_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("HDR BG"),
+            label: Some("HDR Bind Group"),
             layout: &hdr_bgl,
             entries: &[
                 BindGroupEntry {
@@ -496,14 +496,14 @@ impl Example for HdrDemo {
         let post_layout = ctx
             .device
             .create_pipeline_layout(&PipelineLayoutDescriptor {
-                label: Some("Post Layout"),
+                label: Some("Post Process Pipeline Layout"),
                 bind_group_layouts: &[Some(&hdr_bgl)],
                 immediate_size: 0,
             });
         let post_pipeline = ctx
             .device
             .create_render_pipeline(&RenderPipelineDescriptor {
-                label: Some("Post Pipeline"),
+                label: Some("Post Process Render Pipeline"),
                 layout: Some(&post_layout),
                 vertex: VertexState {
                     module: &post_shader,
@@ -569,7 +569,7 @@ impl Example for HdrDemo {
 
         let hdr_bgl = self.post_pipeline.get_bind_group_layout(0);
         self.hdr_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("HDR BG (resized)"),
+            label: Some("HDR Bind Group (Resized)"),
             layout: &hdr_bgl,
             entries: &[
                 BindGroupEntry {
@@ -599,7 +599,8 @@ impl Example for HdrDemo {
 
         {
             let mut data = encase::UniformBuffer::new(Vec::new());
-            data.write(&CameraUniforms { view_proj }).unwrap();
+            data.write(&CameraUniforms { view_proj })
+                .expect("Failed to write uniform buffer");
             ctx.queue
                 .write_buffer(&self.camera_uniform_buffer, 0, &data.into_inner());
         }

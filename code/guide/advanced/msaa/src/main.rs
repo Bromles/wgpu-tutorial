@@ -177,7 +177,7 @@ impl MSAADemo {
     fn create_msaa_texture(ctx: &GpuContext) -> (Texture, TextureView) {
         let size = &ctx.surface_config;
         let texture = ctx.device.create_texture(&TextureDescriptor {
-            label: Some("MSAA Color"),
+            label: Some("MSAA Color Texture"),
             size: Extent3d {
                 width: size.width,
                 height: size.height,
@@ -197,7 +197,7 @@ impl MSAADemo {
     fn create_depth_texture(ctx: &GpuContext) -> (Texture, TextureView) {
         let size = &ctx.surface_config;
         let texture = ctx.device.create_texture(&TextureDescriptor {
-            label: Some("MSAA Depth"),
+            label: Some("MSAA Depth Texture"),
             size: Extent3d {
                 width: size.width,
                 height: size.height,
@@ -254,7 +254,7 @@ impl Example for MSAADemo {
         let bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("BGL"),
+                label: Some("Bind Group Layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::VERTEX | ShaderStages::FRAGMENT,
@@ -267,7 +267,7 @@ impl Example for MSAADemo {
                 }],
             });
         let bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("BG"),
+            label: Some("Bind Group"),
             layout: &bgl,
             entries: &[BindGroupEntry {
                 binding: 0,

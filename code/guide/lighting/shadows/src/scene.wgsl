@@ -46,15 +46,15 @@ struct InstanceInput {
     @location(4) model_col1: vec4<f32>,
     @location(5) model_col2: vec4<f32>,
     @location(6) model_col3: vec4<f32>,
-    @location(7) normal_col0: vec4<f32>,
-    @location(8) normal_col1: vec4<f32>,
-    @location(9) normal_col2: vec4<f32>,
+    @location(7) normal_col0: vec3<f32>,
+    @location(8) normal_col1: vec3<f32>,
+    @location(9) normal_col2: vec3<f32>,
 }
 
 @vertex
 fn vs_main(input: VertexInput, instance: InstanceInput) -> VertexOutput {
     let model = mat4x4<f32>(instance.model_col0, instance.model_col1, instance.model_col2, instance.model_col3);
-    let normal_matrix = mat3x3<f32>(instance.normal_col0.xyz, instance.normal_col1.xyz, instance.normal_col2.xyz);
+    let normal_matrix = mat3x3<f32>(instance.normal_col0, instance.normal_col1, instance.normal_col2);
     var output: VertexOutput;
     let world_pos = model * vec4<f32>(input.position, 1.0);
     output.position = camera.view_proj * world_pos;
@@ -77,7 +77,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
     let shadow_uv = vec3<f32>(
         light_coords.x * 0.5 + 0.5,
         1.0 - (light_coords.y * 0.5 + 0.5),
-        light_coords.z - 0.005
+        light_coords.z
     );
     var shadow = 0.0;
     if (shadow_uv.x >= 0.0 && shadow_uv.x <= 1.0 &&

@@ -153,7 +153,7 @@ impl Example for ModelLoadingDemo {
         let camera_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Camera BGL"),
+                label: Some("Camera Bind Group Layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::VERTEX,
@@ -169,7 +169,7 @@ impl Example for ModelLoadingDemo {
         let mesh_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Mesh BGL"),
+                label: Some("Mesh Bind Group Layout"),
                 entries: &[
                     BindGroupLayoutEntry {
                         binding: 0,
@@ -211,7 +211,7 @@ impl Example for ModelLoadingDemo {
         let pipeline = ctx
             .device
             .create_render_pipeline(&RenderPipelineDescriptor {
-                label: Some("Pipeline"),
+                label: Some("Render Pipeline"),
                 layout: Some(&pipeline_layout),
                 vertex: VertexState {
                     module: &shader,
@@ -256,7 +256,7 @@ impl Example for ModelLoadingDemo {
             });
 
         let sampler = ctx.device.create_sampler(&SamplerDescriptor {
-            label: Some("Sampler"),
+            label: Some("Diffuse Sampler"),
             address_mode_u: AddressMode::Repeat,
             address_mode_v: AddressMode::Repeat,
             address_mode_w: AddressMode::Repeat,
@@ -267,14 +267,14 @@ impl Example for ModelLoadingDemo {
         });
 
         let camera_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Camera Uniform"),
+            label: Some("Camera Uniform Buffer"),
             size: CameraUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
         let camera_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Camera BG"),
+            label: Some("Camera Bind Group"),
             layout: &camera_bgl,
             entries: &[BindGroupEntry {
                 binding: 0,
@@ -324,26 +324,26 @@ impl Example for ModelLoadingDemo {
             let vertex_buffer = ctx
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Mesh VB"),
+                    label: Some("Mesh Vertex Buffer"),
                     contents: bytemuck::cast_slice(vertices),
                     usage: BufferUsages::VERTEX,
                 });
             let index_buffer = ctx
                 .device
                 .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("Mesh IB"),
+                    label: Some("Mesh Index Buffer"),
                     contents: bytemuck::cast_slice(indices),
                     usage: BufferUsages::INDEX,
                 });
             let uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-                label: Some("Mesh Uniform"),
+                label: Some("Mesh Uniform Buffer"),
                 size: MeshUniforms::min_size().into(),
                 usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
                 mapped_at_creation: false,
             });
             let nm = Mat3::from_mat4(model.inverse().transpose());
             let bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-                label: Some("Mesh BG"),
+                label: Some("Mesh Bind Group"),
                 layout: &mesh_bgl,
                 entries: &[
                     BindGroupEntry {
@@ -431,7 +431,9 @@ impl Example for ModelLoadingDemo {
         let view_proj = projection * self.camera.view_matrix();
 
         let mut camera_data = encase::UniformBuffer::new(Vec::new());
-        camera_data.write(&CameraUniforms { view_proj }).unwrap();
+        camera_data
+            .write(&CameraUniforms { view_proj })
+            .expect("Failed to write uniform buffer");
         ctx.queue
             .write_buffer(&self.camera_uniform_buffer, 0, &camera_data.into_inner());
 

@@ -388,7 +388,9 @@ impl Example for InstancingDemo {
 
         {
             let mut uniform_data = encase::UniformBuffer::new(Vec::new());
-            uniform_data.write(&ShaderUniforms { view_proj }).unwrap();
+            uniform_data
+                .write(&ShaderUniforms { view_proj })
+                .expect("Failed to write uniform buffer");
             ctx.queue
                 .write_buffer(&self.uniform_buffer, 0, &uniform_data.into_inner());
         }

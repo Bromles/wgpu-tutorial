@@ -43,6 +43,15 @@ pub trait Example: 'static {
 }
 ```
 
+<div class="info custom-block" style="padding-top: 8px">
+<p class="custom-block-title">Важно</p>
+
+В дальнейших главах трейт `Example` будет расширяться — в нём появятся методы `update` (для обработки ввода и логики)
+и `Input` (для доступа к состоянию клавиатуры и мыши). В этой главе нам достаточно трёх методов: `init`, `resize` и
+`render`.
+
+</div>
+
 - `init` — вызывается один раз при запуске. Получает `GpuContext`, содержащий `device`, `queue`, `surface`,
   `surface_config` и `surface_format`. Здесь мы создаём ресурсы, живущие всё время работы примера
 - `resize` — вызывается при изменении размера окна
@@ -347,11 +356,13 @@ fn render(&mut self, _ctx: &GpuContext, view: &TextureView, encoder: &mut Comman
 
 ## Что получилось
 
-<div class="warning custom-block" style="padding-top: 8px">
-<p class="custom-block-title">Типичные ошибки</p>
-<p>- Render pipeline <strong>immutable</strong> — после создания нельзя изменить шейдер, формат, blend mode. Нужно создать новый pipeline</p>
-<p>- <code>draw(0..3, 0..1)</code> — первый параметр это вершины, второй экземпляры. Перепутать — пустой экран</p>
-</div>
+::: warning Render pipeline immutable
+После создания нельзя изменить шейдер, формат, blend mode. Нужно создать новый pipeline.
+:::
+
+::: warning Перепутаны параметры `draw`
+`draw(0..3, 0..1)` — первый параметр это вершины, второй экземпляры. Перепутать — пустой экран.
+:::
 
 Окно с зелёным фоном и тёмно-красным треугольником в центре. Внешний вид будет различаться в зависимости от
 операционной системы.

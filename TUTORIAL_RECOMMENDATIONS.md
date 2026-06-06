@@ -58,9 +58,40 @@ pub trait Example: 'static {
 В статье — inline-код. Полный код — по ссылке на репозиторий.
 
 Каждая глава содержит:
-- **Типичные ошибки** (блок `::: warning`)
-- **Попробуем** (блок `tip`) — упражнения для самостоятельной работы
+- **Типичные ошибки** (блок `::: warning`) — единообразно во всех главах
+- **Попробуйте сами** (блок `::: tip`) — упражнения для самостоятельной работы
 - **Скриншот результата** (или `<!-- TODO: скриншот -->` плейсхолдер)
+- **Секция результата** — заголовок `## Что получилось` (не `## Итог`)
+
+## Конвенции кода
+
+### WGSL и vertex attributes
+
+Типы в WGSL и Rust должны совпадать:
+- `vec3<f32>` в WGSL → `VertexFormat::Float32x3` в Rust
+- `vec4<f32>` в WGSL → `VertexFormat::Float32x4` в Rust
+
+Не использовать `vec4<f32>` в шейдере, если Rust передаёт `Float32x3` — wgpu молча дополняет до vec4, но это сбивает с толку читателей.
+
+### Имена переменных и полей
+
+Полные описательные имена, без сокращений:
+- `vertex_buffer`, `index_buffer`, `render_pass`, `compute_pass`
+- `camera_uniform_buffer`, `light_uniform_buffer`
+- `scene_texture`, `depth_texture`, `bright_texture`
+
+Не использовать: `vb`, `ib`, `r`, `c`, `s`, `t`, `v`, `bg`, `ub`.
+
+### Лейблы wgpu-ресурсов
+
+Единообразные описательные лейблы с пробелами:
+- `"Camera Uniform Buffer"`, `"Camera Bind Group Layout"`, `"Camera Bind Group"`
+- `"Cube Vertex Buffer"`, `"Floor Index Buffer"`, `"Shadow Depth Texture"`
+- `"Render Pipeline"`, `"Post Process Render Pipeline"`, `"Scene Render Pass"`
+
+### encase
+
+Использовать `.expect("Failed to write uniform buffer")` или `.expect("Failed to write storage buffer")` вместо `.unwrap()`.
 
 ## Что уже сделано
 
@@ -95,6 +126,7 @@ pub trait Example: 'static {
 ## Потенциальные проблемы кода
 
 - **transformations:** backface culling включён без depth buffer — документировано в статье
+- **shadows:** double depth bias (pipeline `DepthBiasState` + shader-side `light_coords.z - 0.005`) — стоит добавить пояснение в статью о Peter Panning
 
 ---
 

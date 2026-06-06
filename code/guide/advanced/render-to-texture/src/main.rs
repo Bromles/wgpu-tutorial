@@ -249,7 +249,7 @@ impl Example for RenderToTextureDemo {
 
         // Camera bind group
         let camera_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Camera Uniform"),
+            label: Some("Camera Uniform Buffer"),
             size: CameraUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -258,7 +258,7 @@ impl Example for RenderToTextureDemo {
         let camera_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Camera BGL"),
+                label: Some("Camera Bind Group Layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::VERTEX,
@@ -272,7 +272,7 @@ impl Example for RenderToTextureDemo {
             });
 
         let camera_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Camera BG"),
+            label: Some("Camera Bind Group"),
             layout: &camera_bgl,
             entries: &[BindGroupEntry {
                 binding: 0,
@@ -282,7 +282,7 @@ impl Example for RenderToTextureDemo {
 
         // Light bind group
         let light_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Light Uniform"),
+            label: Some("Light Uniform Buffer"),
             size: LightUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -291,7 +291,7 @@ impl Example for RenderToTextureDemo {
         let light_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Light BGL"),
+                label: Some("Light Bind Group Layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::FRAGMENT,
@@ -305,7 +305,7 @@ impl Example for RenderToTextureDemo {
             });
 
         let light_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Light BG"),
+            label: Some("Light Bind Group"),
             layout: &light_bgl,
             entries: &[BindGroupEntry {
                 binding: 0,
@@ -371,7 +371,7 @@ impl Example for RenderToTextureDemo {
 
         // Post-process bind group
         let sampler = ctx.device.create_sampler(&SamplerDescriptor {
-            label: Some("Post Sampler"),
+            label: Some("Post Process Sampler"),
             address_mode_u: AddressMode::ClampToEdge,
             address_mode_v: AddressMode::ClampToEdge,
             address_mode_w: AddressMode::ClampToEdge,
@@ -382,7 +382,7 @@ impl Example for RenderToTextureDemo {
         });
 
         let post_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Post Uniform"),
+            label: Some("Post Uniform Buffer"),
             size: PostUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -393,7 +393,7 @@ impl Example for RenderToTextureDemo {
         let post_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Post BGL"),
+                label: Some("Post Process Bind Group Layout"),
                 entries: &[
                     BindGroupLayoutEntry {
                         binding: 0,
@@ -425,7 +425,7 @@ impl Example for RenderToTextureDemo {
             });
 
         let post_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Post BG"),
+            label: Some("Post Process Bind Group"),
             layout: &post_bgl,
             entries: &[
                 BindGroupEntry {
@@ -447,7 +447,7 @@ impl Example for RenderToTextureDemo {
         let post_layout = ctx
             .device
             .create_pipeline_layout(&PipelineLayoutDescriptor {
-                label: Some("Post Layout"),
+                label: Some("Post Process Pipeline Layout"),
                 bind_group_layouts: &[Some(&post_bgl)],
                 immediate_size: 0,
             });
@@ -455,7 +455,7 @@ impl Example for RenderToTextureDemo {
         let post_pipeline = ctx
             .device
             .create_render_pipeline(&RenderPipelineDescriptor {
-                label: Some("Post Pipeline"),
+                label: Some("Post Process Render Pipeline"),
                 layout: Some(&post_layout),
                 vertex: VertexState {
                     module: &post_shader,
@@ -526,7 +526,7 @@ impl Example for RenderToTextureDemo {
         self.offscreen_depth_view = dv;
 
         self.post_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Post BG (resized)"),
+            label: Some("Post Process Bind Group (Resized)"),
             layout: &self.post_bgl,
             entries: &[
                 BindGroupEntry {
@@ -566,7 +566,8 @@ impl Example for RenderToTextureDemo {
 
         {
             let mut data = encase::UniformBuffer::new(Vec::new());
-            data.write(&CameraUniforms { view_proj }).unwrap();
+            data.write(&CameraUniforms { view_proj })
+                .expect("Failed to write uniform buffer");
             ctx.queue
                 .write_buffer(&self.camera_uniform_buffer, 0, &data.into_inner());
         }

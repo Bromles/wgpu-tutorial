@@ -279,7 +279,7 @@ impl Example for MaterialsDemo {
 
         // Camera
         let camera_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Camera Uniform"),
+            label: Some("Camera Uniform Buffer"),
             size: CameraUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -287,7 +287,7 @@ impl Example for MaterialsDemo {
         let camera_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Camera BGL"),
+                label: Some("Camera Bind Group Layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::VERTEX,
@@ -300,7 +300,7 @@ impl Example for MaterialsDemo {
                 }],
             });
         let camera_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Camera BG"),
+            label: Some("Camera Bind Group"),
             layout: &camera_bgl,
             entries: &[BindGroupEntry {
                 binding: 0,
@@ -310,7 +310,7 @@ impl Example for MaterialsDemo {
 
         // Light + texture (group 1)
         let light_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Light Uniform"),
+            label: Some("Light Uniform Buffer"),
             size: LightUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -341,7 +341,7 @@ impl Example for MaterialsDemo {
         let light_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Light BGL"),
+                label: Some("Light Bind Group Layout"),
                 entries: &[
                     BindGroupLayoutEntry {
                         binding: 0,
@@ -372,7 +372,7 @@ impl Example for MaterialsDemo {
                 ],
             });
         let light_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Light BG"),
+            label: Some("Light Bind Group"),
             layout: &light_bgl,
             entries: &[
                 BindGroupEntry {
@@ -401,7 +401,7 @@ impl Example for MaterialsDemo {
         let pipeline = ctx
             .device
             .create_render_pipeline(&RenderPipelineDescriptor {
-                label: Some("Pipeline"),
+                label: Some("Render Pipeline"),
                 layout: Some(&pipeline_layout),
                 vertex: VertexState {
                     module: &shader,
@@ -480,7 +480,8 @@ impl Example for MaterialsDemo {
 
         {
             let mut data = encase::UniformBuffer::new(Vec::new());
-            data.write(&CameraUniforms { view_proj }).unwrap();
+            data.write(&CameraUniforms { view_proj })
+                .expect("Failed to write uniform buffer");
             ctx.queue
                 .write_buffer(&self.camera_uniform_buffer, 0, &data.into_inner());
         }

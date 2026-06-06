@@ -228,20 +228,31 @@ let compute_bgl = ctx.device.create_bind_group_layout(&BindGroupLayoutDescriptor
 
 ## Типичные ошибки
 
-- **`TEXTURE_BINDING` без `STORAGE_BINDING`** — compute-шейдер не сможет писать в текстуру.
-  Флаг `usage` обязан включать `STORAGE_BINDING`.
-- **Несовпадение формата в `texture_storage_2d` и `TextureDescriptor`** — если в WGSL указан
-  `rgba16float`, а текстура создана как `Rgba8Unorm`, pipeline не создастся.
-- **Забыли `+ 15` при dispatch** — если размер текстуры не кратен 16, краевые пиксели не будут
-  обработаны. Без проверки границ в шейдере — запись «за пределами».
-- **`textureSample` вместо `textureLoad`** в compute-шейдере — `textureSample` использует
-  сэмплер и недоступен в compute-шейдерах. Нужен `textureLoad` с целыми координатами.
-- **`ShaderStages::FRAGMENT` вместо `COMPUTE`** — bind group layout для compute должен
-  указывать `COMPUTE`, иначе ресурсы не будут доступны шейдеру.
-- **Пишут и читают одну и ту же текстуру** — нельзя использовать одну текстуру как input
-  и output одновременно. Нужны две отдельные текстуры.
+::: warning `TEXTURE_BINDING` без `STORAGE_BINDING`
+Compute-шейдер не сможет писать в текстуру. Флаг `usage` обязан включать `STORAGE_BINDING`.
+:::
 
-## Итог
+::: warning Несовпадение формата в `texture_storage_2d` и `TextureDescriptor`
+Если в WGSL указан `rgba16float`, а текстура создана как `Rgba8Unorm`, pipeline не создастся.
+:::
+
+::: warning Забыли `+ 15` при dispatch
+Если размер текстуры не кратен 16, краевые пиксели не будут обработаны. Без проверки границ в шейдере — запись «за пределами».
+:::
+
+::: warning `textureSample` вместо `textureLoad` в compute-шейдере
+`textureSample` использует сэмплер и недоступен в compute-шейдерах. Нужен `textureLoad` с целыми координатами.
+:::
+
+::: warning `ShaderStages::FRAGMENT` вместо `COMPUTE`
+Bind group layout для compute должен указывать `COMPUTE`, иначе ресурсы не будут доступны шейдеру.
+:::
+
+::: warning Пишут и читают одну и ту же текстуру
+Нельзя использовать одну текстуру как input и output одновременно. Нужны две отдельные текстуры.
+:::
+
+## Что получилось
 
 Разделённый экран: слева — оригинальная сцена с кубом и полом, справа — размытая версия, обработанная compute-шейдером. Мы познакомились с compute pipeline — новым типом конвейера, который выполняет произвольные вычисления на GPU вне графического конвейера. Compute-шейдер запускается через `dispatch_workgroups`, каждый поток получает свой `global_invocation_id`, а для записи результата используется `texture_storage_2d`. Compute pass записывается в тот же `CommandEncoder` и выполняется GPU в порядке записи — это позволяет комбинировать render и compute проходы произвольным образом.
 

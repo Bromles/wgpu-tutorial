@@ -41,6 +41,7 @@ struct CameraUniforms {
     view_proj: Mat4,
     camera_right: glam::Vec4,
     camera_up: glam::Vec4,
+    max_life: f32,
 }
 
 struct ParticlesDemo {
@@ -77,7 +78,8 @@ impl ParticlesDemo {
             .collect();
 
         let mut data = encase::StorageBuffer::new(Vec::new());
-        data.write(&new_particles).unwrap();
+        data.write(&new_particles)
+            .expect("Failed to write storage buffer");
         ctx.queue.write_buffer(
             buffer,
             (offset as u64) * ParticleData::min_size().get(),
@@ -110,18 +112,20 @@ impl Example for ParticlesDemo {
             .collect();
 
         let mut init_data = encase::StorageBuffer::new(Vec::new());
-        init_data.write(&initial).unwrap();
+        init_data
+            .write(&initial)
+            .expect("Failed to write storage buffer");
 
         let particle_buffer = ctx
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("Particles"),
+                label: Some("Particle Storage Buffer"),
                 contents: &init_data.into_inner(),
                 usage: BufferUsages::STORAGE | BufferUsages::COPY_DST,
             });
 
         let params_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("SimParams"),
+            label: Some("Simulation Parameters Buffer"),
             size: SimParams::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -130,7 +134,7 @@ impl Example for ParticlesDemo {
         let sim_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("SimBGL"),
+                label: Some("Simulation Bind Group Layout"),
                 entries: &[
                     BindGroupLayoutEntry {
                         binding: 0,
@@ -155,7 +159,7 @@ impl Example for ParticlesDemo {
                 ],
             });
         let sim_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("SimBG"),
+            label: Some("Simulation Bind Group"),
             layout: &sim_bgl,
             entries: &[
                 BindGroupEntry {
@@ -172,11 +176,11 @@ impl Example for ParticlesDemo {
         let sim_pipeline = ctx
             .device
             .create_compute_pipeline(&ComputePipelineDescriptor {
-                label: Some("SimPipeline"),
+                label: Some("Simulation Compute Pipeline"),
                 layout: Some(
                     &ctx.device
                         .create_pipeline_layout(&PipelineLayoutDescriptor {
-                            label: Some("SimLayout"),
+                            label: Some("Simulation Pipeline Layout"),
                             bind_group_layouts: &[Some(&sim_bgl)],
                             immediate_size: 0,
                         }),
@@ -190,7 +194,7 @@ impl Example for ParticlesDemo {
         let render_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("RenderBGL"),
+                label: Some("Render Bind Group Layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::VERTEX | ShaderStages::FRAGMENT,
@@ -203,7 +207,7 @@ impl Example for ParticlesDemo {
                 }],
             });
         let render_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("RenderBG"),
+            label: Some("Render Bind Group"),
             layout: &render_bgl,
             entries: &[BindGroupEntry {
                 binding: 0,
@@ -212,7 +216,7 @@ impl Example for ParticlesDemo {
         });
 
         let camera_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("CameraUB"),
+            label: Some("Camera Uniform Buffer"),
             size: CameraUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -220,7 +224,7 @@ impl Example for ParticlesDemo {
         let camera_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("CameraBGL"),
+                label: Some("Camera Bind Group Layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::VERTEX,
@@ -233,7 +237,7 @@ impl Example for ParticlesDemo {
                 }],
             });
         let camera_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("CameraBG"),
+            label: Some("Camera Bind Group"),
             layout: &camera_bgl,
             entries: &[BindGroupEntry {
                 binding: 0,
@@ -244,11 +248,11 @@ impl Example for ParticlesDemo {
         let render_pipeline = ctx
             .device
             .create_render_pipeline(&RenderPipelineDescriptor {
-                label: Some("ParticlePipe"),
+                label: Some("Particle Render Pipeline"),
                 layout: Some(
                     &ctx.device
                         .create_pipeline_layout(&PipelineLayoutDescriptor {
-                            label: Some("RenderLayout"),
+                            label: Some("Render Pipeline Layout"),
                             bind_group_layouts: &[Some(&render_bgl), Some(&camera_bgl)],
                             immediate_size: 0,
                         }),
@@ -300,7 +304,7 @@ impl Example for ParticlesDemo {
                 multiview_mask: None,
             });
 
-        let (depth_texture, depth_texture_view) = create_depth_texture(ctx, "Depth");
+        let (depth_texture, depth_texture_view) = create_depth_texture(ctx, "Depth Texture");
         let camera = Camera::new(Vec3::new(0.0, 3.0, 8.0), 0.0, -0.2);
 
         Self {
@@ -322,7 +326,7 @@ impl Example for ParticlesDemo {
     }
 
     fn resize(&mut self, ctx: &GpuContext, _new_size: PhysicalSize<u32>) {
-        let (d, v) = create_depth_texture(ctx, "Depth");
+        let (d, v) = create_depth_texture(ctx, "Depth Texture");
         self.depth_texture = d;
         self.depth_texture_view = v;
     }
@@ -362,6 +366,7 @@ impl Example for ParticlesDemo {
                 view_proj: vp,
                 camera_right: self.camera.right().extend(0.0),
                 camera_up: self.camera.up().extend(0.0),
+                max_life: 3.5,
             })
             .unwrap();
             ctx.queue
@@ -370,7 +375,7 @@ impl Example for ParticlesDemo {
 
         {
             let mut cpass = encoder.begin_compute_pass(&ComputePassDescriptor {
-                label: Some("Simulate"),
+                label: Some("Simulation Pass"),
                 timestamp_writes: None,
             });
             cpass.set_pipeline(&self.sim_pipeline);
@@ -380,7 +385,7 @@ impl Example for ParticlesDemo {
 
         {
             let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
-                label: Some("Particles"),
+                label: Some("Particle Render Pass"),
                 color_attachments: &[Some(RenderPassColorAttachment {
                     view,
                     resolve_target: None,

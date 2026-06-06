@@ -471,7 +471,9 @@ impl Example for LightingDemo {
 
         {
             let mut uniform_data = encase::UniformBuffer::new(Vec::new());
-            uniform_data.write(&ShaderUniforms { view_proj }).unwrap();
+            uniform_data
+                .write(&ShaderUniforms { view_proj })
+                .expect("Failed to write uniform buffer");
             ctx.queue
                 .write_buffer(&self.camera_uniform_buffer, 0, &uniform_data.into_inner());
         }

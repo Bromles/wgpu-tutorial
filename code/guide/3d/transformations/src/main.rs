@@ -269,7 +269,9 @@ impl Example for RotatingCube {
         for (i, model) in models.iter().enumerate() {
             let mvp = vp * *model;
             let mut uniform_data = encase::UniformBuffer::new(Vec::new());
-            uniform_data.write(&ShaderUniforms { mvp }).unwrap();
+            uniform_data
+                .write(&ShaderUniforms { mvp })
+                .expect("Failed to write uniform buffer");
             ctx.queue
                 .write_buffer(&self.uniform_buffers[i], 0, &uniform_data.into_inner());
 

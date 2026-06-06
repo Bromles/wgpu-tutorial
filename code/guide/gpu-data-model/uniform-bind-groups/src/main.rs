@@ -200,7 +200,9 @@ impl Example for AnimatedQuad {
         let time = self.start_time.elapsed().as_secs_f32();
 
         let mut uniform_data = encase::UniformBuffer::new(Vec::new());
-        uniform_data.write(&ShaderUniforms { time }).unwrap();
+        uniform_data
+            .write(&ShaderUniforms { time })
+            .expect("Failed to write uniform buffer");
         let data = uniform_data.into_inner();
         ctx.queue.write_buffer(&self.uniform_buffer, 0, &data);
 

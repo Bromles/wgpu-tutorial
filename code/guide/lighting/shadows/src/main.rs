@@ -117,7 +117,7 @@ const FLOOR_VERTICES: &[Vertex] = &[
     },
 ];
 
-const FLOOR_INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
+const FLOOR_INDICES: &[u16] = &[0, 2, 1, 0, 3, 2];
 
 const CUBE_PLACEMENTS: &[Vec3] = &[
     Vec3::new(0.0, 0.0, 0.0),
@@ -263,7 +263,7 @@ struct ShadowsDemo {
 impl ShadowsDemo {
     fn create_shadow_texture(ctx: &GpuContext) -> (Texture, TextureView) {
         let texture = ctx.device.create_texture(&TextureDescriptor {
-            label: Some("Shadow Map"),
+            label: Some("Shadow Depth Texture"),
             size: Extent3d {
                 width: SHADOW_MAP_SIZE,
                 height: SHADOW_MAP_SIZE,
@@ -470,7 +470,7 @@ impl Example for ShadowsDemo {
 
         // Camera (group 0)
         let camera_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Camera Uniform"),
+            label: Some("Camera Uniform Buffer"),
             size: CameraUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -478,7 +478,7 @@ impl Example for ShadowsDemo {
         let camera_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Camera BGL"),
+                label: Some("Camera Bind Group Layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::VERTEX,
@@ -491,7 +491,7 @@ impl Example for ShadowsDemo {
                 }],
             });
         let camera_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Camera BG"),
+            label: Some("Camera Bind Group"),
             layout: &camera_bgl,
             entries: &[BindGroupEntry {
                 binding: 0,
@@ -502,7 +502,7 @@ impl Example for ShadowsDemo {
         // Shadow light (group 0 for shadow pipeline)
         let light_view_proj = Self::light_matrix();
         let shadow_light_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Shadow Light Uniform"),
+            label: Some("Shadow Light Uniform Buffer"),
             size: ShadowLightUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -517,7 +517,7 @@ impl Example for ShadowsDemo {
         let shadow_light_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Shadow Light BGL"),
+                label: Some("Shadow Light Bind Group Layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
                     visibility: ShaderStages::VERTEX,
@@ -530,7 +530,7 @@ impl Example for ShadowsDemo {
                 }],
             });
         let shadow_light_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Shadow Light BG"),
+            label: Some("Shadow Light Bind Group"),
             layout: &shadow_light_bgl,
             entries: &[BindGroupEntry {
                 binding: 0,
@@ -541,7 +541,7 @@ impl Example for ShadowsDemo {
         // Scene light + shadow map + texture (group 1 for scene pipeline)
         let (shadow_texture, shadow_texture_view) = Self::create_shadow_texture(ctx);
         let scene_light_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Scene Light Uniform"),
+            label: Some("Scene Light Uniform Buffer"),
             size: SceneLightUniforms::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -560,7 +560,7 @@ impl Example for ShadowsDemo {
         let scene_light_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
-                label: Some("Scene Light BGL"),
+                label: Some("Scene Light Bind Group Layout"),
                 entries: &[
                     BindGroupLayoutEntry {
                         binding: 0,
@@ -607,7 +607,7 @@ impl Example for ShadowsDemo {
                 ],
             });
         let scene_light_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Scene Light BG (cubes)"),
+            label: Some("Scene Light Bind Group (Cubes)"),
             layout: &scene_light_bgl,
             entries: &[
                 BindGroupEntry {
@@ -633,7 +633,7 @@ impl Example for ShadowsDemo {
             ],
         });
         let floor_light_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Scene Light BG (floor)"),
+            label: Some("Scene Light Bind Group (Floor)"),
             layout: &scene_light_bgl,
             entries: &[
                 BindGroupEntry {
@@ -663,7 +663,7 @@ impl Example for ShadowsDemo {
         let shadow_layout = ctx
             .device
             .create_pipeline_layout(&PipelineLayoutDescriptor {
-                label: Some("Shadow Layout"),
+                label: Some("Shadow Pipeline Layout"),
                 bind_group_layouts: &[Some(&shadow_light_bgl)],
                 immediate_size: 0,
             });
@@ -691,11 +691,7 @@ impl Example for ShadowsDemo {
                     depth_write_enabled: Some(true),
                     depth_compare: Some(CompareFunction::Less),
                     stencil: StencilState::default(),
-                    bias: DepthBiasState {
-                        constant: 2,
-                        slope_scale: 2.0,
-                        clamp: 0.0,
-                    },
+                    bias: DepthBiasState::default(),
                 }),
                 multisample: MultisampleState {
                     count: 1,
@@ -804,7 +800,8 @@ impl Example for ShadowsDemo {
 
         {
             let mut data = encase::UniformBuffer::new(Vec::new());
-            data.write(&CameraUniforms { view_proj }).unwrap();
+            data.write(&CameraUniforms { view_proj })
+                .expect("Failed to write uniform buffer");
             ctx.queue
                 .write_buffer(&self.camera_uniform_buffer, 0, &data.into_inner());
         }

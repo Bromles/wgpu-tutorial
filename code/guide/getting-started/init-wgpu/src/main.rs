@@ -138,7 +138,7 @@ impl Renderer {
         let view = frame.texture.create_view(&TextureViewDescriptor::default());
 
         encoder.begin_render_pass(&RenderPassDescriptor {
-            label: Some("Clear render pass"),
+            label: Some("Clear Render Pass"),
             color_attachments: &[Some(RenderPassColorAttachment {
                 view: &view,
                 resolve_target: None,
