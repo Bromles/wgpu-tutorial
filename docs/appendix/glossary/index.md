@@ -112,7 +112,7 @@ normal matrix и т.д.). GPU считывает один элемент на э
 
 **Storage buffer** — буфер с произвольным доступом из шейдера (`var<storage>`); поддерживает чтение и запись. Не имеет
 ограничения 16 KB как uniform-буфер.
-См. [Uniform и bind groups](/guide/gpu-data-model/uniform-bind-groups/).
+См. [Compute Passes](/guide/advanced/compute/).
 
 **Staging buffer (промежуточный буфер)** — временный буфер в памяти, доступной и CPU, и GPU; используется
 `queue.write_buffer()` для передачи данных из оперативной памяти в видеопамять.
