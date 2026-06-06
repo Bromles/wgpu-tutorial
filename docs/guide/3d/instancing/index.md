@@ -95,12 +95,19 @@ fn generate_instances() -> Vec<InstanceData> {
     for x in 0..GRID_SIZE {
         for y in 0..GRID_SIZE {
             for z in 0..GRID_SIZE {
+                let index = x * GRID_SIZE * GRID_SIZE + y * GRID_SIZE + z;
+
                 let pos = Vec3::new(
                     x as f32 - offset + 0.5,
                     y as f32 - offset + 0.5,
                     z as f32 - offset + 0.5,
                 );
-                let model = Mat4::from_translation(pos);
+
+                let rotation = Mat4::from_rotation_y(index as f32 * 0.5);
+                let scale = 0.8 + 0.4 * ((index as f32) % 5.0) / 5.0;
+                let scale_mat = Mat4::from_scale(Vec3::splat(scale));
+
+                let model = Mat4::from_translation(pos) * rotation * scale_mat;
                 instances.push(InstanceData {
                     model: model.to_cols_array_2d(),
                 });
@@ -111,8 +118,14 @@ fn generate_instances() -> Vec<InstanceData> {
 }
 ```
 
-Сдвиг `x - offset + 0.5` центрирует сетку вокруг начала координат. Каждый экземпляр — просто сдвиг,
-но model-матрица может содержать поворот и масштаб.
+Сдвиг `x - offset + 0.5` центрирует сетку вокруг начала координат. Каждый экземпляр получает:
+- **`rotation`** — поворот вокруг Y, угол зависит от линейного индекса (`index * 0.5` радиан), чтобы кубы были
+  повёрнуты по-разному
+- **`scale`** — размер от 0.8 до 1.2, чередующийся по шаблону: `0.8 + 0.4 * (index % 5) / 5`
+- **`scale_mat`** — матрица масштаба из скаляра через `Vec3::splat`
+
+Итоговая model-матрица: `translation * rotation * scale` — порядок стандартный (масштаб → поворот → сдвиг при
+чтении справа налево).
 
 Буфер создаётся с флагом `COPY_DST`, чтобы обновлять данные экземпляров каждый кадр:
 

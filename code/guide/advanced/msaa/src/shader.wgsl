@@ -12,7 +12,7 @@ struct Uniforms {
     view_proj: mat4x4<f32>,
     light_dir: vec3<f32>,
     ambient: f32,
-};
+}
 
 @group(0) @binding(0)
 var<uniform> uniforms: Uniforms;
@@ -25,7 +25,7 @@ struct InstanceInput {
     @location(6) normal_col0: vec4<f32>,
     @location(7) normal_col1: vec4<f32>,
     @location(8) normal_col2: vec4<f32>,
-};
+}
 
 @vertex
 fn vs_main(input: VertexInput, instance: InstanceInput) -> VertexOutput {

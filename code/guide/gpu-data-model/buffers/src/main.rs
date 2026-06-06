@@ -6,8 +6,8 @@ use bytemuck::{Pod, Zeroable};
 use wgpu::util::DeviceExt;
 use wgpu::{
     include_wgsl, BlendComponent, BlendState, Buffer, BufferAddress, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, FragmentState, IndexFormat, LoadOp, MultisampleState,
-    Operations, PipelineCompilationOptions, PolygonMode, PrimitiveState,
+    ColorTargetState, ColorWrites, CommandEncoder, FragmentState, FrontFace, IndexFormat, LoadOp,
+    MultisampleState, Operations, PipelineCompilationOptions, PolygonMode, PrimitiveState,
     PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline,
     RenderPipelineDescriptor, StoreOp, TextureView, VertexAttribute, VertexBufferLayout, VertexFormat,
     VertexState, VertexStepMode,
@@ -120,7 +120,7 @@ impl Example for IndexedQuad {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
                     ..Default::default()
                 },

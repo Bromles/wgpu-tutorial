@@ -8,5 +8,4 @@ license.workspace = true
 [dependencies]
 framework = { path = "../../../framework" }
 wgpu.workspace = true
-winit.workspace = true
 bytemuck.workspace = true

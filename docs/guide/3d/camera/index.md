@@ -115,6 +115,8 @@ fn right(&self) -> Vec3 {
 Это `direction()` с обнулённой y-компонентой для `forward`, и перпендикуляр к нему для `right`.
 Нажатие W двигает вдоль `forward`, D — вдоль `right`.
 
+<img src="/diagrams/camera-vectors.svg" alt="Forward и right векторы камеры относительно угла yaw" style="width: 100%;" />
+
 ## Обработка ввода
 
 Обновление камеры вызывается каждый кадр из метода `update`:
@@ -210,11 +212,84 @@ let mvp = projection * view_mat * model;
 
 Всё остальное — pipeline, текстуры, depth buffer, bind groups — не изменилось с главы про depth buffer.
 
+## Ground plane
+
+Кубы парят в пустоте — добавим плоскость-«пол» под ними. Это два треугольника (4 вершины, 6 индексов):
+
+```rust
+fn ground_vertices() -> Vec<Vertex> {
+    vec![
+        Vertex { position: [-5.0, 0.0, -5.0], uv: [0.0, 0.0] },
+        Vertex { position: [5.0, 0.0, -5.0], uv: [10.0, 0.0] },
+        Vertex { position: [5.0, 0.0, 5.0], uv: [10.0, 10.0] },
+        Vertex { position: [-5.0, 0.0, 5.0], uv: [0.0, 10.0] },
+    ]
+}
+
+const GROUND_INDICES: [u16; 6] = [0, 1, 2, 0, 2, 3];
+```
+
+Плоскость — квадрат от (-5, 0, -5) до (5, 0, 5). UV от 0 до 10 — текстура повторится 10 раз
+(сэмплер использует `AddressMode::Repeat`). Вершины, индексы и uniform-буфер создаются отдельно
+от кубов — у плоскости свой bind group, но тот же bind group layout и тот же pipeline:
+
+```rust
+let ground_uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
+    label: Some("Ground Uniform Buffer"),
+    size: ShaderUniforms::min_size().into(),
+    usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+    mapped_at_creation: false,
+});
+
+let ground_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
+    label: Some("Ground Bind Group"),
+    layout: &bind_group_layout,
+    entries: &[
+        BindGroupEntry {
+            binding: 0,
+            resource: ground_uniform_buffer.as_entire_binding(),
+        },
+        BindGroupEntry {
+            binding: 1,
+            resource: BindingResource::TextureView(&texture_view),
+        },
+        BindGroupEntry {
+            binding: 2,
+            resource: BindingResource::Sampler(&sampler),
+        },
+    ],
+});
+```
+
+В `render` плоскость рисуется после кубов. Model-матрица — просто сдвиг вниз на 0.5 (чтобы кубы
+стояли на плоскости, а не пересекались с ней):
+
+```rust
+{
+    let ground_model = Mat4::from_translation(Vec3::new(0.0, -0.5, 0.0));
+    let mvp = projection * view_mat * ground_model;
+    let mut uniform_data = encase::UniformBuffer::new(Vec::new());
+    uniform_data.write(&ShaderUniforms { mvp }).unwrap();
+    ctx.queue
+        .write_buffer(&self.ground_uniform_buffer, 0, &uniform_data.into_inner());
+}
+```
+
+Перед отрисовкой переключаем vertex buffer, index buffer и bind group на ground-ресурсы:
+
+```rust
+rpass.set_vertex_buffer(0, self.ground_vertex_buffer.slice(..));
+rpass.set_index_buffer(self.ground_index_buffer.slice(..), IndexFormat::Uint16);
+rpass.set_bind_group(0, &self.ground_bind_group, &[]);
+rpass.draw_indexed(0..6, 0, 0..1);
+```
+
+Плоскость использует тот же шейдер и pipeline — только данные (буферы и uniform) другие.
+
 ## Что получилось
 
 ::: warning Типичные ошибки
-- `direction().normalize()` обязателен — `look_to_rh` panic'ает при нулевом направлении
-- Pitch ограничен ±89° — при ±90° камера переворачивается (gimbal lock)
+- Pitch ограничен ±89° — при ±90° вектор `direction()` становится параллелен `up` (Vec3::Y), и `look_to_rh` не может построить корректную матрицу (вырожденное векторное произведение)
 - `yaw -= dx` (не `+=`) — если перепутать знак, мышь будет двигаться в обратную сторону
 :::
 

@@ -92,6 +92,8 @@ fn aces(x: vec3<f32>) -> vec3<f32> {
 ACES даёт более кинематографичную картинку: яркие участки плавно уходят в белый,
 а средние тона сохраняют насыщенность.
 
+<img src="/diagrams/tone-mapping-curves.svg" alt="Сравнение кривых тоновой коррекции: Reinhard и ACES" style="width: 100%;" />
+
 ## Два render pass
 
 Структура аналогична [Render-to-texture](/guide/advanced/render-to-texture/), но с другим
@@ -227,3 +229,5 @@ fn resize(&mut self, ctx: &GpuContext, _new_size: PhysicalSize<u32>) {
 - Поставить `intensity` на 10.0 — яркие области выжигаются, но детали в них сохраняются благодаря tone mapping
 
 </div>
+
+[Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/advanced/hdr)

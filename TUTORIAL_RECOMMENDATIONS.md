@@ -31,10 +31,16 @@ pub trait Example: 'static {
 
 Правила:
 - `GpuContext` — публичные поля `wgpu`-типов, без обёрток
-- `required_features: adapter.features()` — запрашиваем все доступные фичи адаптера (native-only, браузер не нужен)
+- `required_features: adapter.features() - Features::all_experimental_mask()` — запрашиваем все доступные не-экспериментальные фичи адаптера (native-only, браузер не нужен)
 - Не добавлять: ECS, asset manager, scene graph, material system, renderer graph
 - Допустимый минимум: окно, surface lifecycle, device/queue, resize, frame acquire/present, timing, input
 - `ControlFlow::Wait` — event loop засыпает до нового события, мы сами запрашиваем перерисовку
+
+### Framework-модули
+
+- `camera` — `Camera` struct (position, yaw, pitch, update, view_matrix)
+- `texture` — `generate_checkerboard()`, `create_depth_texture()`
+- `geometry` — `CUBE_POSITIONS`, `CUBE_NORMALS`, `CUBE_UVS`, `CUBE_INDICES`
 
 ## Шаблон каждой главы
 
@@ -59,14 +65,14 @@ pub trait Example: 'static {
 ## Что уже сделано
 
 - **Начало работы:** Создание окна, Инициализация wgpu, Первый треугольник
-- **Модель данных GPU:** Шейдеры и WGSL, Вершинные буферы, Индексные буферы, Uniform и bind groups, Текстуры и сэмплеры
+- **Модель данных GPU:** Шейдеры и WGSL, Вершинные и индексные буферы, Uniform и bind groups, Текстуры и сэмплеры
 - **Математика:** Векторы и матрицы, Система координат (LaTeX)
 - **3D и камера:** Трансформации MVP, Depth buffer, Камера, Instancing
 - **Освещение:** Нормали и базовый свет, Материалы и множественные источники, Тени (shadow mapping), Normal Mapping
 - **Продвинутый рендер:** Render-to-texture и постпроцессинг, Несколько мешей, MSAA, HDR и tone mapping, Compute passes, Bloom, Particles
-- **Каркас:** `GpuContext`, `trait Example`, `Input`, `ControlFlow::Wait`, pollster
+- **Каркас:** `GpuContext`, `trait Example`, `Input`, `ControlFlow::Wait`, pollster, `Camera`, `generate_checkerboard`, `create_depth_texture`, cube geometry
 - **Глоссарий:** ~180 терминов по 17 категориям с обратными ссылками
-- **Диаграммы:** 28 SVG
+- **Диаграммы:** 34 SVG
 - **Типичные ошибки:** в каждой главе
 - **Перекрёстные ссылки:** кликабельные ссылки между главами
 - **Структура:** CTA кнопка, sidebar с «Введение», wgpu 29.0 version indicator
@@ -77,11 +83,7 @@ pub trait Example: 'static {
 
 ### Скриншоты результатов
 
-Во все главы добавлены плейсхолдеры `<!-- TODO: скриншот -->`. Нужно запустить каждый пример и сделать PNG.
-
-### Glossary — дополнить обратные ссылки
-
-Сейчас обратные ссылки есть у ~10 терминов. Добавить ко всем остальным.
+Во всех главах есть плейсхолдеры `<!-- TODO: скриншот -->`. Нужно запустить каждый пример и сделать PNG.
 
 ### Структурные мелочи
 
@@ -92,103 +94,33 @@ pub trait Example: 'static {
 
 ## Потенциальные проблемы кода
 
-- **5 lighting/advanced примеров:** шейдеры объявляют normal-колонки как `vec4<f32>`, а Rust передаёт `Float32x3`. Работает, потому что GPU заполняет `.w` = 1.0, но семантически несовместимо
-- **transformations:** backface culling включён без depth buffer — куб выглядит «вывернутым» при определённых углах. Это сделано сознательно (depth buffer в следующей главе), но не документировано
-
----
-
-## Где стоит добавить диаграммы или расписать подробнее
-
-### Диаграммы
-
-| Глава | Что не хватает | Почему важно |
-|-------|----------------|--------------|
-| Uniform и bind groups | Диаграмма pipeline layout ↔ bind group layouts ↔ bind groups — сейчас три сущности описаны текстом, но визуальная схема связи сильно помогла бы | Читатели регулярно путают pipeline layout и bind group layout |
-| Camera | Схема forward/right векторов относительно yaw — сейчас только текст и формула | Нагляднее, чем текстовое описание |
-| Shadows | Диаграмма shadow UV transform: clip space → NDC → UV — сейчас только текст | Координатный трансформ — главная источник ошибок в shadow mapping |
-| HDR | График Reinhard и ACES кривых — сейчас только формулы | Визуальное сравнение кривых проще для понимания |
-| Normal mapping | Диаграмма TBN basis на поверхности — сейчас только таблица | Трёхмерная визуализация касательного пространства сложна для воображения |
-| Bloom | Схема ping-pong между текстурами | Текстовое описание чередования текстур путает |
-
-### Подробности
-
-| Глава | Что расписать | Почему |
-|-------|---------------|--------|
-| init-wgpu | `surface_format` и sRGB — почему ищем sRGB, что будет если не найдём | Читатели спотыкаются о sRGB/linear при переходе к текстурам |
-| Uniform и bind groups | Процесс `write_buffer` → staging buffer → GPU — подробнее раскрыть staging | Частая тема вопросов, ключ к пониманию CPU/GPU разделения |
-| Lighting/basics | Почему 24 вершины — сейчас зовём из depth-buffer главы, но стоит показать визуально | Ключевой концепт для понимания нормалей |
-| Textures | sRGB vs linear — при сэмплировании, при normal maps. Вынести в отдельный блок | Самая частая ошибка: Rgba8UnormSrgb для normal map |
-| Compute passes | Разница `textureLoad` vs `textureSample` — когда какой использовать | compute-шейдеры не могут `textureSample` — частая ловушка |
+- **transformations:** backface culling включён без depth buffer — документировано в статье
 
 ---
 
 ## Аудит содержания статей — оставшиеся проблемы
 
-### БОЛЬШОЕ
-
-#### Multiple meshes — архитектурный регресс
-
-Статья объединяет `view_proj`, `model`, `light_dir` в один uniform buffer — дублирует `view_proj` на каждый меш. Ранее (с главы 13) уже был отдельный camera bind group. Статья помечает это как "not optimal", но не показывает правильный паттерн. Нужно либо исправить код, либо добавить объяснение, почему здесь другой подход.
-
-### СРЕДНЕЕ
-
-#### `cache: None` везде, никогда не объяснён
-
-Поле `cache` в каждом `RenderPipelineDescriptor` — никогда не объяснено. Либо добавить пояснение, либо убрать из примеров кода в статьях.
-
-#### Alignment discussion приходит поздно
-
-`materials` (гл. 14) подробно обсуждает WGSL alignment, но `basics` (гл. 13) уже использует alignment-sensitive structs (`Vec3 + f32` в `LightUniforms`) без объяснения. Стоит либо добавить краткое предупреждение в basics, либо переставить alignment-секцию раньше.
-
-#### Render-to-texture — не показан Input/режим
-
-Статья упоминает переключение режимов клавишами 1/2/3, но не показывает, как `Input` транслируется в `post.mode`. Паттерн "handle input в update, store state, use в render" — неявный.
-
-#### Particles — spawn offset объяснён кратко
-
-Формула `(offset as u64) * ParticleData::min_size().get()` и ротация по модулю — сложная логика для короткого абзаца. Стоит расписать подробнее.
-
-#### Luminance weights несовместимы
-
-Bloom: Rec.709 (0.2126, 0.7152, 0.0722), materials: BT.601 (0.299, 0.587, 0.114). Оба валидны, но разница не отмечена. Стоит добавить примечание.
-
 ### Концептуальные пробелы
 
-- **Выбор texture format** — нет систематического руководства (когда `Rgba8Unorm`, когда `Rgba16Float`, когда sRGB)
+- **Выбор texture format** — нет систематического руководства (когда `Rgba8Unorm`, когда `Rgba16Float`, когда sRGB). Частично покрыто в textures (sRGB vs linear warning block) и init-wgpu (sRGB details)
 - **Error handling** — wgpu validation errors, device loss — не обсуждаются
 - **Memory barriers / синхронизация** — wgpu handles implicitly, но не обсуждается
 
+### Подробности — что стоит расписать
+
+| Глава | Что расписать | Почему |
+|-------|---------------|--------|
+| Uniform и bind groups | Процесс `write_buffer` → staging buffer → GPU — подробнее раскрыть staging | Частая тема вопросов, ключ к пониманию CPU/GPU разделения |
+
 ---
 
-## Качество демо-сцен и архитектура кода
-
-### Демо-сцены — что стоит переделать
+## Качество демо-сцен
 
 | Приоритет | Глава | Проблема | Предложение | Усилие |
 |-----------|-------|----------|-------------|--------|
-| high | Transformations | Один вращающийся куб — первый 3D-опыт невыразительный | 3-5 объектов с разными трансформациями (вращение, орбита, масштаб) | small |
-| high | Lighting/Basics | 125 серых кубов без текстуры — освещение почти незаметно | Добавить checkerboard-текстуру из предыдущих глав | small |
-| medium | Camera | Три куба в пустоте — нет ощущения пространства | Добавить ground plane (текстурированный квад) | small |
-| medium | Instancing | Одинаковая сетка 5×5×5 без вариаций | Добавить уникальный поворот/масштаб для каждого инстанса (2 строки) | trivial |
 | medium | MSAA | Те же кубы — разница AA почти незаметна | Split-screen: левая половина MSAA=1, правая MSAA=4 | medium |
 | small | Shadows | Минимальная сцена не раскрывает технику | Добавить высокий объект (столб) для драматичной тени | small |
 | small | 9 глав | Одна и та же сцена «сетка кубов» для 60% руководства | Варьировать объекты, расстановку, окружение | medium |
-
-### Архитектура кода — что стоит рефакторить
-
-| Приоритет | Проблема | Главы | Предложение | Усилие |
-|-----------|----------|-------|-------------|--------|
-| high | `struct Camera` копируется 13 раз (~900 строк дублирования) | camera → bloom | Вынести в framework crate | medium |
-| medium | `generate_checkerboard()` дублируется 10 раз | textures → bloom | Добавить хелпер в framework | small |
-| medium | `create_depth_texture()` дублируется 13 раз | depth-buffer → bloom | Добавить хелпер в framework | small |
-| medium | 24-вершинный куб копируется с вариациями | depth-buffer, instancing, lighting | Создать `geometry`-модуль в framework | small |
-| medium | Multiple meshes учитывает субоптимальный паттерн (дублирует view_proj) | advanced/multiple-meshes | Использовать 2 bind groups как в lighting-главах | small |
-
-### Подача текста — что улучшить
-
-| Приоритет | Глава | Проблема | Предложение |
-|-----------|-------|----------|-------------|
-| small | Transformations | Backface culling до того как он визуально нужен | Или перенести в depth-buffer, или показать on/off toggle |
 
 ---
 

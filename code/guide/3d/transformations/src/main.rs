@@ -12,8 +12,8 @@ use wgpu::{
     include_wgsl, BindGroup, BindGroupDescriptor, BindGroupEntry,
     BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, BlendComponent, BlendState, Buffer,
     BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState,
-    ColorWrites, CommandEncoder, FragmentState, IndexFormat, LoadOp, MultisampleState,
-    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
+    ColorWrites, CommandEncoder, Face, FragmentState, FrontFace, IndexFormat, LoadOp,
+    MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
     PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
     RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, TextureView,
     VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
@@ -100,8 +100,8 @@ struct RotatingCube {
     pipeline: RenderPipeline,
     vertex_buffer: Buffer,
     index_buffer: Buffer,
-    uniform_buffer: Buffer,
-    bind_group: BindGroup,
+    uniform_buffers: [Buffer; 3],
+    bind_groups: [BindGroup; 3],
     start_time: Instant,
 }
 
@@ -127,13 +127,6 @@ impl Example for RotatingCube {
                 usage: BufferUsages::INDEX,
             });
 
-        let uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("Uniform Buffer"),
-            size: ShaderUniforms::min_size().into(),
-            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-            mapped_at_creation: false,
-        });
-
         let bind_group_layout = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
@@ -150,13 +143,26 @@ impl Example for RotatingCube {
                 }],
             });
 
-        let bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("Bind Group"),
-            layout: &bind_group_layout,
-            entries: &[BindGroupEntry {
-                binding: 0,
-                resource: uniform_buffer.as_entire_binding(),
-            }],
+        let uniform_size = ShaderUniforms::min_size();
+
+        let uniform_buffers: [Buffer; 3] = std::array::from_fn(|i| {
+            ctx.device.create_buffer(&BufferDescriptor {
+                label: Some(&format!("Uniform Buffer {i}")),
+                size: uniform_size.into(),
+                usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+                mapped_at_creation: false,
+            })
+        });
+
+        let bind_groups: [BindGroup; 3] = std::array::from_fn(|i| {
+            ctx.device.create_bind_group(&BindGroupDescriptor {
+                label: Some(&format!("Bind Group {i}")),
+                layout: &bind_group_layout,
+                entries: &[BindGroupEntry {
+                    binding: 0,
+                    resource: uniform_buffers[i].as_entire_binding(),
+                }],
+            })
         });
 
         let pipeline_layout = ctx
@@ -193,9 +199,9 @@ impl Example for RotatingCube {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
-                    cull_mode: Some(wgpu::Face::Back),
+                    cull_mode: Some(Face::Back),
                     ..Default::default()
                 },
                 depth_stencil: None,
@@ -212,8 +218,8 @@ impl Example for RotatingCube {
             pipeline,
             vertex_buffer,
             index_buffer,
-            uniform_buffer,
-            bind_group,
+            uniform_buffers,
+            bind_groups,
             start_time: Instant::now(),
         }
     }
@@ -224,17 +230,20 @@ impl Example for RotatingCube {
         let aspect = ctx.surface_config.width as f32 / ctx.surface_config.height as f32;
         let projection = Mat4::perspective_rh(FRAC_PI_4, aspect, 0.1, 100.0);
         let view_mat = Mat4::look_at_rh(
-            glam::Vec3::new(2.0, 1.5, 2.0),
+            glam::Vec3::new(4.0, 3.0, 4.0),
             glam::Vec3::ZERO,
             glam::Vec3::Y,
         );
-        let model = Mat4::from_rotation_y(time);
-        let mvp = projection * view_mat * model;
+        let vp = projection * view_mat;
 
-        let mut uniform_data = encase::UniformBuffer::new(Vec::new());
-        uniform_data.write(&ShaderUniforms { mvp }).unwrap();
-        ctx.queue
-            .write_buffer(&self.uniform_buffer, 0, &uniform_data.into_inner());
+        let models = [
+            Mat4::from_rotation_y(time),
+            Mat4::from_translation(glam::Vec3::new(2.0 * time.cos(), 0.0, 2.0 * time.sin()))
+                * Mat4::from_rotation_y(time * 2.0),
+            Mat4::from_translation(glam::Vec3::new(-1.5, 1.0, -1.0))
+                * Mat4::from_scale(glam::Vec3::splat(0.5))
+                * Mat4::from_rotation_x(time * 1.5),
+        ];
 
         let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
             label: Some("Render Pass"),
@@ -254,10 +263,19 @@ impl Example for RotatingCube {
         });
 
         rpass.set_pipeline(&self.pipeline);
-        rpass.set_bind_group(0, &self.bind_group, &[]);
         rpass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         rpass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
-        rpass.draw_indexed(0..36, 0, 0..1);
+
+        for (i, model) in models.iter().enumerate() {
+            let mvp = vp * *model;
+            let mut uniform_data = encase::UniformBuffer::new(Vec::new());
+            uniform_data.write(&ShaderUniforms { mvp }).unwrap();
+            ctx.queue
+                .write_buffer(&self.uniform_buffers[i], 0, &uniform_data.into_inner());
+
+            rpass.set_bind_group(0, &self.bind_groups[i], &[]);
+            rpass.draw_indexed(0..36, 0, 0..1);
+        }
     }
 }
 

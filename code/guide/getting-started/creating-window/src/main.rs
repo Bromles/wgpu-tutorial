@@ -5,7 +5,7 @@ use std::sync::Arc;
 use tracing::debug;
 use winit::application::ApplicationHandler;
 use winit::event::{ElementState, KeyEvent, WindowEvent};
-use winit::event_loop::{ActiveEventLoop, EventLoop};
+use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowAttributes, WindowId};
 
@@ -25,7 +25,9 @@ impl ApplicationHandler for App {
                     .expect("Failed to create window"),
             );
 
-            center_window(window.clone());
+            center_window(&window);
+
+            event_loop.set_control_flow(ControlFlow::Wait);
 
             *self = Self::Ready { window }
         }
@@ -84,7 +86,7 @@ fn handle_keyboard_input(event_loop: &ActiveEventLoop, event: KeyEvent) {
     }
 }
 
-fn center_window(window: Arc<Window>) {
+fn center_window(window: &Window) {
     if let Some(monitor) = window.current_monitor() {
         let screen_size = monitor.size();
         let window_size = window.outer_size();

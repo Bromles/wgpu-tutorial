@@ -204,8 +204,8 @@ backends: Backends::PRIMARY,
 
 ```rust
     let surface = instance
-.create_surface(window)
-.expect("Failed to create surface");
+        .create_surface(window)
+        .expect("Failed to create surface");
 ```
 
 Привязываем поверхность к нашему окну winit.
@@ -227,12 +227,12 @@ backends: Backends::PRIMARY,
 ### Adapter
 
 ```rust
-    let adapter = pollster::block_on(instance.request_adapter( & RequestAdapterOptions {
-power_preference: PowerPreference::default (),
-force_fallback_adapter: false,
-compatible_surface: Some( & surface),
-}))
-.expect("Failed to request adapter");
+    let adapter = pollster::block_on(instance.request_adapter(&RequestAdapterOptions {
+        power_preference: PowerPreference::default(),
+        force_fallback_adapter: false,
+        compatible_surface: Some(&surface),
+    }))
+    .expect("Failed to request adapter");
 ```
 
 Запрашиваем адаптер (видеокарту). `request_adapter` — async-функция (так требует стандарт WebGPU для совместимости
@@ -247,7 +247,7 @@ compatible_surface: Some( & surface),
 ```rust
     let (device, queue) = pollster::block_on(adapter.request_device(&DeviceDescriptor {
         label: Some("Main device"),
-        required_features: adapter.features(),
+        required_features: adapter.features() - wgpu::Features::all_experimental_mask(),
         required_limits: Limits::default().using_resolution(adapter.limits()),
         memory_hints: MemoryHints::Performance,
         trace: Default::default(),
@@ -259,14 +259,15 @@ compatible_surface: Some( & surface),
 `Device` и `Queue` создаются вместе — это главные объекты для работы с GPU.
 
 - `label` — отладочное имя, появится в логах. У многих сущностей wgpu есть этот параметр
-- `required_features: adapter.features()` — запрашиваем все фичи, которые поддерживает адаптер. wgpu — нативная
-  библиотека, и мы хотим использовать возможности GPU по полной. Если бы запрашивали `Features::empty()`, получили бы
-  только минимальный набор, определённый стандартом WebGPU — никаких push-констант, storage-текстур с чтением-записью и
-  прочих полезных вещей
+- `required_features: adapter.features() - Features::all_experimental_mask()` — запрашиваем все фичи, которые поддерживает
+  адаптер, **кроме экспериментальных**. wgpu — нативная библиотека, и мы хотим использовать возможности GPU по полной.
+  Если бы запрашивали `Features::empty()`, получили бы только минимальный набор, определённый стандартом WebGPU
 - `required_limits` — ограничения (размер текстур, количество буферов). `using_resolution` учитывает разрешение адаптера
 - `memory_hints: Performance` — подсказка менеджеру памяти: оптимизировать скорость, а не потребление
 - `trace` — запись команд в файл для отладки через [wgpu-player](https://github.com/gfx-rs/wgpu/tree/trunk/player)
-- `experimental_features: disabled` — экспериментальные фичи требуют unsafe, они нам не нужны
+- `experimental_features: disabled` — экспериментальные фичи требуют unsafe, мы их не запрашиваем и не включаем.
+  Вычитание `all_experimental_mask` из `required_features` гарантирует, что адаптер не вернёт ошибку, если в его
+  списке фич оказались экспериментальные
 
 ### SurfaceConfiguration
 
@@ -308,8 +309,29 @@ compatible_surface: Some( & surface),
 1. `get_capabilities` — спрашиваем адаптер, какие форматы, режимы презентации и альфа-режимы поддерживает поверхность.
    Каждый монитор и ОС дают свой набор — поэтому нельзя захардкодить формат
 
-2. Выбираем формат: сначала ищем sRGB-формат (он корректно работает с цветами), а если такого нет — берём первый
-   доступный. На большинстве систем будет `Bgra8UnormSrgb`
+2. Выбираем формат: сначала ищем sRGB-формат, а если такого нет — берём первый доступный. На большинстве систем
+   будет `Bgra8UnormSrgb`
+
+   <details class="details custom-block">
+   <summary class="custom-block-title">Почему именно sRGB</summary>
+
+   GPU выполняет все вычисления в **линейном** цветовом пространстве — это нужно для корректного сложения цветов,
+   освещения и смешивания. Но мониторы и операционная система ожидают изображение в **sRGB**. Если просто записать
+   линейные значения в поверхность — цвета будут блёклыми или пересвеченными.
+
+   sRGB-формат поверхности решает эту проблему: GPU автоматически преобразует линейные значения в sRGB при записи в
+   текстуру поверхности. Нам не нужно делать это вручную в шейдерах.
+
+   Если sRGB-формат недоступен (редко, но бывает на некоторых встроенных графических чипах), мы берём первый
+   поддерживаемый формат как фоллбэк — в этом случае цвета будут менее точными, но приложение запустится.
+
+   **Почему это важно понимать сейчас:** в следующих главах мы столкнёмся с текстурами, и у каждой будет свой формат.
+   Текстуры с цветами (diffuse-карты) — sRGB, потому что они создавались в sRGB-пространстве и GPU должен
+   преобразовать их в линейное при чтении. Normal-карты — линейные, потому что хранят не цвет, а направления.
+   HDR-текстуры используют форматы с плавающей точкой (`Rgba16Float`), потому что стандартные 8 бит на канал не
+   покрывают широкий диапазон яркости. Путаница в форматах — одна из частых причин «странных» цветов и артефактов.
+
+   </details>
 
 3. `SurfaceConfiguration` собираем вручную:
    - `usage: RENDER_ATTACHMENT` — мы будем рисовать в эту текстуру
@@ -342,6 +364,12 @@ fn resize_surface(&mut self, size: PhysicalSize<u32>) {
 Это главный метод — отрисовка кадра.
 
 ### Получение текстуры
+
+```rust
+use wgpu::CurrentSurfaceTexture::{
+    Lost, Occluded, Outdated, Suboptimal, Success, Timeout, Validation,
+};
+```
 
 ```rust
 fn render(&mut self, window: Arc<Window>) {
@@ -382,12 +410,12 @@ fn render(&mut self, window: Arc<Window>) {
 
 ```rust
     let mut encoder = self
-.device
-.create_command_encoder( & CommandEncoderDescriptor {
-label: Some("Main command encoder"),
-});
+        .device
+        .create_command_encoder(&CommandEncoderDescriptor {
+            label: Some("Main command encoder"),
+        });
 
-let view = frame.texture.create_view( & TextureViewDescriptor::default ());
+    let view = frame.texture.create_view(&TextureViewDescriptor::default());
 ```
 
 `CommandEncoder` записывает команды для GPU. `TextureView` — «ссылка» на текстуру, понятная видеокарте.
@@ -395,22 +423,22 @@ let view = frame.texture.create_view( & TextureViewDescriptor::default ());
 ### Render Pass
 
 ```rust
-    encoder.begin_render_pass( & RenderPassDescriptor {
-label: Some("Clear render pass"),
-color_attachments: & [Some(RenderPassColorAttachment {
-view: & view,
-resolve_target: None,
-ops: Operations {
-load: LoadOp::Clear(Color::GREEN),
-store: StoreOp::Store,
-},
-depth_slice: None,
-})],
-depth_stencil_attachment: None,
-timestamp_writes: None,
-occlusion_query_set: None,
-multiview_mask: None,
-});
+    encoder.begin_render_pass(&RenderPassDescriptor {
+        label: Some("Clear render pass"),
+        color_attachments: &[Some(RenderPassColorAttachment {
+            view: &view,
+            resolve_target: None,
+            ops: Operations {
+                load: LoadOp::Clear(Color::GREEN),
+                store: StoreOp::Store,
+            },
+            depth_slice: None,
+        })],
+        depth_stencil_attachment: None,
+        timestamp_writes: None,
+        occlusion_query_set: None,
+        multiview_mask: None,
+    });
 ```
 
 Render pass — операция рендера. Здесь мы:
@@ -426,7 +454,7 @@ Render pass — операция рендера. Здесь мы:
 ### Отправка и отображение
 
 ```rust
-    self .queue.submit([encoder.finish()]);
+    self.queue.submit([encoder.finish()]);
 window.pre_present_notify();
 frame.present();
 }

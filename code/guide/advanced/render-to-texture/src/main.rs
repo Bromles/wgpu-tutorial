@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::f32::consts::{FRAC_PI_2, FRAC_PI_4};
+use std::f32::consts::FRAC_PI_4;
 use std::mem::size_of;
 use std::time::Duration;
 
@@ -9,22 +9,27 @@ use encase::ShaderType;
 use glam::{Mat3, Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, BlendComponent, BlendState, Buffer, BufferAddress,
-    BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState, ColorWrites,
-    CommandEncoder, DepthBiasState, DepthStencilState, Extent3d, FilterMode, FragmentState, IndexFormat,
+    include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
+    BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType,
+    BlendComponent, BlendState, Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages,
+    Color, ColorTargetState, ColorWrites, CommandEncoder, CompareFunction,
+    DepthBiasState, DepthStencilState, Extent3d, Face, FilterMode, FragmentState, FrontFace, IndexFormat,
     LoadOp, MipmapFilterMode, MultisampleState, Operations,
     PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode, PrimitiveState,
     PrimitiveTopology, RenderPassColorAttachment, RenderPassDepthStencilAttachment,
-    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor,
-    ShaderStages, StencilState, StoreOp, Texture, TextureDescriptor, TextureDimension,
-    TextureFormat, TextureUsages, TextureView, TextureViewDescriptor, VertexAttribute,
-    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, Sampler, SamplerBindingType,
+    SamplerDescriptor, ShaderStages, StencilState, StoreOp, Texture, TextureDescriptor,
+    TextureDimension, TextureFormat, TextureSampleType, TextureUsages, TextureView,
+    TextureViewDescriptor, TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat,
+    VertexState, VertexStepMode,
 };
 use winit::dpi::PhysicalSize;
 use winit::keyboard::KeyCode;
 
-use framework::{run, Example, GpuContext, Input};
+use framework::{
+    create_depth_texture, run, Camera, Example, GpuContext, Input, CUBE_INDICES,
+    CUBE_NORMALS, CUBE_POSITIONS,
+};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -56,109 +61,13 @@ impl Vertex {
     }
 }
 
-const VERTICES: &[Vertex] = &[
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        normal: [1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        normal: [1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        normal: [1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        normal: [1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        normal: [-1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        normal: [-1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        normal: [-1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        normal: [-1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        normal: [0.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        normal: [0.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        normal: [0.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        normal: [0.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        normal: [0.0, -1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        normal: [0.0, -1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        normal: [0.0, -1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        normal: [0.0, -1.0, 0.0],
-    },
-];
-
-const INDICES: &[u16] = &[
-    0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4, 8, 9, 10, 10, 11, 8, 12, 13, 14, 14, 15, 12, 16, 17, 18,
-    18, 19, 16, 20, 21, 22, 22, 23, 20,
-];
+fn cube_vertices() -> Vec<Vertex> {
+    CUBE_POSITIONS
+        .iter()
+        .zip(&CUBE_NORMALS)
+        .map(|(&position, &normal)| Vertex { position, normal })
+        .collect()
+}
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -211,77 +120,6 @@ impl InstanceData {
             array_stride: size_of::<InstanceData>() as BufferAddress,
             step_mode: VertexStepMode::Instance,
             attributes: &Self::ATTRIBUTES,
-        }
-    }
-}
-
-struct Camera {
-    position: Vec3,
-    yaw: f32,
-    pitch: f32,
-    speed: f32,
-    sensitivity: f32,
-}
-
-impl Camera {
-    fn new(position: Vec3, yaw: f32, pitch: f32) -> Self {
-        Self {
-            position,
-            yaw,
-            pitch,
-            speed: 5.0,
-            sensitivity: 0.003,
-        }
-    }
-
-    fn direction(&self) -> Vec3 {
-        Vec3::new(
-            -self.yaw.sin() * self.pitch.cos(),
-            self.pitch.sin(),
-            -self.yaw.cos() * self.pitch.cos(),
-        )
-    }
-
-    fn forward(&self) -> Vec3 {
-        Vec3::new(-self.yaw.sin(), 0.0, -self.yaw.cos())
-    }
-
-    fn right(&self) -> Vec3 {
-        Vec3::new(self.yaw.cos(), 0.0, -self.yaw.sin())
-    }
-
-    fn view_matrix(&self) -> Mat4 {
-        Mat4::look_to_rh(self.position, self.direction(), Vec3::Y)
-    }
-
-    fn update(&mut self, dt: f32, input: &Input) {
-        if input.mouse_button_pressed(1) {
-            let (dx, dy) = input.mouse_delta();
-            self.yaw -= dx as f32 * self.sensitivity;
-            self.pitch -= dy as f32 * self.sensitivity;
-            self.pitch = self.pitch.clamp(-FRAC_PI_2 + 0.01, FRAC_PI_2 - 0.01);
-        }
-        let mut velocity = Vec3::ZERO;
-        if input.key_pressed(KeyCode::KeyW) {
-            velocity += self.forward();
-        }
-        if input.key_pressed(KeyCode::KeyS) {
-            velocity -= self.forward();
-        }
-        if input.key_pressed(KeyCode::KeyD) {
-            velocity += self.right();
-        }
-        if input.key_pressed(KeyCode::KeyA) {
-            velocity -= self.right();
-        }
-        if input.key_pressed(KeyCode::Space) {
-            velocity.y += 1.0;
-        }
-        if input.key_pressed(KeyCode::ShiftLeft) {
-            velocity.y -= 1.0;
-        }
-        if velocity.length_squared() > 0.0 {
-            self.position += velocity.normalize() * self.speed * dt;
         }
     }
 }
@@ -340,19 +178,17 @@ struct RenderToTextureDemo {
     index_buffer: Buffer,
     instance_buffer: Buffer,
     camera_uniform_buffer: Buffer,
-    camera_bind_group: wgpu::BindGroup,
+    camera_bind_group: BindGroup,
     light_uniform_buffer: Buffer,
-    light_bind_group: wgpu::BindGroup,
+    light_bind_group: BindGroup,
     post_uniform_buffer: Buffer,
-    post_bind_group: wgpu::BindGroup,
-    post_bgl: wgpu::BindGroupLayout,
-    sampler: wgpu::Sampler,
+    post_bind_group: BindGroup,
+    post_bgl: BindGroupLayout,
+    sampler: Sampler,
     offscreen_texture: Texture,
     offscreen_view: TextureView,
     offscreen_depth: Texture,
     offscreen_depth_view: TextureView,
-    depth_texture: Texture,
-    depth_texture_view: TextureView,
     camera: Camera,
     post_mode: u32,
 }
@@ -379,26 +215,6 @@ impl RenderToTextureDemo {
         let view = texture.create_view(&TextureViewDescriptor::default());
         (texture, view)
     }
-
-    fn create_depth_texture(ctx: &GpuContext, label: &str) -> (Texture, TextureView) {
-        let size = &ctx.surface_config;
-        let texture = ctx.device.create_texture(&TextureDescriptor {
-            label: Some(label),
-            size: Extent3d {
-                width: size.width,
-                height: size.height,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: TextureDimension::D2,
-            format: TextureFormat::Depth32Float,
-            usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING,
-            view_formats: &[],
-        });
-        let view = texture.create_view(&TextureViewDescriptor::default());
-        (texture, view)
-    }
 }
 
 impl Example for RenderToTextureDemo {
@@ -410,7 +226,7 @@ impl Example for RenderToTextureDemo {
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(VERTICES),
+                contents: bytemuck::cast_slice(&cube_vertices()),
                 usage: BufferUsages::VERTEX,
             });
 
@@ -418,7 +234,7 @@ impl Example for RenderToTextureDemo {
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(INDICES),
+                contents: bytemuck::cast_slice(&CUBE_INDICES),
                 usage: BufferUsages::INDEX,
             });
 
@@ -428,7 +244,7 @@ impl Example for RenderToTextureDemo {
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Instance Buffer"),
                 contents: bytemuck::cast_slice(&instances),
-                usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
+                usage: BufferUsages::VERTEX,
             });
 
         // Camera bind group
@@ -532,15 +348,15 @@ impl Example for RenderToTextureDemo {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
-                    cull_mode: Some(wgpu::Face::Back),
+                    cull_mode: Some(Face::Back),
                     ..Default::default()
                 },
                 depth_stencil: Some(DepthStencilState {
                     format: TextureFormat::Depth32Float,
                     depth_write_enabled: Some(true),
-                    depth_compare: Some(wgpu::CompareFunction::Less),
+                    depth_compare: Some(CompareFunction::Less),
                     stencil: StencilState::default(),
                     bias: DepthBiasState::default(),
                 }),
@@ -556,9 +372,9 @@ impl Example for RenderToTextureDemo {
         // Post-process bind group
         let sampler = ctx.device.create_sampler(&SamplerDescriptor {
             label: Some("Post Sampler"),
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            address_mode_u: AddressMode::ClampToEdge,
+            address_mode_v: AddressMode::ClampToEdge,
+            address_mode_w: AddressMode::ClampToEdge,
             mag_filter: FilterMode::Nearest,
             min_filter: FilterMode::Nearest,
             mipmap_filter: MipmapFilterMode::Nearest,
@@ -583,8 +399,8 @@ impl Example for RenderToTextureDemo {
                         binding: 0,
                         visibility: ShaderStages::FRAGMENT,
                         ty: BindingType::Texture {
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: TextureSampleType::Float { filterable: true },
+                            view_dimension: TextureViewDimension::D2,
                             multisampled: false,
                         },
                         count: None,
@@ -614,11 +430,11 @@ impl Example for RenderToTextureDemo {
             entries: &[
                 BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&offscreen_view),
+                    resource: BindingResource::TextureView(&offscreen_view),
                 },
                 BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
+                    resource: BindingResource::Sampler(&sampler),
                 },
                 BindGroupEntry {
                     binding: 2,
@@ -674,9 +490,7 @@ impl Example for RenderToTextureDemo {
                 multiview_mask: None,
             });
 
-        let (offscreen_depth, offscreen_depth_view) =
-            Self::create_depth_texture(ctx, "Offscreen Depth");
-        let (depth_texture, depth_texture_view) = Self::create_depth_texture(ctx, "Screen Depth");
+        let (offscreen_depth, offscreen_depth_view) = create_depth_texture(ctx, "Offscreen Depth");
 
         let camera = Camera::new(Vec3::new(0.0, 2.0, 8.0), 0.0, -0.2);
 
@@ -698,8 +512,6 @@ impl Example for RenderToTextureDemo {
             offscreen_view,
             offscreen_depth,
             offscreen_depth_view,
-            depth_texture,
-            depth_texture_view,
             camera,
             post_mode: 0,
         }
@@ -709,12 +521,9 @@ impl Example for RenderToTextureDemo {
         let (offscreen, view) = Self::create_offscreen_texture(ctx);
         self.offscreen_texture = offscreen;
         self.offscreen_view = view;
-        let (d, dv) = Self::create_depth_texture(ctx, "Offscreen Depth");
+        let (d, dv) = create_depth_texture(ctx, "Offscreen Depth");
         self.offscreen_depth = d;
         self.offscreen_depth_view = dv;
-        let (d, dv) = Self::create_depth_texture(ctx, "Screen Depth");
-        self.depth_texture = d;
-        self.depth_texture_view = dv;
 
         self.post_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
             label: Some("Post BG (resized)"),
@@ -722,11 +531,11 @@ impl Example for RenderToTextureDemo {
             entries: &[
                 BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&self.offscreen_view),
+                    resource: BindingResource::TextureView(&self.offscreen_view),
                 },
                 BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&self.sampler),
+                    resource: BindingResource::Sampler(&self.sampler),
                 },
                 BindGroupEntry {
                     binding: 2,

@@ -3,9 +3,10 @@
 use framework::{run, Example, GpuContext};
 use wgpu::{
     include_wgsl, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites,
-    CommandEncoder, FragmentState, LoadOp, MultisampleState, Operations, PipelineCompilationOptions,
-    PolygonMode, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
-    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, StoreOp, TextureView, VertexState,
+    CommandEncoder, FragmentState, FrontFace, LoadOp, MultisampleState, Operations,
+    PipelineCompilationOptions, PolygonMode, PrimitiveState, PrimitiveTopology,
+    RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, StoreOp,
+    TextureView, VertexState,
 };
 
 struct Triangle {
@@ -44,7 +45,7 @@ impl Example for Triangle {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
                     ..Default::default()
                 },

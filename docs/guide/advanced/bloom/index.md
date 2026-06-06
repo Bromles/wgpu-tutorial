@@ -54,7 +54,10 @@ if (brightness > params.threshold) {
 }
 ```
 
-Luminance — стандартный Rec. 709: $L = 0.2126 R + 0.7152 G + 0.0722 B$. Порог `threshold = 1.0`
+Luminance — стандартный Rec. 709: $L = 0.2126 R + 0.7152 G + 0.0722 B$. Это веса для sRGB/HDR
+контента, рекомендованные ITU. В главе про [render-to-texture](/guide/advanced/render-to-texture/) мы
+использовали BT.601 ($0.299, 0.587, 0.114$) — стандарт для SD-видео. Оба подхода корректны,
+Rec. 709 лучше подходит для рендера, BT.601 — для видео. Порог `threshold = 1.0`
 означает, что выбираются только HDR-значения (те, что не влезли бы в LDR).
 
 ## Separable Gaussian blur
@@ -63,7 +66,7 @@ Luminance — стандартный Rec. 709: $L = 0.2126 R + 0.7152 G + 0.0722
 Separable blur разбивает его на два 1D прохода: горизонтальный ($9$ сэмплов) и вертикальный ($9$ сэмплов) —
 всего 18 вместо 81.
 
-Веса для 5-точечного 1D Gaussian:
+Веса для 9-точечного 1D Gaussian (5 уникальных весов из-за симметрии):
 
 ```wgsl
 let weights = array<f32, 5>(0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216);
@@ -95,6 +98,8 @@ for (var i: i32 = 1; i < 5; i++) {
 | V-blur | blur | bright |
 
 После V-blur результат оказывается в текстуре `bright`. Это позволяет не создавать третью текстуру.
+
+<img src="/diagrams/bloom-ping-pong.svg" alt="Bloom: ping-pong между текстурами" style="width: 100%;" />
 
 ## Composite
 
@@ -177,7 +182,9 @@ let vblur_bg = ... direction: [0.0, 1.0/height] ...
 <p class="custom-block-title">Попробуем</p>
 
 - Изменить `threshold` на 0.5 — больше пикселей попадёт в bloom, свечение станет сильнее
-- Увеличить ядро blur до 9 точек — более размытое свечение
+- Увеличить радиус blur (больше 4) — более размытое свечение
 - Поставить `threshold` на 2.0 — только самые яркие участки будут светиться
 
 </div>
+
+[Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/advanced/bloom)

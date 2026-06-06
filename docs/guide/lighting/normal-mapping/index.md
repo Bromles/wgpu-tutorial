@@ -74,6 +74,8 @@ $$
 Normal map хранит нормали именно в tangent space: ось Z — это нормаль к поверхности, X — касательная вдоль $U$,
 Y — вдоль $V$. Нормаль $(0, 0, 1)$ в tangent space означает «напрямую из поверхности» — плоский участок.
 
+<img src="/diagrams/tbn-basis.svg" alt="TBN базис на поверхности: касательная, битангенса, нормаль" style="width: 100%;" />
+
 ## Откуда берётся tangent
 
 Tangent — это направление, вдоль которого изменяется координата $U$ текстуры. Для плоской стены,
@@ -302,9 +304,11 @@ let sampler = ctx.device.create_sampler(&SamplerDescriptor {
 <div class="tip custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Попробуем</p>
 
-- Изменить радиус и шаг bump-паттерна в `generate_bump_normal_map` — увидеть другой рельеф
+- Изменить радиус и шаг bump-паттерна в `generate_normal_map` — увидеть другой рельеф
 - Повернуть стену через model-матрицу — убедиться, что нормали корректно трансформируются
 - Убрать normal map (вернуть `vec3<f32>(0.0, 0.0, 1.0)`) — сравнить плоскую и рельефную поверхность
 - Увеличить интенсивность света — рельеф станет более выраженным
 
 </div>
+
+[Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/lighting/normal-mapping)

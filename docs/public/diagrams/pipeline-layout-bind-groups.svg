@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 520" width="100%" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <rect width="780" height="520" fill="#1a1a2e" rx="8"/>
+
+  <defs>
+    <marker id="arw" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#5588aa"/>
+    </marker>
+    <marker id="arw2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#aa5588"/>
+    </marker>
+  </defs>
+
+  <!-- Pipeline Layout -->
+  <rect x="20" y="20" width="740" height="185" rx="8" fill="#1a2030" stroke="#4477aa" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="390" y="46" text-anchor="middle" fill="#6699cc" font-size="14" font-weight="600">Pipeline Layout</text>
+  <text x="390" y="62" text-anchor="middle" fill="#556677" font-size="10">определяет набор Bind Group Layout'ов</text>
+
+  <!-- BGL 0 -->
+  <rect x="40" y="78" width="340" height="115" rx="6" fill="#1a2a3a" stroke="#5588aa" stroke-width="1.5"/>
+  <text x="210" y="100" text-anchor="middle" fill="#5588aa" font-size="12" font-weight="600">Bind Group Layout 0 (camera)</text>
+  <rect x="55" y="110" width="310" height="24" rx="3" fill="#1a2030" stroke="#446688" stroke-width="0.5"/>
+  <text x="65" y="127" fill="#88bbdd" font-size="10">@binding(0)</text>
+  <text x="170" y="127" fill="#aaa" font-size="10">view_proj: uniform buffer</text>
+  <rect x="55" y="140" width="310" height="24" rx="3" fill="#1a2030" stroke="#446688" stroke-width="0.5"/>
+  <text x="65" y="157" fill="#88bbdd" font-size="10">@binding(1)</text>
+  <text x="170" y="157" fill="#aaa" font-size="10">camera_pos: uniform buffer</text>
+  <text x="55" y="185" fill="#446688" font-size="9">определяет структуру: какие bindings и типы</text>
+
+  <!-- BGL 1 -->
+  <rect x="400" y="78" width="340" height="115" rx="6" fill="#2a1a2a" stroke="#aa5588" stroke-width="1.5"/>
+  <text x="570" y="100" text-anchor="middle" fill="#aa5588" font-size="12" font-weight="600">Bind Group Layout 1 (mesh)</text>
+  <rect x="415" y="110" width="310" height="24" rx="3" fill="#1a1020" stroke="#664455" stroke-width="0.5"/>
+  <text x="425" y="127" fill="#cc88aa" font-size="10">@binding(0)</text>
+  <text x="530" y="127" fill="#aaa" font-size="10">diffuse: texture_2d</text>
+  <rect x="415" y="140" width="310" height="24" rx="3" fill="#1a1020" stroke="#664455" stroke-width="0.5"/>
+  <text x="425" y="157" fill="#cc88aa" font-size="10">@binding(1)</text>
+  <text x="530" y="157" fill="#aaa" font-size="10">sampler: sampler</text>
+  <text x="415" y="185" fill="#664455" font-size="9">определяет структуру: какие bindings и типы</text>
+
+  <!-- Section label -->
+  <text x="390" y="225" text-anchor="middle" fill="#667788" font-size="11">▼ создаются из Layout'а ▼</text>
+
+  <!-- Bind Groups for BGL 0 -->
+  <line x1="145" y1="193" x2="110" y2="258" stroke="#5588aa" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arw)"/>
+  <line x1="275" y1="193" x2="310" y2="258" stroke="#5588aa" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arw)"/>
+
+  <!-- BG A (camera, per-frame) -->
+  <rect x="25" y="260" width="175" height="130" rx="6" fill="#1a2a3a" stroke="#5588aa" stroke-width="1"/>
+  <text x="112" y="282" text-anchor="middle" fill="#6699bb" font-size="11" font-weight="600">Bind Group A</text>
+  <text x="112" y="296" text-anchor="middle" fill="#446688" font-size="9">соответствует Layout 0</text>
+  <rect x="38" y="306" width="150" height="24" rx="3" fill="#0e1a28" stroke="#335577" stroke-width="0.5"/>
+  <text x="48" y="323" fill="#66aacc" font-size="9">buf:</text>
+  <text x="72" y="323" fill="#99ccdd" font-size="9">CameraUniform</text>
+  <rect x="38" y="336" width="150" height="24" rx="3" fill="#0e1a28" stroke="#335577" stroke-width="0.5"/>
+  <text x="48" y="353" fill="#66aacc" font-size="9">buf:</text>
+  <text x="72" y="353" fill="#99ccdd" font-size="9">camera_position</text>
+  <text x="112" y="382" text-anchor="middle" fill="#5588aa" font-size="9">ресурсы: buffers, textures</text>
+
+  <!-- BG B (camera, per-frame alt) -->
+  <rect x="220" y="260" width="175" height="130" rx="6" fill="#1a2a3a" stroke="#5588aa" stroke-width="1"/>
+  <text x="307" y="282" text-anchor="middle" fill="#6699bb" font-size="11" font-weight="600">Bind Group B</text>
+  <text x="307" y="296" text-anchor="middle" fill="#446688" font-size="9">соответствует Layout 0</text>
+  <rect x="233" y="306" width="150" height="24" rx="3" fill="#0e1a28" stroke="#335577" stroke-width="0.5"/>
+  <text x="243" y="323" fill="#66aacc" font-size="9">buf:</text>
+  <text x="267" y="323" fill="#99ccdd" font-size="9">CameraUniform</text>
+  <rect x="233" y="336" width="150" height="24" rx="3" fill="#0e1a28" stroke="#335577" stroke-width="0.5"/>
+  <text x="243" y="353" fill="#66aacc" font-size="9">buf:</text>
+  <text x="267" y="353" fill="#99ccdd" font-size="9">camera_position</text>
+  <text x="307" y="382" text-anchor="middle" fill="#5588aa" font-size="9">ресурсы: buffers, textures</text>
+
+  <!-- Bind Groups for BGL 1 -->
+  <line x1="505" y1="193" x2="475" y2="258" stroke="#aa5588" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arw2)"/>
+  <line x1="635" y1="193" x2="665" y2="258" stroke="#aa5588" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arw2)"/>
+
+  <!-- BG C (mesh: wood) -->
+  <rect x="390" y="260" width="175" height="130" rx="6" fill="#2a1a2a" stroke="#aa5588" stroke-width="1"/>
+  <text x="477" y="282" text-anchor="middle" fill="#bb77aa" font-size="11" font-weight="600">Bind Group C</text>
+  <text x="477" y="296" text-anchor="middle" fill="#664455" font-size="9">соответствует Layout 1</text>
+  <rect x="403" y="306" width="150" height="24" rx="3" fill="#1a0e1a" stroke="#553355" stroke-width="0.5"/>
+  <text x="413" y="323" fill="#aa6699" font-size="9">tex:</text>
+  <text x="437" y="323" fill="#ddaacc" font-size="9">wood_diffuse.png</text>
+  <rect x="403" y="336" width="150" height="24" rx="3" fill="#1a0e1a" stroke="#553355" stroke-width="0.5"/>
+  <text x="413" y="353" fill="#aa6699" font-size="9">sampler:</text>
+  <text x="460" y="353" fill="#ddaacc" font-size="9">linear + repeat</text>
+  <text x="477" y="382" text-anchor="middle" fill="#aa5588" font-size="9">ресурсы: textures, samplers</text>
+
+  <!-- BG D (mesh: brick) -->
+  <rect x="585" y="260" width="175" height="130" rx="6" fill="#2a1a2a" stroke="#aa5588" stroke-width="1"/>
+  <text x="672" y="282" text-anchor="middle" fill="#bb77aa" font-size="11" font-weight="600">Bind Group D</text>
+  <text x="672" y="296" text-anchor="middle" fill="#664455" font-size="9">соответствует Layout 1</text>
+  <rect x="598" y="306" width="150" height="24" rx="3" fill="#1a0e1a" stroke="#553355" stroke-width="0.5"/>
+  <text x="608" y="323" fill="#aa6699" font-size="9">tex:</text>
+  <text x="632" y="323" fill="#ddaacc" font-size="9">brick_diffuse.png</text>
+  <rect x="598" y="336" width="150" height="24" rx="3" fill="#1a0e1a" stroke="#553355" stroke-width="0.5"/>
+  <text x="608" y="353" fill="#aa6699" font-size="9">sampler:</text>
+  <text x="655" y="353" fill="#ddaacc" font-size="9">linear + repeat</text>
+  <text x="672" y="382" text-anchor="middle" fill="#aa5588" font-size="9">ресурсы: textures, samplers</text>
+
+  <!-- Legend -->
+  <rect x="20" y="415" width="740" height="90" rx="6" fill="#14142a" stroke="#334" stroke-width="1"/>
+  <text x="390" y="438" text-anchor="middle" fill="#888" font-size="11" font-weight="600">Ключевая идея</text>
+  <text x="390" y="458" text-anchor="middle" fill="#667788" font-size="10">Bind Group Layout — шаблон (какие bindings, какие типы)</text>
+  <text x="390" y="476" text-anchor="middle" fill="#667788" font-size="10">Bind Group — конкретный экземпляр с реальными ресурсами (буферы, текстуры)</text>
+  <text x="390" y="494" text-anchor="middle" fill="#556677" font-size="10">Один Layout → множество Bind Groups (например, разные текстуры для разных мешей)</text>
+</svg>

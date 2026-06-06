@@ -10,7 +10,7 @@ use wgpu::{
     include_wgsl, BindGroup, BindGroupDescriptor, BindGroupEntry,
     BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, BlendComponent, BlendState, Buffer,
     BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState,
-    ColorWrites, CommandEncoder, FragmentState, IndexFormat, LoadOp, MultisampleState,
+    ColorWrites, CommandEncoder, FragmentState, FrontFace, IndexFormat, LoadOp, MultisampleState,
     Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
     PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
     RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, TextureView,
@@ -172,7 +172,7 @@ impl Example for AnimatedQuad {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
                     ..Default::default()
                 },

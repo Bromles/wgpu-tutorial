@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::f32::consts::{FRAC_PI_2, FRAC_PI_4};
+use std::f32::consts::FRAC_PI_4;
 use std::mem::size_of;
 use std::time::Duration;
 
@@ -9,21 +9,23 @@ use encase::ShaderType;
 use glam::{Mat3, Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, BlendComponent, BlendState, Buffer, BufferAddress,
-    BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState, ColorWrites,
-    CommandEncoder, DepthBiasState, DepthStencilState, Extent3d, FragmentState, IndexFormat,
-    LoadOp, MultisampleState, Operations, PipelineCompilationOptions,
-    PipelineLayoutDescriptor, PolygonMode, PrimitiveState, PrimitiveTopology,
-    RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
-    RenderPipeline, RenderPipelineDescriptor, ShaderStages, StencilState, StoreOp, Texture,
-    TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, TextureView,
-    TextureViewDescriptor, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    include_wgsl, BindGroup, BindGroupDescriptor, BindGroupEntry,
+    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, BlendComponent, BlendState, Buffer,
+    BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState,
+    ColorWrites, CommandEncoder, CompareFunction, DepthBiasState, DepthStencilState, Extent3d,
+    Face, FragmentState, FrontFace, IndexFormat, LoadOp, MultisampleState,
+    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
+    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
+    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderStages,
+    StencilState, StoreOp, Texture, TextureDescriptor, TextureDimension, TextureFormat,
+    TextureUsages, TextureView, TextureViewDescriptor, VertexAttribute, VertexBufferLayout,
+    VertexFormat, VertexState, VertexStepMode,
 };
 use winit::dpi::PhysicalSize;
-use winit::keyboard::KeyCode;
 
-use framework::{run, Example, GpuContext, Input};
+use framework::{
+    run, Camera, Example, GpuContext, Input, CUBE_INDICES, CUBE_NORMALS, CUBE_POSITIONS,
+};
 
 const SAMPLE_COUNT: u32 = 4;
 
@@ -57,109 +59,13 @@ impl Vertex {
     }
 }
 
-const VERTICES: &[Vertex] = &[
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        normal: [1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        normal: [1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        normal: [1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        normal: [1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        normal: [-1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        normal: [-1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        normal: [-1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        normal: [-1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        normal: [0.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        normal: [0.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        normal: [0.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        normal: [0.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        normal: [0.0, -1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        normal: [0.0, -1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        normal: [0.0, -1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        normal: [0.0, -1.0, 0.0],
-    },
-];
-
-const INDICES: &[u16] = &[
-    0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4, 8, 9, 10, 10, 11, 8, 12, 13, 14, 14, 15, 12, 16, 17, 18,
-    18, 19, 16, 20, 21, 22, 22, 23, 20,
-];
+fn cube_vertices() -> Vec<Vertex> {
+    CUBE_POSITIONS
+        .iter()
+        .zip(&CUBE_NORMALS)
+        .map(|(&position, &normal)| Vertex { position, normal })
+        .collect()
+}
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -216,72 +122,6 @@ impl InstanceData {
     }
 }
 
-struct Camera {
-    position: Vec3,
-    yaw: f32,
-    pitch: f32,
-    speed: f32,
-    sensitivity: f32,
-}
-
-impl Camera {
-    fn new(position: Vec3, yaw: f32, pitch: f32) -> Self {
-        Self {
-            position,
-            yaw,
-            pitch,
-            speed: 5.0,
-            sensitivity: 0.003,
-        }
-    }
-    fn direction(&self) -> Vec3 {
-        Vec3::new(
-            -self.yaw.sin() * self.pitch.cos(),
-            self.pitch.sin(),
-            -self.yaw.cos() * self.pitch.cos(),
-        )
-    }
-    fn forward(&self) -> Vec3 {
-        Vec3::new(-self.yaw.sin(), 0.0, -self.yaw.cos())
-    }
-    fn right(&self) -> Vec3 {
-        Vec3::new(self.yaw.cos(), 0.0, -self.yaw.sin())
-    }
-    fn view_matrix(&self) -> Mat4 {
-        Mat4::look_to_rh(self.position, self.direction(), Vec3::Y)
-    }
-    fn update(&mut self, dt: f32, input: &Input) {
-        if input.mouse_button_pressed(1) {
-            let (dx, dy) = input.mouse_delta();
-            self.yaw -= dx as f32 * self.sensitivity;
-            self.pitch -= dy as f32 * self.sensitivity;
-            self.pitch = self.pitch.clamp(-FRAC_PI_2 + 0.01, FRAC_PI_2 - 0.01);
-        }
-        let mut v = Vec3::ZERO;
-        if input.key_pressed(KeyCode::KeyW) {
-            v += self.forward();
-        }
-        if input.key_pressed(KeyCode::KeyS) {
-            v -= self.forward();
-        }
-        if input.key_pressed(KeyCode::KeyD) {
-            v += self.right();
-        }
-        if input.key_pressed(KeyCode::KeyA) {
-            v -= self.right();
-        }
-        if input.key_pressed(KeyCode::Space) {
-            v.y += 1.0;
-        }
-        if input.key_pressed(KeyCode::ShiftLeft) {
-            v.y -= 1.0;
-        }
-        if v.length_squared() > 0.0 {
-            self.position += v.normalize() * self.speed * dt;
-        }
-    }
-}
-
 #[derive(ShaderType)]
 struct ShaderUniforms {
     view_proj: Mat4,
@@ -325,7 +165,7 @@ struct MSAADemo {
     index_buffer: Buffer,
     instance_buffer: Buffer,
     uniform_buffer: Buffer,
-    bind_group: wgpu::BindGroup,
+    bind_group: BindGroup,
     _msaa_texture: Texture,
     msaa_view: TextureView,
     _depth_texture: Texture,
@@ -385,14 +225,14 @@ impl Example for MSAADemo {
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(VERTICES),
+                contents: bytemuck::cast_slice(&cube_vertices()),
                 usage: BufferUsages::VERTEX,
             });
         let index_buffer = ctx
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(INDICES),
+                contents: bytemuck::cast_slice(&CUBE_INDICES),
                 usage: BufferUsages::INDEX,
             });
         let instances = generate_instances();
@@ -401,7 +241,7 @@ impl Example for MSAADemo {
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Instance Buffer"),
                 contents: bytemuck::cast_slice(&instances),
-                usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
+                usage: BufferUsages::VERTEX,
             });
 
         let uniform_buffer = ctx.device.create_buffer(&BufferDescriptor {
@@ -469,15 +309,15 @@ impl Example for MSAADemo {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
-                    cull_mode: Some(wgpu::Face::Back),
+                    cull_mode: Some(Face::Back),
                     ..Default::default()
                 },
                 depth_stencil: Some(DepthStencilState {
                     format: TextureFormat::Depth32Float,
                     depth_write_enabled: Some(true),
-                    depth_compare: Some(wgpu::CompareFunction::Less),
+                    depth_compare: Some(CompareFunction::Less),
                     stencil: StencilState::default(),
                     bias: DepthBiasState::default(),
                 }),

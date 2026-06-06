@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 480" width="100%" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <rect width="600" height="480" fill="#1a1a2e" rx="8"/>
+
+  <text x="300" y="30" text-anchor="middle" fill="#ccc" font-size="15" font-weight="600">Базис TBN для нормального отображения</text>
+
+  <g transform="translate(300, 260)">
+    <!-- Surface quad in 3D perspective -->
+    <polygon points="-160,30 160,65 170,-30 -150,-65" fill="#2a3040" stroke="#556688" stroke-width="1.5" opacity="0.85"/>
+
+    <!-- UV grid on surface -->
+    <g stroke="#445566" stroke-width="0.6" opacity="0.55">
+      <line x1="-120" y1="-57" x2="-110" y2="26"/>
+      <line x1="-80" y1="-49" x2="-70" y2="33"/>
+      <line x1="-40" y1="-41" x2="-30" y2="38"/>
+      <line x1="40" y1="-38" x2="50" y2="36"/>
+      <line x1="80" y1="-36" x2="90" y2="34"/>
+      <line x1="120" y1="-33" x2="130" y2="30"/>
+      <line x1="-155" y1="-45" x2="165" y2="-5"/>
+      <line x1="-157" y1="-25" x2="163" y2="15"/>
+      <line x1="-158" y1="-5" x2="162" y2="35"/>
+    </g>
+
+    <text x="115" y="60" fill="#778899" font-size="11" font-style="italic">Поверхность</text>
+
+    <!-- Origin point -->
+    <circle cx="0" cy="0" r="5" fill="#fff" opacity="0.9"/>
+
+    <!-- T vector (Tangent) - along U - RED -->
+    <line x1="0" y1="0" x2="155" y2="-40" stroke="#ff4444" stroke-width="3" stroke-linecap="round"/>
+    <polygon points="155,-40 141,-45 142,-34" fill="#ff4444"/>
+    <text x="160" y="-44" fill="#ff4444" font-size="14" font-weight="700">T</text>
+    <text x="160" y="-28" fill="#ff6666" font-size="10">Касательная (T)</text>
+
+    <!-- B vector (Bitangent) - along V - GREEN -->
+    <line x1="0" y1="0" x2="10" y2="100" stroke="#44cc44" stroke-width="3" stroke-linecap="round"/>
+    <polygon points="10,100 4,87 16,88" fill="#44cc44"/>
+    <text x="22" y="104" fill="#44cc44" font-size="14" font-weight="700">B</text>
+    <text x="22" y="119" fill="#66dd66" font-size="10">Битангенса (B)</text>
+
+    <!-- N vector (Normal) - perpendicular - BLUE -->
+    <line x1="0" y1="0" x2="-55" y2="-150" stroke="#4488ff" stroke-width="3" stroke-linecap="round"/>
+    <polygon points="-55,-150 -62,-137 -48,-139" fill="#4488ff"/>
+    <text x="-52" y="-157" fill="#4488ff" font-size="14" font-weight="700">N</text>
+    <text x="-52" y="-171" fill="#66aaff" font-size="10">Нормаль (N)</text>
+
+    <!-- UV direction labels on surface -->
+    <text x="75" y="-50" fill="#8899aa" font-size="12" font-weight="600">U →</text>
+    <text x="-25" y="55" fill="#8899aa" font-size="12" font-weight="600">V ↓</text>
+
+    <!-- Right angle marker between T and B on surface -->
+    <path d="M 17,-4 L 17,5 L 8,5" fill="none" stroke="#aaa" stroke-width="0.8" opacity="0.6"/>
+
+    <!-- Right angle marker between N and surface -->
+    <path d="M -6,-20 L 4,-18 L 2,-9" fill="none" stroke="#aaa" stroke-width="0.8" opacity="0.6"/>
+  </g>
+
+  <!-- Matrix conversion box -->
+  <g transform="translate(40, 405)">
+    <rect x="0" y="0" width="520" height="58" fill="#1e2640" stroke="#334466" stroke-width="1" rx="6"/>
+
+    <text x="260" y="18" text-anchor="middle" fill="#99aabb" font-size="11" font-weight="600">Матрица TBN преобразует из касательного пространства в мировое:</text>
+
+    <text x="130" y="42" text-anchor="end" fill="#ddd" font-size="13" font-family="'Courier New', monospace">TBN =</text>
+
+    <!-- Matrix brackets -->
+    <text x="140" y="42" fill="#888" font-size="20" font-family="'Courier New', monospace">⎡</text>
+    <text x="268" y="42" fill="#888" font-size="20" font-family="'Courier New', monospace">⎤</text>
+
+    <text x="152" y="42" fill="#ddd" font-size="12" font-family="'Courier New', monospace">
+      <tspan fill="#ff6666">T</tspan>.x  <tspan fill="#66dd66">B</tspan>.x  <tspan fill="#66aaff">N</tspan>.x
+    </text>
+
+    <text x="305" y="42" fill="#ddd" font-size="13" font-family="'Courier New', monospace">→  n<tspan font-size="9" baseline-shift="sub">world</tspan> = TBN · n<tspan font-size="9" baseline-shift="sub">tangent</tspan></text>
+  </g>
+</svg>

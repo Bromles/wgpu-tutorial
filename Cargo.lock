@@ -210,7 +210,6 @@ dependencies = [
  "bytemuck",
  "framework",
  "wgpu",
- "winit",
 ]
 
 [[package]]
@@ -567,6 +566,7 @@ checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 name = "framework"
 version = "0.1.0"
 dependencies = [
+ "glam",
  "pollster",
  "tracing",
  "tracing-subscriber",
@@ -740,7 +740,6 @@ version = "0.1.0"
 dependencies = [
  "framework",
  "wgpu",
- "winit",
 ]
 
 [[package]]
@@ -1821,7 +1820,6 @@ version = "0.1.0"
 dependencies = [
  "framework",
  "wgpu",
- "winit",
 ]
 
 [[package]]
@@ -1958,7 +1956,6 @@ dependencies = [
  "bytemuck",
  "framework",
  "wgpu",
- "winit",
 ]
 
 [[package]]
@@ -2131,7 +2128,6 @@ dependencies = [
  "framework",
  "glam",
  "wgpu",
- "winit",
 ]
 
 [[package]]
@@ -2172,7 +2168,6 @@ dependencies = [
  "encase",
  "framework",
  "wgpu",
- "winit",
 ]
 
 [[package]]

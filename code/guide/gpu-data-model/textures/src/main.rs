@@ -8,8 +8,8 @@ use wgpu::{
     include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
     BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState,
     Buffer, BufferAddress, BufferUsages, Color, ColorTargetState, ColorWrites, CommandEncoder,
-    Extent3d, FilterMode, FragmentState, IndexFormat, LoadOp, MipmapFilterMode, MultisampleState,
-    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
+    Extent3d, FilterMode, FragmentState, FrontFace, IndexFormat, LoadOp, MipmapFilterMode,
+    MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
     PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
     RenderPipeline, RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor, ShaderStages,
     StoreOp, TexelCopyBufferLayout, TextureDescriptor, TextureDimension, TextureFormat,
@@ -17,7 +17,7 @@ use wgpu::{
     VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
 };
 
-use framework::{run, Example, GpuContext};
+use framework::{generate_checkerboard, run, Example, GpuContext};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -73,21 +73,6 @@ const INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
 const TEXTURE_SIZE: u32 = 256;
 const CELL_SIZE: u32 = 32;
 
-fn generate_checkerboard() -> Vec<u8> {
-    let mut pixels = Vec::with_capacity((TEXTURE_SIZE * TEXTURE_SIZE * 4) as usize);
-    for y in 0..TEXTURE_SIZE {
-        for x in 0..TEXTURE_SIZE {
-            let checker = ((x / CELL_SIZE) + (y / CELL_SIZE)) % 2 == 0;
-            if checker {
-                pixels.extend_from_slice(&[255, 255, 255, 255]);
-            } else {
-                pixels.extend_from_slice(&[58, 134, 173, 255]);
-            }
-        }
-    }
-    pixels
-}
-
 struct TexturedQuad {
     pipeline: RenderPipeline,
     vertex_buffer: Buffer,
@@ -132,7 +117,12 @@ impl Example for TexturedQuad {
             view_formats: &[],
         });
 
-        let pixels = generate_checkerboard();
+        let pixels = generate_checkerboard(
+            TEXTURE_SIZE,
+            CELL_SIZE,
+            [255, 255, 255, 255],
+            [58, 134, 173, 255],
+        );
         ctx.queue.write_texture(
             texture.as_image_copy(),
             &pixels,
@@ -234,7 +224,7 @@ impl Example for TexturedQuad {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
                     ..Default::default()
                 },

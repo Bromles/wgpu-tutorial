@@ -12,19 +12,22 @@ use wgpu::{
     include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
     BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState,
     Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, DepthBiasState, DepthStencilState, Extent3d,
-    FilterMode, FragmentState, IndexFormat, LoadOp, MipmapFilterMode, MultisampleState,
-    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
-    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
-    SamplerBindingType, SamplerDescriptor, ShaderStages, StencilState, StoreOp, TexelCopyBufferLayout,
-    Texture, TextureDescriptor, TextureDimension, TextureFormat, TextureSampleType,
-    TextureUsages, TextureView, TextureViewDescriptor, TextureViewDimension, VertexAttribute,
-    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, DepthBiasState, DepthStencilState,
+    Extent3d, Face, FilterMode, FragmentState, FrontFace, IndexFormat, LoadOp,
+    MipmapFilterMode, MultisampleState, Operations, PipelineCompilationOptions,
+    PipelineLayoutDescriptor, PolygonMode, PrimitiveState, PrimitiveTopology,
+    RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
+    RenderPipeline, RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor, ShaderStages,
+    StencilState, StoreOp, TexelCopyBufferLayout, Texture, TextureDescriptor, TextureDimension,
+    TextureFormat, TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor,
+    TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
 };
 use winit::dpi::PhysicalSize;
 
-use framework::{run, Example, GpuContext};
+use framework::{
+    create_depth_texture, generate_checkerboard, run, Example, GpuContext, CUBE_INDICES,
+    CUBE_POSITIONS, CUBE_UVS,
+};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -56,133 +59,16 @@ impl Vertex {
     }
 }
 
-const VERTICES: &[Vertex] = &[
-    // Front (z = +0.5)
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        uv: [0.0, 0.0],
-    },
-    // Back (z = -0.5)
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        uv: [0.0, 0.0],
-    },
-    // Right (x = +0.5)
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        uv: [0.0, 0.0],
-    },
-    // Left (x = -0.5)
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        uv: [0.0, 0.0],
-    },
-    // Top (y = +0.5)
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        uv: [0.0, 0.0],
-    },
-    // Bottom (y = -0.5)
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        uv: [0.0, 0.0],
-    },
-];
-
-const INDICES: &[u16] = &[
-    0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4, 8, 9, 10, 10, 11, 8, 12, 13, 14, 14, 15, 12, 16, 17, 18,
-    18, 19, 16, 20, 21, 22, 22, 23, 20,
-];
+fn cube_vertices() -> Vec<Vertex> {
+    CUBE_POSITIONS
+        .iter()
+        .zip(&CUBE_UVS)
+        .map(|(&position, &uv)| Vertex { position, uv })
+        .collect()
+}
 
 const TEX_SIZE: u32 = 256;
 const CELL_SIZE: u32 = 32;
-
-fn generate_checkerboard() -> Vec<u8> {
-    let mut pixels = Vec::with_capacity((TEX_SIZE * TEX_SIZE * 4) as usize);
-    for y in 0..TEX_SIZE {
-        for x in 0..TEX_SIZE {
-            let checker = ((x / CELL_SIZE) + (y / CELL_SIZE)) % 2 == 0;
-            if checker {
-                pixels.extend_from_slice(&[255, 255, 255, 255]);
-            } else {
-                pixels.extend_from_slice(&[58, 134, 173, 255]);
-            }
-        }
-    }
-    pixels
-}
 
 struct CubeDraw {
     uniform_buffer: Buffer,
@@ -205,39 +91,18 @@ struct DepthBufferDemo {
     start_time: Instant,
 }
 
-impl DepthBufferDemo {
-    fn create_depth_texture(ctx: &GpuContext) -> (Texture, TextureView) {
-        let size = &ctx.surface_config;
-        let texture = ctx.device.create_texture(&TextureDescriptor {
-            label: Some("Depth Texture"),
-            size: wgpu::Extent3d {
-                width: size.width,
-                height: size.height,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: TextureDimension::D2,
-            format: TextureFormat::Depth32Float,
-            usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING,
-            view_formats: &[],
-        });
-        let view = texture.create_view(&TextureViewDescriptor::default());
-        (texture, view)
-    }
-}
-
 impl Example for DepthBufferDemo {
     fn init(ctx: &GpuContext) -> Self {
         let shader_module = ctx
             .device
             .create_shader_module(include_wgsl!("shader.wgsl"));
 
+        let vertices = cube_vertices();
         let vertex_buffer = ctx
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(VERTICES),
+                contents: bytemuck::cast_slice(&vertices),
                 usage: BufferUsages::VERTEX,
             });
 
@@ -245,11 +110,16 @@ impl Example for DepthBufferDemo {
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(INDICES),
+                contents: bytemuck::cast_slice(&CUBE_INDICES),
                 usage: BufferUsages::INDEX,
             });
 
-        let pixels = generate_checkerboard();
+        let pixels = generate_checkerboard(
+            TEX_SIZE,
+            CELL_SIZE,
+            [255, 255, 255, 255],
+            [58, 134, 173, 255],
+        );
         let texture = ctx.device.create_texture(&TextureDescriptor {
             label: Some("Grid Texture"),
             size: Extent3d {
@@ -402,15 +272,15 @@ impl Example for DepthBufferDemo {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
-                    cull_mode: Some(wgpu::Face::Back),
+                    cull_mode: Some(Face::Back),
                     ..Default::default()
                 },
                 depth_stencil: Some(DepthStencilState {
                     format: TextureFormat::Depth32Float,
                     depth_write_enabled: Some(true),
-                    depth_compare: Some(wgpu::CompareFunction::Less),
+                    depth_compare: Some(CompareFunction::Less),
                     stencil: StencilState::default(),
                     bias: DepthBiasState::default(),
                 }),
@@ -423,7 +293,7 @@ impl Example for DepthBufferDemo {
                 multiview_mask: None,
             });
 
-        let (depth_texture, depth_texture_view) = Self::create_depth_texture(ctx);
+        let (depth_texture, depth_texture_view) = create_depth_texture(ctx, "Depth Texture");
 
         Self {
             pipeline,
@@ -437,7 +307,7 @@ impl Example for DepthBufferDemo {
     }
 
     fn resize(&mut self, ctx: &GpuContext, _new_size: PhysicalSize<u32>) {
-        let (depth, view) = Self::create_depth_texture(ctx);
+        let (depth, view) = create_depth_texture(ctx, "Depth Texture");
         self.depth_texture = depth;
         self.depth_texture_view = view;
     }

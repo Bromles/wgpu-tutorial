@@ -136,6 +136,8 @@ let shadow_uv = vec3<f32>(
 Координаты из clip space (−1…1) преобразуются в UV (0…1). Y инвертируется: в clip space Y вверх,
 в текстурах — вниз. `shadow_uv.z - 0.005` — дополнительный bias для устранения acne.
 
+<img src="/diagrams/shadow-uv-transform.svg" alt="Трансформация координат тени: clip space → UV → depth comparison" style="width: 100%;" />
+
 <img src="/diagrams/shadow-coordinate-transform.svg" alt="Координатный трансформ для shadow mapping" style="width: 100%;" />
 
 В vertex shader позиция в пространстве света вычисляется с perspective divide — делением на `w`:
@@ -185,12 +187,11 @@ const FLOOR_VERTICES: &[Vertex] = &[
     Vertex { position: [-5.0, -0.5,  5.0], normal: [0.0, 1.0, 0.0], uv: [0.0, 5.0] },
 ];
 
-const FLOOR_INDICES: &[u16] = &[0, 2, 1, 0, 3, 2];
+const FLOOR_INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
 ```
 
 4 вершины, 2 треугольника. Нормаль `(0, 1, 0)` — вверх. UV-координаты повторяют текстуру 5 раз
-(UV от 0 до 5 вместо 0 до 1). Порядок индексов `0, 2, 1, 0, 3, 2` — CCW с учётом того, что
-камера смотрит на пол сверху:
+(UV от 0 до 5 вместо 0 до 1). Порядок индексов `0, 1, 2, 0, 2, 3` — CCW при виде сверху:
 
 ```rust
 rpass.set_vertex_buffer(0, self.floor_vertex_buffer.slice(..));

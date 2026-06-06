@@ -40,6 +40,11 @@ editLink: false
 
 ## Несколько объектов: по bind group на куб
 
+По сравнению с предыдущей главой, вершинный формат изменился: вместо цвета (`color: [f32; 3]`) вершины теперь
+хранят UV-координаты (`uv: [f32; 2]`), а цвет поверхности берётся из текстуры. Поэтому bind group layout
+содержит три binding: uniform-буфер (binding 0, vertex), текстура (binding 1, fragment) и сэмплер
+(binding 2, fragment). Текстура и сэмплер создаются один раз и используются всеми кубами.
+
 Каждый куб имеет свою позицию и, соответственно, свою MVP-матрицу. Нам нужно обновлять uniform-буфер для каждого
 куба отдельно. Для этого создаём отдельный uniform-буфер и bind group на каждый куб:
 
@@ -67,10 +72,20 @@ let cubes: Vec<CubeDraw> = positions
         let bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
             label: Some("Bind Group"),
             layout: &bind_group_layout,
-            entries: &[BindGroupEntry {
-                binding: 0,
-                resource: uniform_buffer.as_entire_binding(),
-            }],
+            entries: &[
+                BindGroupEntry {
+                    binding: 0,
+                    resource: uniform_buffer.as_entire_binding(),
+                },
+                BindGroupEntry {
+                    binding: 1,
+                    resource: BindingResource::TextureView(&texture_view),
+                },
+                BindGroupEntry {
+                    binding: 2,
+                    resource: BindingResource::Sampler(&sampler),
+                },
+            ],
         });
 
         CubeDraw {

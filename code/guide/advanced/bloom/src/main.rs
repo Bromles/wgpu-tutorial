@@ -1,6 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::f32::consts::FRAC_PI_2;
 use std::mem::size_of;
 use std::time::Duration;
 
@@ -9,24 +8,26 @@ use encase::ShaderType;
 use glam::{Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, AddressMode, BindGroupDescriptor, BindGroupEntry,
-    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState,
-    Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, ComputePassDescriptor,
-    ComputePipeline, ComputePipelineDescriptor, DepthStencilState, Extent3d, FilterMode, FragmentState,
-    IndexFormat, LoadOp, MipmapFilterMode, MultisampleState, Operations,
-    PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode, PrimitiveState,
-    PrimitiveTopology, RenderPassColorAttachment, RenderPassDepthStencilAttachment,
-    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor,
-    ShaderStages, StencilState, StorageTextureAccess, StoreOp, TexelCopyBufferLayout, Texture,
-    TextureDescriptor, TextureDimension, TextureFormat, TextureSampleType, TextureUsages,
-    TextureView, TextureViewDescriptor, TextureViewDimension, VertexAttribute, VertexBufferLayout,
-    VertexFormat, VertexState, VertexStepMode,
+    include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
+    BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType,
+    BlendComponent, BlendState, Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages,
+    Color, ColorTargetState, ColorWrites, CommandEncoder, CompareFunction,
+    ComputePassDescriptor, ComputePipeline, ComputePipelineDescriptor, DepthStencilState, Device, Extent3d,
+    Face, FilterMode, FragmentState, FrontFace, IndexFormat, LoadOp, MipmapFilterMode,
+    MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
+    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
+    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, Sampler,
+    SamplerBindingType, SamplerDescriptor, ShaderStages, StencilState, StorageTextureAccess,
+    StoreOp, TexelCopyBufferLayout, Texture, TextureDescriptor, TextureDimension,
+    TextureFormat, TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor,
+    TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
 };
 use winit::dpi::PhysicalSize;
-use winit::keyboard::KeyCode;
 
-use framework::{run, Example, GpuContext, Input};
+use framework::{
+    create_depth_texture, generate_checkerboard, run, Camera, Example, GpuContext, Input, CUBE_INDICES,
+    CUBE_NORMALS, CUBE_POSITIONS, CUBE_UVS,
+};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -63,132 +64,19 @@ impl Vertex {
     }
 }
 
-const CUBE_VERTICES: &[Vertex] = &[
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        normal: [1.0, 0.0, 0.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        normal: [1.0, 0.0, 0.0],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        normal: [1.0, 0.0, 0.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        normal: [1.0, 0.0, 0.0],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        normal: [-1.0, 0.0, 0.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        normal: [-1.0, 0.0, 0.0],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        normal: [-1.0, 0.0, 0.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        normal: [-1.0, 0.0, 0.0],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        normal: [0.0, 1.0, 0.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        normal: [0.0, 1.0, 0.0],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        normal: [0.0, 1.0, 0.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        normal: [0.0, 1.0, 0.0],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        normal: [0.0, -1.0, 0.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        normal: [0.0, -1.0, 0.0],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        normal: [0.0, -1.0, 0.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        normal: [0.0, -1.0, 0.0],
-        uv: [0.0, 0.0],
-    },
-];
-const CUBE_INDICES: &[u16] = &[
-    0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4, 8, 9, 10, 10, 11, 8, 12, 13, 14, 14, 15, 12, 16, 17, 18,
-    18, 19, 16, 20, 21, 22, 22, 23, 20,
-];
+fn cube_vertices() -> Vec<Vertex> {
+    CUBE_POSITIONS
+        .iter()
+        .zip(&CUBE_NORMALS)
+        .zip(&CUBE_UVS)
+        .map(|((&position, &normal), &uv)| Vertex {
+            position,
+            normal,
+            uv,
+        })
+        .collect()
+}
+
 const FLOOR_VERTICES: &[Vertex] = &[
     Vertex {
         position: [-5.0, -0.5, -5.0],
@@ -211,72 +99,7 @@ const FLOOR_VERTICES: &[Vertex] = &[
         uv: [0.0, 5.0],
     },
 ];
-const FLOOR_INDICES: &[u16] = &[0, 2, 1, 0, 3, 2];
-
-struct Camera {
-    position: Vec3,
-    yaw: f32,
-    pitch: f32,
-    speed: f32,
-    sensitivity: f32,
-}
-impl Camera {
-    fn new(pos: Vec3, yaw: f32, pitch: f32) -> Self {
-        Self {
-            position: pos,
-            yaw,
-            pitch,
-            speed: 5.0,
-            sensitivity: 0.003,
-        }
-    }
-    fn direction(&self) -> Vec3 {
-        Vec3::new(
-            -self.yaw.sin() * self.pitch.cos(),
-            self.pitch.sin(),
-            -self.yaw.cos() * self.pitch.cos(),
-        )
-    }
-    fn forward(&self) -> Vec3 {
-        Vec3::new(-self.yaw.sin(), 0.0, -self.yaw.cos())
-    }
-    fn right(&self) -> Vec3 {
-        Vec3::new(self.yaw.cos(), 0.0, -self.yaw.sin())
-    }
-    fn view_matrix(&self) -> Mat4 {
-        Mat4::look_to_rh(self.position, self.direction(), Vec3::Y)
-    }
-    fn update(&mut self, dt: f32, input: &Input) {
-        if input.mouse_button_pressed(1) {
-            let (dx, dy) = input.mouse_delta();
-            self.yaw -= dx as f32 * self.sensitivity;
-            self.pitch -= dy as f32 * self.sensitivity;
-            self.pitch = self.pitch.clamp(-FRAC_PI_2 + 0.01, FRAC_PI_2 - 0.01);
-        }
-        let mut v = Vec3::ZERO;
-        if input.key_pressed(KeyCode::KeyW) {
-            v += self.forward();
-        }
-        if input.key_pressed(KeyCode::KeyS) {
-            v -= self.forward();
-        }
-        if input.key_pressed(KeyCode::KeyD) {
-            v += self.right();
-        }
-        if input.key_pressed(KeyCode::KeyA) {
-            v -= self.right();
-        }
-        if input.key_pressed(KeyCode::Space) {
-            v.y += 1.0;
-        }
-        if input.key_pressed(KeyCode::ShiftLeft) {
-            v.y -= 1.0;
-        }
-        if v.length_squared() > 0.0 {
-            self.position += v.normalize() * self.speed * dt;
-        }
-    }
-}
+const FLOOR_INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
 
 #[derive(ShaderType)]
 struct CameraUniforms {
@@ -302,19 +125,6 @@ struct BlurParams {
 
 const TEX_SIZE: u32 = 256;
 const CELL_SIZE: u32 = 32;
-fn generate_checkerboard(light: [u8; 4], dark: [u8; 4]) -> Vec<u8> {
-    let mut p = Vec::with_capacity((TEX_SIZE * TEX_SIZE * 4) as usize);
-    for y in 0..TEX_SIZE {
-        for x in 0..TEX_SIZE {
-            if ((x / CELL_SIZE) + (y / CELL_SIZE)) % 2 == 0 {
-                p.extend_from_slice(&light);
-            } else {
-                p.extend_from_slice(&dark);
-            }
-        }
-    }
-    p
-}
 
 struct BloomDemo {
     scene_pipeline: RenderPipeline,
@@ -326,9 +136,9 @@ struct BloomDemo {
     floor_vb: Buffer,
     floor_ib: Buffer,
     camera_ub: Buffer,
-    camera_bg: wgpu::BindGroup,
-    cube_bg: wgpu::BindGroup,
-    floor_bg: wgpu::BindGroup,
+    camera_bg: BindGroup,
+    cube_bg: BindGroup,
+    floor_bg: BindGroup,
     scene_tex: Texture,
     scene_tv: TextureView,
     bright_tex: Texture,
@@ -336,12 +146,13 @@ struct BloomDemo {
     blur_tex: Texture,
     blur_tv: TextureView,
     bright_params_ub: Buffer,
-    bright_bg: wgpu::BindGroup,
-    hblur_bg: wgpu::BindGroup,
-    vblur_bg: wgpu::BindGroup,
-    blur_params_ub: Buffer,
-    post_bg: wgpu::BindGroup,
-    post_sampler: wgpu::Sampler,
+    bright_bg: BindGroup,
+    hblur_bg: BindGroup,
+    vblur_bg: BindGroup,
+    hblur_params_ub: Buffer,
+    vblur_params_ub: Buffer,
+    post_bg: BindGroup,
+    post_sampler: Sampler,
     depth_tex: Texture,
     depth_tv: TextureView,
     camera: Camera,
@@ -371,26 +182,7 @@ impl BloomDemo {
         let v = t.create_view(&TextureViewDescriptor::default());
         (t, v)
     }
-    fn create_depth_tex(ctx: &GpuContext) -> (Texture, TextureView) {
-        let s = &ctx.surface_config;
-        let t = ctx.device.create_texture(&TextureDescriptor {
-            label: Some("Depth"),
-            size: Extent3d {
-                width: s.width,
-                height: s.height,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: TextureDimension::D2,
-            format: TextureFormat::Depth32Float,
-            usage: TextureUsages::RENDER_ATTACHMENT,
-            view_formats: &[],
-        });
-        let v = t.create_view(&TextureViewDescriptor::default());
-        (t, v)
-    }
-    fn create_compute_bgl(device: &wgpu::Device, extra_buffer: bool) -> wgpu::BindGroupLayout {
+    fn create_compute_bgl(device: &Device, extra_buffer: bool) -> BindGroupLayout {
         let mut entries = vec![
             BindGroupLayoutEntry {
                 binding: 0,
@@ -445,14 +237,14 @@ impl Example for BloomDemo {
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("CubeVB"),
-                contents: bytemuck::cast_slice(CUBE_VERTICES),
+                contents: bytemuck::cast_slice(&cube_vertices()),
                 usage: BufferUsages::VERTEX,
             });
         let cube_ib = ctx
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("CubeIB"),
-                contents: bytemuck::cast_slice(CUBE_INDICES),
+                contents: bytemuck::cast_slice(&CUBE_INDICES),
                 usage: BufferUsages::INDEX,
             });
         let floor_vb = ctx
@@ -470,7 +262,8 @@ impl Example for BloomDemo {
                 usage: BufferUsages::INDEX,
             });
 
-        let cube_px = generate_checkerboard([180, 60, 60, 255], [100, 35, 35, 255]);
+        let cube_px =
+            generate_checkerboard(TEX_SIZE, CELL_SIZE, [180, 60, 60, 255], [100, 35, 35, 255]);
         let cube_tex = ctx.device.create_texture(&TextureDescriptor {
             label: Some("CubeTex"),
             size: Extent3d {
@@ -501,7 +294,12 @@ impl Example for BloomDemo {
         );
         let cube_tv = cube_tex.create_view(&TextureViewDescriptor::default());
 
-        let floor_px = generate_checkerboard([200, 200, 200, 255], [100, 100, 100, 255]);
+        let floor_px = generate_checkerboard(
+            TEX_SIZE,
+            CELL_SIZE,
+            [200, 200, 200, 255],
+            [100, 100, 100, 255],
+        );
         let floor_tex = ctx.device.create_texture(&TextureDescriptor {
             label: Some("FloorTex"),
             size: Extent3d {
@@ -693,9 +491,9 @@ impl Example for BloomDemo {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
-                    cull_mode: Some(wgpu::Face::Back),
+                    cull_mode: Some(Face::Back),
                     ..Default::default()
                 },
                 depth_stencil: Some(DepthStencilState {
@@ -783,8 +581,14 @@ impl Example for BloomDemo {
 
         // Blur
         let blur_bgl = Self::create_compute_bgl(&ctx.device, true);
-        let blur_params_ub = ctx.device.create_buffer(&BufferDescriptor {
-            label: Some("BlurParams"),
+        let hblur_params_ub = ctx.device.create_buffer(&BufferDescriptor {
+            label: Some("HBlurParams"),
+            size: BlurParams::min_size().into(),
+            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+        let vblur_params_ub = ctx.device.create_buffer(&BufferDescriptor {
+            label: Some("VBlurParams"),
             size: BlurParams::min_size().into(),
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
@@ -797,8 +601,7 @@ impl Example for BloomDemo {
                 direction: glam::Vec2::new(1.0 / w, 0.0),
             })
             .unwrap();
-            ctx.queue
-                .write_buffer(&blur_params_ub, 0, &d.into_inner());
+            ctx.queue.write_buffer(&hblur_params_ub, 0, &d.into_inner());
         }
         let hblur_bg = ctx.device.create_bind_group(&BindGroupDescriptor {
             label: Some("HBlurBG"),
@@ -814,7 +617,7 @@ impl Example for BloomDemo {
                 },
                 BindGroupEntry {
                     binding: 2,
-                    resource: blur_params_ub.as_entire_binding(),
+                    resource: hblur_params_ub.as_entire_binding(),
                 },
             ],
         });
@@ -824,8 +627,7 @@ impl Example for BloomDemo {
                 direction: glam::Vec2::new(0.0, 1.0 / h),
             })
             .unwrap();
-            ctx.queue
-                .write_buffer(&blur_params_ub, 0, &d.into_inner());
+            ctx.queue.write_buffer(&vblur_params_ub, 0, &d.into_inner());
         }
         let vblur_bg = ctx.device.create_bind_group(&BindGroupDescriptor {
             label: Some("VBlurBG"),
@@ -841,20 +643,10 @@ impl Example for BloomDemo {
                 },
                 BindGroupEntry {
                     binding: 2,
-                    resource: blur_params_ub.as_entire_binding(),
+                    resource: vblur_params_ub.as_entire_binding(),
                 },
             ],
         });
-        // write H direction back for first pass
-        {
-            let mut d = encase::UniformBuffer::new(Vec::new());
-            d.write(&BlurParams {
-                direction: glam::Vec2::new(1.0 / w, 0.0),
-            })
-            .unwrap();
-            ctx.queue
-                .write_buffer(&blur_params_ub, 0, &d.into_inner());
-        }
         let blur_pipeline = ctx
             .device
             .create_compute_pipeline(&ComputePipelineDescriptor {
@@ -976,7 +768,7 @@ impl Example for BloomDemo {
                 multiview_mask: None,
             });
 
-        let (depth_tex, depth_tv) = Self::create_depth_tex(ctx);
+        let (depth_tex, depth_tv) = create_depth_texture(ctx, "Depth Texture");
         let camera = Camera::new(Vec3::new(0.0, 2.5, 5.0), 0.0, -0.3);
 
         Self {
@@ -1002,7 +794,8 @@ impl Example for BloomDemo {
             bright_bg,
             hblur_bg,
             vblur_bg,
-            blur_params_ub,
+            hblur_params_ub,
+            vblur_params_ub,
             post_bg,
             post_sampler,
             depth_tex,
@@ -1065,7 +858,7 @@ impl Example for BloomDemo {
             })
             .unwrap();
             ctx.queue
-                .write_buffer(&self.blur_params_ub, 0, &d.into_inner());
+                .write_buffer(&self.hblur_params_ub, 0, &d.into_inner());
         }
         self.hblur_bg = ctx.device.create_bind_group(&BindGroupDescriptor {
             label: Some("HBlurBG"),
@@ -1081,7 +874,7 @@ impl Example for BloomDemo {
                 },
                 BindGroupEntry {
                     binding: 2,
-                    resource: self.blur_params_ub.as_entire_binding(),
+                    resource: self.hblur_params_ub.as_entire_binding(),
                 },
             ],
         });
@@ -1092,7 +885,7 @@ impl Example for BloomDemo {
             })
             .unwrap();
             ctx.queue
-                .write_buffer(&self.blur_params_ub, 0, &d.into_inner());
+                .write_buffer(&self.vblur_params_ub, 0, &d.into_inner());
         }
         self.vblur_bg = ctx.device.create_bind_group(&BindGroupDescriptor {
             label: Some("VBlurBG"),
@@ -1108,19 +901,10 @@ impl Example for BloomDemo {
                 },
                 BindGroupEntry {
                     binding: 2,
-                    resource: self.blur_params_ub.as_entire_binding(),
+                    resource: self.vblur_params_ub.as_entire_binding(),
                 },
             ],
         });
-        {
-            let mut d = encase::UniformBuffer::new(Vec::new());
-            d.write(&BlurParams {
-                direction: glam::Vec2::new(1.0 / w, 0.0),
-            })
-            .unwrap();
-            ctx.queue
-                .write_buffer(&self.blur_params_ub, 0, &d.into_inner());
-        }
 
         let post_bgl = self.post_pipeline.get_bind_group_layout(0);
         self.post_bg = ctx.device.create_bind_group(&BindGroupDescriptor {
@@ -1142,7 +926,7 @@ impl Example for BloomDemo {
             ],
         });
 
-        let (d, v) = Self::create_depth_tex(ctx);
+        let (d, v) = create_depth_texture(ctx, "Depth Texture");
         self.depth_tex = d;
         self.depth_tv = v;
     }

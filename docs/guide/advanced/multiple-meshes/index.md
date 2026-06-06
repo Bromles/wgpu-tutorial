@@ -16,7 +16,7 @@ editLink: false
 
 - процедурная генерация геометрии: сфера из параметрических уравнений
 - несколько мешей, каждый со своими буферами и bind group
-- один uniform на меш: model, normal matrix, цвет
+- два bind group: общий camera (group 0) + персональный mesh (group 1)
 - переключение между мешами в render pass
 
 **Итог:** три сферы с разными текстурами, каждая — отдельный mesh со своим bind group
@@ -89,34 +89,116 @@ struct MeshDraw {
 Один pipeline используется для всех мешей — формат вершин и состояние рендера одинаковые.
 Меняются только данные: геометрия (vertex/index buffers) и параметры (uniform + texture).
 
-## Uniform на меш
+## Два bind group: camera и mesh
 
-Шейдер получает model-матрицу, normal matrix, направление света и базовый цвет через один uniform:
+Данные для рендера делятся на две категории: общие для всей сцены (камера) и индивидуальные для каждого объекта
+(модель, текстура). Разделим их на два bind group:
+
+```mermaid
+flowchart LR
+    subgraph "Group 0 — Camera"
+        C["view_proj"]
+    end
+    subgraph "Group 1 — Mesh"
+        M["model, normal_matrix"]
+        L["light_dir, ambient"]
+        T["base_color, texture"]
+    end
+    C --> VS["Вершинный шейдер"]
+    M --> VS
+    L --> FS["Фрагментный шейдер"]
+    T --> FS
+```
+
+- **Group 0 (camera)** — `view_proj`, устанавливается **один раз** перед циклом отрисовки. Все меши используют одну и
+  ту же матрицу проекции
+- **Group 1 (mesh)** — `model`, `normal_matrix`, `light_dir`, `ambient`, `base_color` + текстура, устанавливается
+  **на каждый меш**. Эти данные уникальны для каждого объекта
+
+### Шейдер
 
 ```wgsl
-struct Uniforms {
+struct CameraUniforms {
     view_proj: mat4x4<f32>,
+};
+
+@group(0) @binding(0)
+var<uniform> camera: CameraUniforms;
+
+struct MeshUniforms {
     model: mat4x4<f32>,
     normal_matrix: mat3x3<f32>,
     light_dir: vec3<f32>,
     ambient: f32,
     base_color: vec4<f32>,
 };
+
+@group(1) @binding(0)
+var<uniform> mesh: MeshUniforms;
+
+@group(1) @binding(1)
+var diffuse_tex: texture_2d<f32>;
+
+@group(1) @binding(2)
+var diffuse_sampler: sampler;
 ```
 
-Model и normal matrix индивидуальны для каждого меша — каждый объект может быть сдвинут,
-повёрнут, масштабирован. `view_proj` общий, но передаётся через uniform каждого меша.
+Вершинный шейдер читает `camera.view_proj` из group 0 и `mesh.model` из group 1:
 
-::: info
-`view_proj` дублируется в uniform каждого меша — это не оптимально. Альтернатива — вынести
-`view_proj` в отдельный bind group (camera bind group), общий для всех мешей. Мы использовали
-этот подход в главе про [instancing](../../3d/instancing/). Здесь каждый меш имеет полный uniform
-для простоты — один bind group на меш вместо двух.
-:::
+```wgsl
+let world_pos = mesh.model * vec4<f32>(input.position, 1.0);
+output.position = camera.view_proj * world_pos;
+```
+
+### Rust: два bind group layout
+
+Pipeline layout содержит оба layout:
+
+```rust
+let camera_bgl = ctx.device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+    label: Some("Camera BGL"),
+    entries: &[BindGroupLayoutEntry {
+        binding: 0,
+        visibility: ShaderStages::VERTEX,
+        ty: BindingType::Buffer {
+            ty: BufferBindingType::Uniform,
+            has_dynamic_offset: false,
+            min_binding_size: Some(CameraUniforms::min_size()),
+        },
+        count: None,
+    }],
+});
+
+let mesh_bgl = ctx.device.create_bind_group_layout(&BindGroupLayoutDescriptor {
+    label: Some("Mesh BGL"),
+    entries: &[
+        // binding 0: mesh uniform (model, normal_matrix, light, color)
+        // binding 1: diffuse texture
+        // binding 2: sampler
+    ],
+});
+
+let pipeline_layout = ctx.device.create_pipeline_layout(&PipelineLayoutDescriptor {
+    bind_group_layouts: &[Some(&camera_bgl), Some(&mesh_bgl)],
+    // ...
+});
+```
+
+Camera bind group создаётся один раз, mesh bind group — для каждого объекта:
+
+```rust
+let camera_bind_group = ctx.device.create_bind_group(&BindGroupDescriptor {
+    layout: &camera_bgl,
+    entries: &[BindGroupEntry {
+        binding: 0,
+        resource: camera_uniform_buffer.as_entire_binding(),
+    }],
+});
+```
 
 ## Создание меша
 
-Функция `create_mesh` инкапсулирует создание буферов, uniform и bind group:
+Функция `create_mesh` создаёт вершинный и индексный буферы, mesh uniform и bind group (group 1):
 
 ```rust
 let create_mesh = |vertices, indices, tex_view, color, model| {
@@ -143,19 +225,21 @@ let meshes = vec![
 
 ## Отрисовка
 
-В render pass переключаемся между мешами:
+Camera bind group (group 0) устанавливается **один раз** перед циклом — `view_proj` общий для всех мешей.
+Mesh bind group (group 1) переключается на каждом объекте:
 
 ```rust
 rpass.set_pipeline(&self.pipeline);
+rpass.set_bind_group(0, &self.camera_bind_group, &[]);
 for mesh in &self.meshes {
     rpass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
     rpass.set_index_buffer(mesh.index_buffer.slice(..), IndexFormat::Uint16);
-    rpass.set_bind_group(0, &mesh.bind_group, &[]);
+    rpass.set_bind_group(1, &mesh.bind_group, &[]);
     rpass.draw_indexed(0..mesh.index_count, 0, 0..1);
 }
 ```
 
-Для каждого меша устанавливаем свои буферы и bind group. Pipeline общий.
+`view_proj` пишется в camera uniform buffer один раз за кадр, а не дублируется в каждый mesh uniform.
 
 ## Что получилось
 

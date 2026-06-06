@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 450" width="100%" style="font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <defs>
+    <clipPath id="chart-clip">
+      <rect x="70" y="50" width="600" height="340"/>
+    </clipPath>
+  </defs>
+
+  <rect width="700" height="450" fill="#1a1a2e" rx="8"/>
+
+  <text x="370" y="32" text-anchor="middle" fill="#ccc" font-size="14" font-weight="600">Тоновая коррекция: Reinhard vs ACES</text>
+
+  <g id="grid">
+    <line x1="70" y1="390" x2="670" y2="390" stroke="#444" stroke-width="1"/>
+    <line x1="70" y1="50" x2="70" y2="390" stroke="#444" stroke-width="1"/>
+    <line x1="70" y1="50" x2="670" y2="50" stroke="#333" stroke-width="0.5"/>
+    <line x1="670" y1="50" x2="670" y2="390" stroke="#333" stroke-width="0.5"/>
+
+    <line x1="203.3" y1="50" x2="203.3" y2="390" stroke="#2a2a40" stroke-width="0.5"/>
+    <line x1="336.7" y1="50" x2="336.7" y2="390" stroke="#2a2a40" stroke-width="0.5"/>
+    <line x1="470.0" y1="50" x2="470.0" y2="390" stroke="#2a2a40" stroke-width="0.5"/>
+    <line x1="603.3" y1="50" x2="603.3" y2="390" stroke="#2a2a40" stroke-width="0.5"/>
+
+    <line x1="70" y1="316.1" x2="670" y2="316.1" stroke="#2a2a40" stroke-width="0.5"/>
+    <line x1="70" y1="242.2" x2="670" y2="242.2" stroke="#2a2a40" stroke-width="0.5"/>
+    <line x1="70" y1="168.3" x2="670" y2="168.3" stroke="#2a2a40" stroke-width="0.5"/>
+
+    <line x1="70" y1="94.3" x2="670" y2="94.3" stroke="#2a2a40" stroke-width="0.5" stroke-dasharray="2,4"/>
+  </g>
+
+  <g id="axes-labels">
+    <text x="370" y="430" text-anchor="middle" fill="#aaa" font-size="12">Вход HDR</text>
+    <text x="20" y="220" text-anchor="middle" fill="#aaa" font-size="12" transform="rotate(-90, 20, 220)">Выход LDR</text>
+
+    <text x="70" y="408" text-anchor="middle" fill="#888" font-size="10">0</text>
+    <text x="203.3" y="408" text-anchor="middle" fill="#888" font-size="10">1</text>
+    <text x="336.7" y="408" text-anchor="middle" fill="#888" font-size="10">2</text>
+    <text x="470.0" y="408" text-anchor="middle" fill="#888" font-size="10">3</text>
+    <text x="603.3" y="408" text-anchor="middle" fill="#888" font-size="10">4</text>
+
+    <text x="60" y="394" text-anchor="end" fill="#888" font-size="10">0</text>
+    <text x="60" y="320" text-anchor="end" fill="#888" font-size="10">0.25</text>
+    <text x="60" y="246" text-anchor="end" fill="#888" font-size="10">0.50</text>
+    <text x="60" y="172" text-anchor="end" fill="#888" font-size="10">0.75</text>
+    <text x="60" y="98" text-anchor="end" fill="#888" font-size="10">1.0</text>
+
+    <line x1="70" y1="394" x2="66" y2="394" stroke="#888" stroke-width="0.5"/>
+    <line x1="70" y1="320" x2="66" y2="320" stroke="#888" stroke-width="0.5"/>
+    <line x1="70" y1="246" x2="66" y2="246" stroke="#888" stroke-width="0.5"/>
+    <line x1="70" y1="172" x2="66" y2="172" stroke="#888" stroke-width="0.5"/>
+    <line x1="70" y1="98" x2="66" y2="98" stroke="#888" stroke-width="0.5"/>
+
+    <line x1="203.3" y1="390" x2="203.3" y2="394" stroke="#888" stroke-width="0.5"/>
+    <line x1="336.7" y1="390" x2="336.7" y2="394" stroke="#888" stroke-width="0.5"/>
+    <line x1="470.0" y1="390" x2="470.0" y2="394" stroke="#888" stroke-width="0.5"/>
+    <line x1="603.3" y1="390" x2="603.3" y2="394" stroke="#888" stroke-width="0.5"/>
+  </g>
+
+  <g id="curves" clip-path="url(#chart-clip)">
+    <line x1="70" y1="390" x2="223.3" y2="50" stroke="#666" stroke-width="1" stroke-dasharray="6,4" opacity="0.5"/>
+
+    <line x1="70" y1="94.3" x2="670" y2="94.3" stroke="#e8445a" stroke-width="1.2" stroke-dasharray="4,3" opacity="0.7"/>
+    <text x="675" y="98" fill="#e8445a" font-size="9" opacity="0.8">Потолок LDR</text>
+
+    <polyline fill="none" stroke="#4499dd" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+      points="70.0,390.0 76.7,375.9 83.3,363.1 90.0,351.4 96.7,340.7 103.3,330.9 110.0,321.8 116.7,313.3 123.3,305.5 130.0,298.2 136.7,291.4 143.3,285.1 150.0,279.1 156.7,273.5 163.3,268.3 170.0,263.3 176.7,258.6 183.3,254.2 190.0,250.0 196.7,246.0 203.3,242.2 210.0,238.6 216.7,235.1 223.3,231.9 230.0,228.7 236.7,225.7 243.3,222.9 250.0,220.2 256.7,217.5 263.3,215.0 270.0,212.6 276.7,210.3 283.3,208.1 290.0,205.9 296.7,203.8 303.3,201.9 310.0,199.9 316.7,198.1 323.3,196.3 330.0,194.6 336.7,192.9 343.3,191.3 350.0,189.7 356.7,188.2 363.3,186.7 370.0,185.3 376.7,183.9 383.3,182.6 390.0,181.3 396.7,180.0 403.3,178.8 410.0,177.6 416.7,176.5 423.3,175.3 430.0,174.3 436.7,173.2 443.3,172.2 450.0,171.1 456.7,170.2 463.3,169.2 470.0,168.3 476.7,167.3 483.3,166.5 490.0,165.6 496.7,164.7 503.3,163.9 510.0,163.1 516.7,162.3 523.3,161.5 530.0,160.8 536.7,160.0 543.3,159.3 550.0,158.6 556.7,157.9 563.3,157.3 570.0,156.6 576.7,155.9 583.3,155.3 590.0,154.7 596.7,154.1 603.3,153.5 610.0,152.9 616.7,152.3 623.3,151.8 630.0,151.2 636.7,150.7 643.3,150.1 650.0,149.6 656.7,149.1 663.3,148.6 670.0,148.1"/>
+
+    <polyline fill="none" stroke="#ee8833" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+      points="70.0,390.0 76.7,376.9 83.3,352.8 90.0,326.3 96.7,301.4 103.3,279.4 110.0,260.4 116.7,244.1 123.3,230.1 130.0,218.1 136.7,207.8 143.3,198.8 150.0,190.9 156.7,184.0 163.3,177.9 170.0,172.5 176.7,167.6 183.3,163.2 190.0,159.2 196.7,155.6 203.3,152.4 210.0,149.4 216.7,146.6 223.3,144.1 230.0,141.7 236.7,139.6 243.3,137.6 250.0,135.7 256.7,133.9 263.3,132.3 270.0,130.8 276.7,129.3 283.3,128.0 290.0,126.7 296.7,125.5 303.3,124.4 310.0,123.3 316.7,122.3 323.3,121.3 330.0,120.4 336.7,119.5 343.3,118.7 350.0,117.9 356.7,117.1 363.3,116.4 370.0,115.7 376.7,115.0 383.3,114.4 390.0,113.8 396.7,113.2 403.3,112.6 410.0,112.1 416.7,111.6 423.3,111.1 430.0,110.6 436.7,110.1 443.3,109.7 450.0,109.2 456.7,108.8 463.3,108.4 470.0,108.0 476.7,107.6 483.3,107.3 490.0,106.9 496.7,106.6 503.3,106.2 510.0,105.9 516.7,105.6 523.3,105.3 530.0,105.0 536.7,104.7 543.3,104.4 550.0,104.2 556.7,103.9 563.3,103.6 570.0,103.4 576.7,103.1 583.3,102.9 590.0,102.7 596.7,102.4 603.3,102.2 610.0,102.0 616.7,101.8 623.3,101.6 630.0,101.4 636.7,101.2 643.3,101.0 650.0,100.8 656.7,100.6 663.3,100.4 670.0,100.3"/>
+  </g>
+
+  <g id="legend" transform="translate(430, 60)">
+    <rect x="0" y="0" width="230" height="95" fill="#1a1a2e" fill-opacity="0.9" stroke="#333" stroke-width="0.5" rx="4"/>
+
+    <line x1="12" y1="20" x2="40" y2="20" stroke="#4499dd" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="50" y="24" fill="#ccc" font-size="11">Reinhard:  x / (1 + x)</text>
+
+    <line x1="12" y1="44" x2="40" y2="44" stroke="#ee8833" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="50" y="48" fill="#ccc" font-size="11">ACES  (аппроксимация)</text>
+
+    <line x1="12" y1="68" x2="40" y2="68" stroke="#666" stroke-width="1" stroke-dasharray="6,4" opacity="0.7"/>
+    <text x="50" y="72" fill="#aaa" font-size="11">Без тоновой коррекции</text>
+
+    <line x1="12" y1="86" x2="40" y2="86" stroke="#e8445a" stroke-width="1" stroke-dasharray="4,3" opacity="0.7"/>
+    <text x="50" y="90" fill="#aaa" font-size="10">Потолок LDR (y = 1)</text>
+  </g>
+</svg>

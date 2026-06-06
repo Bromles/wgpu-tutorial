@@ -13,7 +13,7 @@ struct VertexOutput {
 
 struct CameraUniforms {
     view_proj: mat4x4<f32>,
-};
+}
 
 @group(0) @binding(0)
 var<uniform> camera: CameraUniforms;
@@ -26,7 +26,7 @@ struct InstanceInput {
     @location(7) normal_col0: vec4<f32>,
     @location(8) normal_col1: vec4<f32>,
     @location(9) normal_col2: vec4<f32>,
-};
+}
 
 @vertex
 fn vs_main(input: VertexInput, instance: InstanceInput) -> VertexOutput {
@@ -53,12 +53,12 @@ fn vs_main(input: VertexInput, instance: InstanceInput) -> VertexOutput {
 struct Light {
     direction: vec3<f32>,
     color: vec3<f32>,
-};
+}
 
 struct LightUniforms {
     lights: array<Light, 3>,
     ambient: f32,
-};
+}
 
 @group(1) @binding(0)
 var<uniform> light: LightUniforms;

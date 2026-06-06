@@ -1,6 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::f32::consts::FRAC_PI_2;
 use std::time::Duration;
 
 use encase::ShaderType;
@@ -8,20 +7,19 @@ use glam::{Mat4, Vec3};
 use rand::Rng;
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, BlendComponent, BlendFactor, BlendOperation, BlendState,
-    Buffer, BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState,
-    ColorWrites, CommandEncoder, CompareFunction, ComputePassDescriptor,
-    ComputePipelineDescriptor, DepthStencilState, Extent3d, FragmentState, LoadOp,
+    include_wgsl, BindGroup, BindGroupDescriptor, BindGroupEntry,
+    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, BlendComponent, BlendFactor, BlendOperation,
+    BlendState, Buffer, BufferBindingType, BufferDescriptor, BufferUsages, Color,
+    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, ComputePassDescriptor,
+    ComputePipeline, ComputePipelineDescriptor, DepthStencilState, FragmentState, LoadOp,
     MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
-    PrimitiveState, PrimitiveTopology, RenderPassDescriptor, RenderPipeline,
-    RenderPipelineDescriptor, ShaderStages, StencilState, StoreOp, TextureDescriptor,
-    TextureDimension, TextureFormat, TextureUsages, TextureViewDescriptor, VertexState,
+    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
+    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderStages,
+    StencilState, StoreOp, Texture, TextureFormat, TextureView, VertexState,
 };
 use winit::dpi::PhysicalSize;
-use winit::keyboard::KeyCode;
 
-use framework::{run, Example, GpuContext, Input};
+use framework::{create_depth_texture, run, Camera, Example, GpuContext, Input};
 
 const NUM_PARTICLES: u32 = 2048;
 
@@ -45,112 +43,24 @@ struct CameraUniforms {
     camera_up: glam::Vec4,
 }
 
-struct Camera {
-    position: Vec3,
-    yaw: f32,
-    pitch: f32,
-    speed: f32,
-    sensitivity: f32,
-}
-
-impl Camera {
-    fn new(pos: Vec3, yaw: f32, pitch: f32) -> Self {
-        Self {
-            position: pos,
-            yaw,
-            pitch,
-            speed: 5.0,
-            sensitivity: 0.003,
-        }
-    }
-    fn direction(&self) -> Vec3 {
-        Vec3::new(
-            -self.yaw.sin() * self.pitch.cos(),
-            self.pitch.sin(),
-            -self.yaw.cos() * self.pitch.cos(),
-        )
-    }
-    fn forward(&self) -> Vec3 {
-        Vec3::new(-self.yaw.sin(), 0.0, -self.yaw.cos())
-    }
-    fn right(&self) -> Vec3 {
-        Vec3::new(self.yaw.cos(), 0.0, -self.yaw.sin())
-    }
-    fn up(&self) -> Vec3 {
-        Vec3::Y
-    }
-    fn view_matrix(&self) -> Mat4 {
-        Mat4::look_to_rh(self.position, self.direction(), Vec3::Y)
-    }
-    fn update(&mut self, dt: f32, input: &Input) {
-        if input.mouse_button_pressed(1) {
-            let (dx, dy) = input.mouse_delta();
-            self.yaw -= dx as f32 * self.sensitivity;
-            self.pitch -= dy as f32 * self.sensitivity;
-            self.pitch = self.pitch.clamp(-FRAC_PI_2 + 0.01, FRAC_PI_2 - 0.01);
-        }
-        let mut v = Vec3::ZERO;
-        if input.key_pressed(KeyCode::KeyW) {
-            v += self.forward();
-        }
-        if input.key_pressed(KeyCode::KeyS) {
-            v -= self.forward();
-        }
-        if input.key_pressed(KeyCode::KeyD) {
-            v += self.right();
-        }
-        if input.key_pressed(KeyCode::KeyA) {
-            v -= self.right();
-        }
-        if input.key_pressed(KeyCode::Space) {
-            v.y += 1.0;
-        }
-        if input.key_pressed(KeyCode::ShiftLeft) {
-            v.y -= 1.0;
-        }
-        if v.length_squared() > 0.0 {
-            self.position += v.normalize() * self.speed * dt;
-        }
-    }
-}
-
 struct ParticlesDemo {
-    sim_pipeline: wgpu::ComputePipeline,
+    sim_pipeline: ComputePipeline,
     render_pipeline: RenderPipeline,
     particle_buffer: Buffer,
     params_buffer: Buffer,
-    sim_bind_group: wgpu::BindGroup,
-    render_bind_group: wgpu::BindGroup,
+    sim_bind_group: BindGroup,
+    render_bind_group: BindGroup,
     camera_uniform_buffer: Buffer,
-    camera_bind_group: wgpu::BindGroup,
-    depth_texture: wgpu::Texture,
-    depth_texture_view: wgpu::TextureView,
+    camera_bind_group: BindGroup,
+    depth_texture: Texture,
+    depth_texture_view: TextureView,
     camera: Camera,
     spawn_timer: f32,
     spawn_offset: u32,
+    last_dt: f32,
 }
 
 impl ParticlesDemo {
-    fn create_depth_texture(ctx: &GpuContext) -> (wgpu::Texture, wgpu::TextureView) {
-        let s = &ctx.surface_config;
-        let t = ctx.device.create_texture(&TextureDescriptor {
-            label: Some("Depth"),
-            size: Extent3d {
-                width: s.width,
-                height: s.height,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: TextureDimension::D2,
-            format: TextureFormat::Depth32Float,
-            usage: TextureUsages::RENDER_ATTACHMENT,
-            view_formats: &[],
-        });
-        let v = t.create_view(&TextureViewDescriptor::default());
-        (t, v)
-    }
-
     fn spawn_particles(buffer: &Buffer, ctx: &GpuContext, count: u32, offset: u32) {
         let mut rng = rand::rng();
         let new_particles: Vec<ParticleData> = (0..count)
@@ -160,11 +70,7 @@ impl ParticlesDemo {
                 let y_vel = rng.random_range(2.0..6.0);
                 ParticleData {
                     pos: Vec3::ZERO,
-                    vel: Vec3::new(
-                        angle.cos() * speed * 0.5,
-                        y_vel,
-                        angle.sin() * speed * 0.5,
-                    ),
+                    vel: Vec3::new(angle.cos() * speed * 0.5, y_vel, angle.sin() * speed * 0.5),
                     life: rng.random_range(1.5..3.5),
                 }
             })
@@ -197,11 +103,7 @@ impl Example for ParticlesDemo {
                 let y_vel = rng.random_range(2.0..6.0);
                 ParticleData {
                     pos: Vec3::ZERO,
-                    vel: Vec3::new(
-                        angle.cos() * speed * 0.5,
-                        y_vel,
-                        angle.sin() * speed * 0.5,
-                    ),
+                    vel: Vec3::new(angle.cos() * speed * 0.5, y_vel, angle.sin() * speed * 0.5),
                     life: rng.random_range(1.5..3.5),
                 }
             })
@@ -384,7 +286,7 @@ impl Example for ParticlesDemo {
                 },
                 depth_stencil: Some(DepthStencilState {
                     format: TextureFormat::Depth32Float,
-                    depth_write_enabled: Some(true),
+                    depth_write_enabled: Some(false),
                     depth_compare: Some(CompareFunction::Less),
                     stencil: StencilState::default(),
                     bias: Default::default(),
@@ -398,7 +300,7 @@ impl Example for ParticlesDemo {
                 multiview_mask: None,
             });
 
-        let (depth_texture, depth_texture_view) = Self::create_depth_texture(ctx);
+        let (depth_texture, depth_texture_view) = create_depth_texture(ctx, "Depth");
         let camera = Camera::new(Vec3::new(0.0, 3.0, 8.0), 0.0, -0.2);
 
         Self {
@@ -415,21 +317,23 @@ impl Example for ParticlesDemo {
             camera,
             spawn_timer: 0.0,
             spawn_offset: 0,
+            last_dt: 1.0 / 60.0,
         }
     }
 
     fn resize(&mut self, ctx: &GpuContext, _new_size: PhysicalSize<u32>) {
-        let (d, v) = Self::create_depth_texture(ctx);
+        let (d, v) = create_depth_texture(ctx, "Depth");
         self.depth_texture = d;
         self.depth_texture_view = v;
     }
 
     fn update(&mut self, _ctx: &GpuContext, dt: Duration, input: &Input) {
-        self.camera.update(dt.as_secs_f32(), input);
+        self.last_dt = dt.as_secs_f32();
+        self.camera.update(self.last_dt, input);
         self.spawn_timer += dt.as_secs_f32();
     }
 
-    fn render(&mut self, ctx: &GpuContext, view: &wgpu::TextureView, encoder: &mut CommandEncoder) {
+    fn render(&mut self, ctx: &GpuContext, view: &TextureView, encoder: &mut CommandEncoder) {
         if self.spawn_timer > 0.1 {
             self.spawn_timer = 0.0;
             let count = 64u32;
@@ -440,7 +344,7 @@ impl Example for ParticlesDemo {
         {
             let mut data = encase::UniformBuffer::new(Vec::new());
             data.write(&SimParams {
-                dt: 1.0 / 60.0,
+                dt: self.last_dt,
                 gravity: 9.8,
             })
             .unwrap();
@@ -477,7 +381,7 @@ impl Example for ParticlesDemo {
         {
             let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
                 label: Some("Particles"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(RenderPassColorAttachment {
                     view,
                     resolve_target: None,
                     ops: Operations {
@@ -486,7 +390,7 @@ impl Example for ParticlesDemo {
                     },
                     depth_slice: None,
                 })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
                     view: &self.depth_texture_view,
                     depth_ops: Some(Operations {
                         load: LoadOp::Clear(1.0),

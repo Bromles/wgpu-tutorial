@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::f32::consts::{FRAC_PI_2, FRAC_PI_4};
+use std::f32::consts::FRAC_PI_4;
 use std::mem::size_of;
 use std::time::Duration;
 
@@ -9,23 +9,25 @@ use encase::ShaderType;
 use glam::{Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, AddressMode, BindGroupDescriptor, BindGroupEntry,
+    include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
     BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState,
     Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, DepthBiasState, DepthStencilState, Extent3d,
-    FilterMode, FragmentState, IndexFormat, LoadOp, MipmapFilterMode, MultisampleState,
-    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
-    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
-    SamplerBindingType, SamplerDescriptor, ShaderStages, StencilState, StoreOp, TexelCopyBufferLayout,
-    Texture, TextureDescriptor, TextureDimension, TextureFormat, TextureSampleType,
-    TextureUsages, TextureView, TextureViewDescriptor, TextureViewDimension, VertexAttribute,
-    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, DepthBiasState, DepthStencilState,
+    Extent3d, Face, FilterMode, FragmentState, FrontFace, IndexFormat, LoadOp,
+    MipmapFilterMode, MultisampleState, Operations, PipelineCompilationOptions,
+    PipelineLayoutDescriptor, PolygonMode, PrimitiveState, PrimitiveTopology,
+    RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
+    RenderPipeline, RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor, ShaderStages,
+    StencilState, StoreOp, TexelCopyBufferLayout, Texture, TextureDescriptor, TextureDimension,
+    TextureFormat, TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor,
+    TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
 };
 use winit::dpi::PhysicalSize;
-use winit::keyboard::KeyCode;
 
-use framework::{run, Example, GpuContext, Input};
+use framework::{
+    create_depth_texture, generate_checkerboard, run, Camera, Example, GpuContext, Input,
+    CUBE_INDICES, CUBE_POSITIONS, CUBE_UVS,
+};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -57,127 +59,16 @@ impl Vertex {
     }
 }
 
-const VERTICES: &[Vertex] = &[
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        uv: [0.0, 0.0],
-    },
-];
-
-const INDICES: &[u16] = &[
-    0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4, 8, 9, 10, 10, 11, 8, 12, 13, 14, 14, 15, 12, 16, 17, 18,
-    18, 19, 16, 20, 21, 22, 22, 23, 20,
-];
+fn cube_vertices() -> Vec<Vertex> {
+    CUBE_POSITIONS
+        .iter()
+        .zip(&CUBE_UVS)
+        .map(|(&position, &uv)| Vertex { position, uv })
+        .collect()
+}
 
 const TEX_SIZE: u32 = 256;
 const CELL_SIZE: u32 = 32;
-
-fn generate_checkerboard() -> Vec<u8> {
-    let mut pixels = Vec::with_capacity((TEX_SIZE * TEX_SIZE * 4) as usize);
-    for y in 0..TEX_SIZE {
-        for x in 0..TEX_SIZE {
-            let checker = ((x / CELL_SIZE) + (y / CELL_SIZE)) % 2 == 0;
-            if checker {
-                pixels.extend_from_slice(&[255, 255, 255, 255]);
-            } else {
-                pixels.extend_from_slice(&[58, 134, 173, 255]);
-            }
-        }
-    }
-    pixels
-}
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -218,82 +109,6 @@ impl InstanceData {
     }
 }
 
-struct Camera {
-    position: Vec3,
-    yaw: f32,
-    pitch: f32,
-    speed: f32,
-    sensitivity: f32,
-}
-
-impl Camera {
-    fn new(position: Vec3, yaw: f32, pitch: f32) -> Self {
-        Self {
-            position,
-            yaw,
-            pitch,
-            speed: 5.0,
-            sensitivity: 0.003,
-        }
-    }
-
-    fn direction(&self) -> Vec3 {
-        Vec3::new(
-            -self.yaw.sin() * self.pitch.cos(),
-            self.pitch.sin(),
-            -self.yaw.cos() * self.pitch.cos(),
-        )
-    }
-
-    fn forward(&self) -> Vec3 {
-        Vec3::new(-self.yaw.sin(), 0.0, -self.yaw.cos())
-    }
-
-    fn right(&self) -> Vec3 {
-        Vec3::new(self.yaw.cos(), 0.0, -self.yaw.sin())
-    }
-
-    fn view_matrix(&self) -> Mat4 {
-        Mat4::look_to_rh(self.position, self.direction(), Vec3::Y)
-    }
-
-    fn update(&mut self, dt: f32, input: &Input) {
-        if input.mouse_button_pressed(1) {
-            let (dx, dy) = input.mouse_delta();
-            self.yaw -= dx as f32 * self.sensitivity;
-            self.pitch -= dy as f32 * self.sensitivity;
-            self.pitch = self.pitch.clamp(-FRAC_PI_2 + 0.01, FRAC_PI_2 - 0.01);
-        }
-
-        let forward = self.forward();
-        let right = self.right();
-        let mut velocity = Vec3::ZERO;
-
-        if input.key_pressed(KeyCode::KeyW) {
-            velocity += forward;
-        }
-        if input.key_pressed(KeyCode::KeyS) {
-            velocity -= forward;
-        }
-        if input.key_pressed(KeyCode::KeyD) {
-            velocity += right;
-        }
-        if input.key_pressed(KeyCode::KeyA) {
-            velocity -= right;
-        }
-        if input.key_pressed(KeyCode::Space) {
-            velocity.y += 1.0;
-        }
-        if input.key_pressed(KeyCode::ShiftLeft) {
-            velocity.y -= 1.0;
-        }
-
-        if velocity.length_squared() > 0.0 {
-            self.position += velocity.normalize() * self.speed * dt;
-        }
-    }
-}
-
 #[derive(ShaderType)]
 struct ShaderUniforms {
     view_proj: Mat4,
@@ -309,12 +124,19 @@ fn generate_instances() -> Vec<InstanceData> {
     for x in 0..GRID_SIZE {
         for y in 0..GRID_SIZE {
             for z in 0..GRID_SIZE {
+                let index = x * GRID_SIZE * GRID_SIZE + y * GRID_SIZE + z;
+
                 let pos = Vec3::new(
                     x as f32 - offset + 0.5,
                     y as f32 - offset + 0.5,
                     z as f32 - offset + 0.5,
                 );
-                let model = Mat4::from_translation(pos);
+
+                let rotation = Mat4::from_rotation_y(index as f32 * 0.5);
+                let scale = 0.8 + 0.4 * ((index as f32) % 5.0) / 5.0;
+                let scale_mat = Mat4::from_scale(Vec3::splat(scale));
+
+                let model = Mat4::from_translation(pos) * rotation * scale_mat;
                 instances.push(InstanceData {
                     model: model.to_cols_array_2d(),
                 });
@@ -330,32 +152,10 @@ struct InstancingDemo {
     index_buffer: Buffer,
     instance_buffer: Buffer,
     uniform_buffer: Buffer,
-    bind_group: wgpu::BindGroup,
+    bind_group: BindGroup,
     depth_texture: Texture,
     depth_texture_view: TextureView,
     camera: Camera,
-}
-
-impl InstancingDemo {
-    fn create_depth_texture(ctx: &GpuContext) -> (Texture, TextureView) {
-        let size = &ctx.surface_config;
-        let texture = ctx.device.create_texture(&TextureDescriptor {
-            label: Some("Depth Texture"),
-            size: Extent3d {
-                width: size.width,
-                height: size.height,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: TextureDimension::D2,
-            format: TextureFormat::Depth32Float,
-            usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING,
-            view_formats: &[],
-        });
-        let view = texture.create_view(&TextureViewDescriptor::default());
-        (texture, view)
-    }
 }
 
 impl Example for InstancingDemo {
@@ -364,11 +164,12 @@ impl Example for InstancingDemo {
             .device
             .create_shader_module(include_wgsl!("shader.wgsl"));
 
+        let vertices = cube_vertices();
         let vertex_buffer = ctx
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(VERTICES),
+                contents: bytemuck::cast_slice(&vertices),
                 usage: BufferUsages::VERTEX,
             });
 
@@ -376,7 +177,7 @@ impl Example for InstancingDemo {
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(INDICES),
+                contents: bytemuck::cast_slice(&CUBE_INDICES),
                 usage: BufferUsages::INDEX,
             });
 
@@ -390,7 +191,12 @@ impl Example for InstancingDemo {
                 usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
             });
 
-        let pixels = generate_checkerboard();
+        let pixels = generate_checkerboard(
+            TEX_SIZE,
+            CELL_SIZE,
+            [255, 255, 255, 255],
+            [58, 134, 173, 255],
+        );
         let texture = ctx.device.create_texture(&TextureDescriptor {
             label: Some("Grid Texture"),
             size: Extent3d {
@@ -526,15 +332,15 @@ impl Example for InstancingDemo {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
-                    cull_mode: Some(wgpu::Face::Back),
+                    cull_mode: Some(Face::Back),
                     ..Default::default()
                 },
                 depth_stencil: Some(DepthStencilState {
                     format: TextureFormat::Depth32Float,
                     depth_write_enabled: Some(true),
-                    depth_compare: Some(wgpu::CompareFunction::Less),
+                    depth_compare: Some(CompareFunction::Less),
                     stencil: StencilState::default(),
                     bias: DepthBiasState::default(),
                 }),
@@ -547,7 +353,7 @@ impl Example for InstancingDemo {
                 multiview_mask: None,
             });
 
-        let (depth_texture, depth_texture_view) = Self::create_depth_texture(ctx);
+        let (depth_texture, depth_texture_view) = create_depth_texture(ctx, "Depth Texture");
 
         let camera = Camera::new(Vec3::new(0.0, 2.0, 8.0), 0.0, -0.2);
 
@@ -565,7 +371,7 @@ impl Example for InstancingDemo {
     }
 
     fn resize(&mut self, ctx: &GpuContext, _new_size: PhysicalSize<u32>) {
-        let (depth, view) = Self::create_depth_texture(ctx);
+        let (depth, view) = create_depth_texture(ctx, "Depth Texture");
         self.depth_texture = depth;
         self.depth_texture_view = view;
     }

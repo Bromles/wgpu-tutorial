@@ -1,6 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::f32::consts::FRAC_PI_2;
 use std::mem::size_of;
 use std::time::Duration;
 
@@ -9,11 +8,11 @@ use encase::ShaderType;
 use glam::{Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, AddressMode, BindGroupDescriptor, BindGroupEntry,
+    include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
     BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState,
     Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, DepthStencilState, Extent3d,
-    FilterMode, FragmentState, IndexFormat, LoadOp, MipmapFilterMode, MultisampleState,
+    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, DepthStencilState, Extent3d, Face,
+    FilterMode, FragmentState, FrontFace, IndexFormat, LoadOp, MipmapFilterMode, MultisampleState,
     Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
     PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
     RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
@@ -23,9 +22,8 @@ use wgpu::{
     VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
 };
 use winit::dpi::PhysicalSize;
-use winit::keyboard::KeyCode;
 
-use framework::{run, Example, GpuContext, Input};
+use framework::{create_depth_texture, run, Camera, Example, GpuContext, Input};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -97,77 +95,6 @@ const VERTICES: &[Vertex] = &[
 ];
 
 const INDICES: &[u16] = &[0, 1, 2, 2, 3, 0];
-
-struct Camera {
-    position: Vec3,
-    yaw: f32,
-    pitch: f32,
-    speed: f32,
-    sensitivity: f32,
-}
-
-impl Camera {
-    fn new(position: Vec3, yaw: f32, pitch: f32) -> Self {
-        Self {
-            position,
-            yaw,
-            pitch,
-            speed: 5.0,
-            sensitivity: 0.003,
-        }
-    }
-
-    fn direction(&self) -> Vec3 {
-        Vec3::new(
-            -self.yaw.sin() * self.pitch.cos(),
-            self.pitch.sin(),
-            -self.yaw.cos() * self.pitch.cos(),
-        )
-    }
-
-    fn forward(&self) -> Vec3 {
-        Vec3::new(-self.yaw.sin(), 0.0, -self.yaw.cos())
-    }
-
-    fn right(&self) -> Vec3 {
-        Vec3::new(self.yaw.cos(), 0.0, -self.yaw.sin())
-    }
-
-    fn view_matrix(&self) -> Mat4 {
-        Mat4::look_to_rh(self.position, self.direction(), Vec3::Y)
-    }
-
-    fn update(&mut self, dt: f32, input: &Input) {
-        if input.mouse_button_pressed(1) {
-            let (dx, dy) = input.mouse_delta();
-            self.yaw -= dx as f32 * self.sensitivity;
-            self.pitch -= dy as f32 * self.sensitivity;
-            self.pitch = self.pitch.clamp(-FRAC_PI_2 + 0.01, FRAC_PI_2 - 0.01);
-        }
-        let mut velocity = Vec3::ZERO;
-        if input.key_pressed(KeyCode::KeyW) {
-            velocity += self.forward();
-        }
-        if input.key_pressed(KeyCode::KeyS) {
-            velocity -= self.forward();
-        }
-        if input.key_pressed(KeyCode::KeyD) {
-            velocity += self.right();
-        }
-        if input.key_pressed(KeyCode::KeyA) {
-            velocity -= self.right();
-        }
-        if input.key_pressed(KeyCode::Space) {
-            velocity.y += 1.0;
-        }
-        if input.key_pressed(KeyCode::ShiftLeft) {
-            velocity.y -= 1.0;
-        }
-        if velocity.length_squared() > 0.0 {
-            self.position += velocity.normalize() * self.speed * dt;
-        }
-    }
-}
 
 #[derive(ShaderType)]
 struct CameraUniforms {
@@ -252,33 +179,11 @@ struct NormalMappingDemo {
     vertex_buffer: Buffer,
     index_buffer: Buffer,
     camera_uniform_buffer: Buffer,
-    camera_bind_group: wgpu::BindGroup,
-    material_bind_group: wgpu::BindGroup,
+    camera_bind_group: BindGroup,
+    material_bind_group: BindGroup,
     depth_texture: Texture,
     depth_texture_view: TextureView,
     camera: Camera,
-}
-
-impl NormalMappingDemo {
-    fn create_depth_texture(ctx: &GpuContext) -> (Texture, TextureView) {
-        let size = &ctx.surface_config;
-        let texture = ctx.device.create_texture(&TextureDescriptor {
-            label: Some("Depth Texture"),
-            size: Extent3d {
-                width: size.width,
-                height: size.height,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: TextureDimension::D2,
-            format: TextureFormat::Depth32Float,
-            usage: TextureUsages::RENDER_ATTACHMENT,
-            view_formats: &[],
-        });
-        let view = texture.create_view(&TextureViewDescriptor::default());
-        (texture, view)
-    }
 }
 
 impl Example for NormalMappingDemo {
@@ -532,9 +437,9 @@ impl Example for NormalMappingDemo {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
-                    cull_mode: Some(wgpu::Face::Back),
+                    cull_mode: Some(Face::Back),
                     ..Default::default()
                 },
                 depth_stencil: Some(DepthStencilState {
@@ -553,7 +458,7 @@ impl Example for NormalMappingDemo {
                 multiview_mask: None,
             });
 
-        let (depth_texture, depth_texture_view) = Self::create_depth_texture(ctx);
+        let (depth_texture, depth_texture_view) = create_depth_texture(ctx, "Depth Texture");
         let camera = Camera::new(Vec3::new(0.0, 0.0, 5.0), 0.0, 0.0);
 
         Self {
@@ -570,7 +475,7 @@ impl Example for NormalMappingDemo {
     }
 
     fn resize(&mut self, ctx: &GpuContext, _new_size: PhysicalSize<u32>) {
-        let (d, v) = Self::create_depth_texture(ctx);
+        let (d, v) = create_depth_texture(ctx, "Depth Texture");
         self.depth_texture = d;
         self.depth_texture_view = v;
     }

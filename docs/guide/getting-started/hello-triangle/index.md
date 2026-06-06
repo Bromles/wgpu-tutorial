@@ -217,10 +217,10 @@ let shader_module = ctx.device.create_shader_module(include_wgsl!("shader.wgsl")
 
 ```rust
 vertex: VertexState {
-module: & shader_module,
-entry_point: Some("vs_main"),
-buffers: & [],
-compilation_options: PipelineCompilationOptions::default (),
+    module: &shader_module,
+    entry_point: Some("vs_main"),
+    buffers: &[],
+    compilation_options: PipelineCompilationOptions::default(),
 },
 ```
 
@@ -234,17 +234,17 @@ compilation_options: PipelineCompilationOptions::default (),
 
 ```rust
 fragment: Some(FragmentState {
-module: & shader_module,
-entry_point: Some("fs_main"),
-targets: & [Some(ColorTargetState {
-format: ctx.surface_format,
-blend: Some(BlendState {
-color: BlendComponent::REPLACE,
-alpha: BlendComponent::REPLACE,
-}),
-write_mask: ColorWrites::ALL,
-})],
-compilation_options: PipelineCompilationOptions::default (),
+    module: &shader_module,
+    entry_point: Some("fs_main"),
+    targets: &[Some(ColorTargetState {
+        format: ctx.surface_format,
+        blend: Some(BlendState {
+            color: BlendComponent::REPLACE,
+            alpha: BlendComponent::REPLACE,
+        }),
+        write_mask: ColorWrites::ALL,
+    })],
+    compilation_options: PipelineCompilationOptions::default(),
 }),
 ```
 
@@ -260,10 +260,10 @@ compilation_options: PipelineCompilationOptions::default (),
 
 ```rust
 primitive: PrimitiveState {
-topology: PrimitiveTopology::TriangleList,
-front_face: FrontFace::Ccw,
-polygon_mode: PolygonMode::Fill,
-..Default::default ()
+    topology: PrimitiveTopology::TriangleList,
+    front_face: wgpu::FrontFace::Ccw,
+    polygon_mode: PolygonMode::Fill,
+    ..Default::default()
 },
 ```
 
@@ -278,9 +278,9 @@ polygon_mode: PolygonMode::Fill,
 
 ```rust
 multisample: MultisampleState {
-count: 1,
-mask: ! 0,
-alpha_to_coverage_enabled: false,
+    count: 1,
+    mask: !0,
+    alpha_to_coverage_enabled: false,
 },
 depth_stencil: None,
 cache: None,
@@ -289,7 +289,9 @@ multiview_mask: None,
 
 - `multisample` — настройки сглаживания (MSAA). `count: 1` — без мультисэмплирования
 - `depth_stencil` — настройки буфера глубины и трафарета. Пока не используем
-- `cache` — кэш конвейера для ускорения последующих запусков приложения. Не используем
+- `cache` — кэш скомпилированного конвейера. Позволяет ускорить создание pipeline при повторных запусках
+  приложения — GPU не перекомпилирует шейдеры, а читает их из кэша. Пока не используем: сериализация кэша
+  зависит от драйвера и платформы, что усложняет код примеров
 - `multiview_mask` — маска для рендеринга в несколько слоёв. Не используем
 
 ## Отрисовка
@@ -345,13 +347,16 @@ fn render(&mut self, _ctx: &GpuContext, view: &TextureView, encoder: &mut Comman
 
 ## Что получилось
 
-::: warning Типичные ошибки
-- Render pipeline **immutable** — после создания нельзя изменить шейдер, формат, blend mode. Нужно создать новый pipeline
-- `draw(0..3, 0..1)` — первый параметр это вершины, второй экземпляры. Перепутать — пустой экран
-:::
+<div class="warning custom-block" style="padding-top: 8px">
+<p class="custom-block-title">Типичные ошибки</p>
+<p>- Render pipeline <strong>immutable</strong> — после создания нельзя изменить шейдер, формат, blend mode. Нужно создать новый pipeline</p>
+<p>- <code>draw(0..3, 0..1)</code> — первый параметр это вершины, второй экземпляры. Перепутать — пустой экран</p>
+</div>
 
 Окно с зелёным фоном и тёмно-красным треугольником в центре. Внешний вид будет различаться в зависимости от
 операционной системы.
+
+<!-- TODO: скриншот -->
 
 <div class="tip custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Попробуем</p>

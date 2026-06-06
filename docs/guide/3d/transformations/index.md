@@ -20,7 +20,7 @@ editLink: false
 - backface culling
 - обновление uniform-буфера каждый кадр
 
-**Итог:** вращающийся куб с отсечением задних граней
+**Итог:** три куба с разными трансформациями и отсечением задних граней
 
 ---
 
@@ -42,7 +42,7 @@ glam.workspace = true # [!code ++]
 ```
 
 `glam` — библиотека линейной алгебры для графики. Предоставляет `Vec3`, `Mat4`, операции с матрицами и кватернионами.
-Интегрирована с `encase` через фичу `encase/ glam` — типы `glam` можно напрямую использовать в `#[derive(ShaderType)]`
+Интегрирована с `encase` через фичу `encase`/`glam` — типы `glam` можно напрямую использовать в `#[derive(ShaderType)]`
 структурах.
 
 ## Три матрицы
@@ -84,13 +84,13 @@ let model = Mat4::from_scale(Vec3::splat(0.5))
 
 ```rust
 let view = Mat4::look_at_rh(
-    Vec3::new(2.0, 1.5, 2.0),   // позиция камеры (eye)
+    Vec3::new(4.0, 3.0, 4.0),    // позиция камеры (eye)
     Vec3::ZERO,                   // точка, куда смотрит камера (target)
     Vec3::Y,                      // вектор «вверх»
 );
 ```
 
-Камера расположена в точке (2, 1.5, 2) и смотрит в начало координат — туда, где находится куб. В отличие от
+Камера расположена в точке (4, 3, 4) и смотрит в начало координат — туда, где находятся кубы. В отличие от
 `look_to_rh`, принимающего направление взгляда, `look_at_rh` принимает целевую точку — удобнее, когда мы знаем,
 куда хотим смотреть.
 
@@ -217,28 +217,106 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 }
 ```
 
-## Обновление матрицы каждый кадр
+## Несколько моделей: массив uniform-буферов
 
-Каждый кадр пересчитываем MVP и записываем в uniform-буфер:
+Вместо одного куба нарисуем три — каждый со своей model-матрицей. Для этого создаём по отдельному
+uniform-буферу и bind group на каждую модель:
+
+```rust
+struct RotatingCube {
+    pipeline: RenderPipeline,
+    vertex_buffer: Buffer,
+    index_buffer: Buffer,
+    uniform_buffers: [Buffer; 3],
+    bind_groups: [BindGroup; 3],
+    start_time: Instant,
+}
+```
+
+При инициализации — три uniform-буфера и три bind group через `std::array::from_fn`:
+
+```rust
+let uniform_size = ShaderUniforms::min_size();
+
+let uniform_buffers: [Buffer; 3] = std::array::from_fn(|i| {
+    ctx.device.create_buffer(&BufferDescriptor {
+        label: Some(&format!("Uniform Buffer {i}")),
+        size: uniform_size.into(),
+        usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+        mapped_at_creation: false,
+    })
+});
+
+let bind_groups: [BindGroup; 3] = std::array::from_fn(|i| {
+    ctx.device.create_bind_group(&BindGroupDescriptor {
+        label: Some(&format!("Bind Group {i}")),
+        layout: &bind_group_layout,
+        entries: &[BindGroupEntry {
+            binding: 0,
+            resource: uniform_buffers[i].as_entire_binding(),
+        }],
+    })
+});
+```
+
+Все bind groups используют один и тот же layout — это важно. Pipeline layout описывает формат (какие привязки
+и какого типа), а bind group привязывает конкретные ресурсы. Один layout, много групп — это нормальная практика.
+
+## Обновление матриц каждый кадр
+
+Каждый кадр пересчитываем MVP для каждой модели. View-projection вычисляется один раз, а model-матрицы —
+в цикле:
 
 ```rust
 let time = self.start_time.elapsed().as_secs_f32();
 let aspect = ctx.surface_config.width as f32 / ctx.surface_config.height as f32;
 
 let projection = Mat4::perspective_rh(FRAC_PI_4, aspect, 0.1, 100.0);
-let view = Mat4::look_at_rh(
-    Vec3::new(2.0, 1.5, 2.0),
+let view_mat = Mat4::look_at_rh(
+    Vec3::new(4.0, 3.0, 4.0),
     Vec3::ZERO,
     Vec3::Y,
 );
-let model = Mat4::from_rotation_y(time);
-let mvp = projection * view * model;
+let vp = projection * view_mat;
+
+let models = [
+    Mat4::from_rotation_y(time),
+    Mat4::from_translation(Vec3::new(
+        2.0 * time.cos(),
+        0.0,
+        2.0 * time.sin(),
+    )) * Mat4::from_rotation_y(time * 2.0),
+    Mat4::from_translation(Vec3::new(-1.5, 1.0, -1.0))
+        * Mat4::from_scale(Vec3::splat(0.5))
+        * Mat4::from_rotation_x(time * 1.5),
+];
 ```
 
-Куб вращается за счёт `Mat4::from_rotation_y(time)` — угол поворота растёт с течением времени. Projection зависит
-от соотношения сторон окна и пересчитывается каждый кадр — при resize изображение не будет растянуто.
+Три model-матрицы:
+- **Вращающийся куб** — `from_rotation_y(time)`, стоит в начале координат
+- **Орбитальный куб** — `from_translation` по кругу радиуса 2 с удвоенной скоростью вращения
+- **Маленький куб** — сдвинут влево-вверх-назад, уменьшен в 2 раза, вращается вокруг X
 
-Для камеры здесь используется `look_at_rh` — он принимает позицию глаза и **целевую точку**, на которую
+`vp` — это `projection * view_mat`, предвычисленная один раз. В цикле домножаем на model:
+
+```rust
+for (i, model) in models.iter().enumerate() {
+    let mvp = vp * *model;
+    let mut uniform_data = encase::UniformBuffer::new(Vec::new());
+    uniform_data.write(&ShaderUniforms { mvp }).unwrap();
+    ctx.queue
+        .write_buffer(&self.uniform_buffers[i], 0, &uniform_data.into_inner());
+
+    rpass.set_bind_group(0, &self.bind_groups[i], &[]);
+    rpass.draw_indexed(0..36, 0, 0..1);
+}
+```
+
+Перед отрисовкой каждого куба переключаем bind group — `set_bind_group` меняет привязку для последующих
+вызовов `draw_indexed`. Vertex buffer, index buffer и pipeline общие для всех.
+
+Projection зависит от соотношения сторон окна и пересчитывается каждый кадр — при resize изображение не будет
+растянуто. Для камеры используется `look_at_rh` — он принимает позицию глаза и **целевую точку**, на которую
 смотрим. Есть и другой вариант:
 
 ```rust
@@ -269,6 +347,15 @@ primitive: PrimitiveState {
 GPU определяет переднюю грань через векторное произведение (cross product) двух рёбер треугольника в screen space.
 Если результат указывает на наблюдателя — грань передняя (CCW), если от наблюдателя — задняя (CW).
 
+<div class="warning custom-block" style="padding-top: 8px">
+<p class="custom-block-title">Куб выглядит «вывернутым наизнанку»</p>
+
+Пока у нас нет depth buffer (буфера глубины), поэтому задние грани, оказавшиеся ближе к камере, рисуются поверх
+передних. Из-за этого при определённых углах поворота куб может выглядеть странно. Это нормально — depth buffer будет
+добавлен в следующей главе, и тогда отображение станет корректным.
+
+</div>
+
 <div class="info custom-block" style="padding-top: 8px">
 <p class="custom-block-title">Почему у куба 24 вершины, а не 8?</p>
 
@@ -287,7 +374,7 @@ GPU определяет переднюю грань через векторно
 - `look_at_rh` panics если eye = target — целевая точка должна отличаться от позиции камеры
 :::
 
-Вращающийся куб. Backface culling убирает задние грани, цвета граней — интерполяция между вершинами.
+Три куба с разными трансформациями (вращение, орбита, масштаб). Backface culling убирает задние грани, цвета граней — интерполяция между вершинами.
 
 <!-- TODO: скриншот -->
 

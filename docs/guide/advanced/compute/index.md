@@ -128,6 +128,15 @@ textureStore(output_tex, vec2<i32>(id.xy), color / total);
 `textureLoad` читает конкретный тексель без фильтрации — в отличие от `textureSample`,
 который использует сэмплер. Координаты — целые числа, не нормализованные.
 
+::: info textureLoad vs textureSample
+
+- **`textureLoad(tex, coords)`** — читает конкретный тексель по целочисленным координатам. Без фильтрации, сэмплер не нужен. Доступен **во всех** стадиях шейдера, включая compute.
+- **`textureSample(tex, sampler, coords)`** — читает с фильтрацией/сэмплированием по float-координатам. Доступен **только** во фрагментных шейдерах.
+
+Именно поэтому в compute-шейдерах всегда используется `textureLoad` — `textureSample` в них недоступен. Во фрагментных шейдерах `textureSample` предпочтительнее для фильтрованных чтений, а `textureLoad` — для точного доступа к текселям.
+
+:::
+
 Clamp гарантирует, что координаты не выйдут за границы текстуры — краевые пиксели
 «размазываются» на соседей за пределами изображения.
 
@@ -188,7 +197,6 @@ let compute_pipeline = ctx.device.create_compute_pipeline(&ComputePipelineDescri
     module: &blur_shader,
     entry_point: Some("main"),
     compilation_options: PipelineCompilationOptions::default(),
-    cache: None,
 });
 ```
 
@@ -247,3 +255,5 @@ let compute_bgl = ctx.device.create_bind_group_layout(&BindGroupLayoutDescriptor
 - Добавить второй compute pass: инверсия цветов размытой половины
 
 </div>
+
+[Полный код главы](https://github.com/Bromles/wgpu-tutorial/tree/master/code/guide/advanced/compute)

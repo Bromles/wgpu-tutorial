@@ -1,10 +1,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use wgpu::{
-    include_wgsl, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites, CommandEncoder,
-    FragmentState, LoadOp, MultisampleState, Operations, PipelineCompilationOptions, PolygonMode,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
-    RenderPipeline, RenderPipelineDescriptor, StoreOp, TextureView, VertexState,
+    include_wgsl, BlendComponent, BlendState, Color, ColorTargetState, ColorWrites,
+    CommandEncoder, FragmentState, FrontFace, LoadOp, MultisampleState, Operations,
+    PipelineCompilationOptions, PolygonMode, PrimitiveState, PrimitiveTopology,
+    RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, StoreOp,
+    TextureView, VertexState,
 };
 
 use framework::{run, Example, GpuContext};
@@ -45,7 +46,7 @@ impl Example for ColoredTriangle {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
                     ..Default::default()
                 },

@@ -8,8 +8,8 @@ use wgpu::CurrentSurfaceTexture::{
 };
 use wgpu::{
     Backends, Color, CommandEncoderDescriptor, CompositeAlphaMode, Device, DeviceDescriptor,
-    ExperimentalFeatures, Instance, InstanceDescriptor, Limits, LoadOp, MemoryHints,
-    Operations, PowerPreference, PresentMode, Queue, RenderPassColorAttachment, RenderPassDescriptor,
+    ExperimentalFeatures, Instance, InstanceDescriptor, Limits, LoadOp, MemoryHints, Operations,
+    PowerPreference, PresentMode, Queue, RenderPassColorAttachment, RenderPassDescriptor,
     RequestAdapterOptions, StoreOp, Surface, SurfaceConfiguration, TextureFormat, TextureUsages,
     TextureViewDescriptor,
 };
@@ -60,7 +60,7 @@ impl Renderer {
 
         let (device, queue) = pollster::block_on(adapter.request_device(&DeviceDescriptor {
             label: Some("Main device"),
-            required_features: adapter.features(),
+            required_features: adapter.features() - wgpu::Features::all_experimental_mask(),
             required_limits: Limits::default().using_resolution(adapter.limits()),
             memory_hints: MemoryHints::Performance,
             trace: Default::default(),
@@ -173,7 +173,7 @@ impl ApplicationHandler for App {
                     .expect("Failed to create window"),
             );
 
-            center_window(window.clone());
+            center_window(&window);
 
             event_loop.set_control_flow(ControlFlow::Wait);
 
@@ -264,7 +264,7 @@ fn handle_keyboard_input(event_loop: &ActiveEventLoop, event: KeyEvent) {
     }
 }
 
-fn center_window(window: Arc<Window>) {
+fn center_window(window: &Window) {
     if let Some(monitor) = window.current_monitor() {
         let screen_size = monitor.size();
         let window_size = window.outer_size();

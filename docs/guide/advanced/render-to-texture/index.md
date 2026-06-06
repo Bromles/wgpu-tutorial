@@ -151,7 +151,25 @@ return color;
 - `mode == 1` — оттенки серого (luminance по стандартным весам BT.601)
 - `mode == 2` — инверсия цветов
 
-Режим переключается клавишами 1, 2, 3.
+Режим переключается клавишами 1, 2, 3. Обработка ввода — в `update`:
+
+```rust
+fn update(&mut self, _ctx: &GpuContext, dt: Duration, input: &Input) {
+    self.camera.update(dt.as_secs_f32(), input);
+    if input.key_pressed(KeyCode::Digit1) {
+        self.post_mode = 0;
+    }
+    if input.key_pressed(KeyCode::Digit2) {
+        self.post_mode = 1;
+    }
+    if input.key_pressed(KeyCode::Digit3) {
+        self.post_mode = 2;
+    }
+}
+```
+
+Паттерн: `update` читает ввод и сохраняет состояние в `self.post_mode`, `render` использует
+это состояние при записи uniform. Input и рендер разделены — данные не смешиваются.
 
 ## Bind group для постпроцессинга
 

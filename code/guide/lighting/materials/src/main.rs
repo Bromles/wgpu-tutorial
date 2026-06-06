@@ -1,6 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::f32::consts::{FRAC_PI_2, FRAC_PI_4};
+use std::f32::consts::FRAC_PI_4;
 use std::mem::size_of;
 use std::time::Duration;
 
@@ -9,23 +9,25 @@ use encase::ShaderType;
 use glam::{Mat3, Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, AddressMode, BindGroupDescriptor, BindGroupEntry,
+    include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
     BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState,
     Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, DepthBiasState, DepthStencilState, Extent3d,
-    FilterMode, FragmentState, IndexFormat, LoadOp, MipmapFilterMode, MultisampleState,
-    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
-    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
-    SamplerBindingType, SamplerDescriptor, ShaderStages, StencilState, StoreOp, TexelCopyBufferLayout,
-    Texture, TextureDescriptor, TextureDimension, TextureFormat, TextureSampleType,
-    TextureUsages, TextureView, TextureViewDescriptor, TextureViewDimension, VertexAttribute,
-    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, DepthBiasState, DepthStencilState,
+    Extent3d, Face, FilterMode, FragmentState, FrontFace, IndexFormat, LoadOp,
+    MipmapFilterMode, MultisampleState, Operations, PipelineCompilationOptions,
+    PipelineLayoutDescriptor, PolygonMode, PrimitiveState, PrimitiveTopology,
+    RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
+    RenderPipeline, RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor, ShaderStages,
+    StencilState, StoreOp, TexelCopyBufferLayout, Texture, TextureDescriptor, TextureDimension,
+    TextureFormat, TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor,
+    TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
 };
 use winit::dpi::PhysicalSize;
-use winit::keyboard::KeyCode;
 
-use framework::{run, Example, GpuContext, Input};
+use framework::{
+    create_depth_texture, generate_checkerboard, run, Camera, Example, GpuContext, Input, CUBE_INDICES,
+    CUBE_NORMALS, CUBE_POSITIONS, CUBE_UVS,
+};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -63,139 +65,21 @@ impl Vertex {
     }
 }
 
-const VERTICES: &[Vertex] = &[
-    // Front (z = +0.5), normal (0, 0, 1)
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        normal: [0.0, 0.0, 1.0],
-        uv: [0.0, 0.0],
-    },
-    // Back (z = -0.5), normal (0, 0, -1)
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        normal: [0.0, 0.0, -1.0],
-        uv: [0.0, 0.0],
-    },
-    // Right (x = +0.5), normal (1, 0, 0)
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        normal: [1.0, 0.0, 0.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        normal: [1.0, 0.0, 0.0],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        normal: [1.0, 0.0, 0.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        normal: [1.0, 0.0, 0.0],
-        uv: [0.0, 0.0],
-    },
-    // Left (x = -0.5), normal (-1, 0, 0)
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        normal: [-1.0, 0.0, 0.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        normal: [-1.0, 0.0, 0.0],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        normal: [-1.0, 0.0, 0.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        normal: [-1.0, 0.0, 0.0],
-        uv: [0.0, 0.0],
-    },
-    // Top (y = +0.5), normal (0, 1, 0)
-    Vertex {
-        position: [-0.5, 0.5, 0.5],
-        normal: [0.0, 1.0, 0.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5],
-        normal: [0.0, 1.0, 0.0],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5],
-        normal: [0.0, 1.0, 0.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5],
-        normal: [0.0, 1.0, 0.0],
-        uv: [0.0, 0.0],
-    },
-    // Bottom (y = -0.5), normal (0, -1, 0)
-    Vertex {
-        position: [-0.5, -0.5, -0.5],
-        normal: [0.0, -1.0, 0.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5],
-        normal: [0.0, -1.0, 0.0],
-        uv: [1.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5],
-        normal: [0.0, -1.0, 0.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5],
-        normal: [0.0, -1.0, 0.0],
-        uv: [0.0, 0.0],
-    },
-];
+fn cube_vertices() -> Vec<Vertex> {
+    CUBE_POSITIONS
+        .iter()
+        .zip(&CUBE_NORMALS)
+        .zip(&CUBE_UVS)
+        .map(|((&position, &normal), &uv)| Vertex {
+            position,
+            normal,
+            uv,
+        })
+        .collect()
+}
 
-const INDICES: &[u16] = &[
-    0, 1, 2, 2, 3, 0, 4, 5, 6, 6, 7, 4, 8, 9, 10, 10, 11, 8, 12, 13, 14, 14, 15, 12, 16, 17, 18,
-    18, 19, 16, 20, 21, 22, 22, 23, 20,
-];
+const TEX_SIZE: u32 = 256;
+const CELL_SIZE: u32 = 32;
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -252,76 +136,6 @@ impl InstanceData {
     }
 }
 
-struct Camera {
-    position: Vec3,
-    yaw: f32,
-    pitch: f32,
-    speed: f32,
-    sensitivity: f32,
-}
-
-impl Camera {
-    fn new(position: Vec3, yaw: f32, pitch: f32) -> Self {
-        Self {
-            position,
-            yaw,
-            pitch,
-            speed: 5.0,
-            sensitivity: 0.003,
-        }
-    }
-
-    fn direction(&self) -> Vec3 {
-        Vec3::new(
-            -self.yaw.sin() * self.pitch.cos(),
-            self.pitch.sin(),
-            -self.yaw.cos() * self.pitch.cos(),
-        )
-    }
-
-    fn forward(&self) -> Vec3 {
-        Vec3::new(-self.yaw.sin(), 0.0, -self.yaw.cos())
-    }
-    fn right(&self) -> Vec3 {
-        Vec3::new(self.yaw.cos(), 0.0, -self.yaw.sin())
-    }
-
-    fn view_matrix(&self) -> Mat4 {
-        Mat4::look_to_rh(self.position, self.direction(), Vec3::Y)
-    }
-
-    fn update(&mut self, dt: f32, input: &Input) {
-        if input.mouse_button_pressed(1) {
-            let (dx, dy) = input.mouse_delta();
-            self.yaw -= dx as f32 * self.sensitivity;
-            self.pitch -= dy as f32 * self.sensitivity;
-            self.pitch = self.pitch.clamp(-FRAC_PI_2 + 0.01, FRAC_PI_2 - 0.01);
-        }
-        let mut velocity = Vec3::ZERO;
-        if input.key_pressed(KeyCode::KeyW) {
-            velocity += self.forward();
-        }
-        if input.key_pressed(KeyCode::KeyS) {
-            velocity -= self.forward();
-        }
-        if input.key_pressed(KeyCode::KeyD) {
-            velocity += self.right();
-        }
-        if input.key_pressed(KeyCode::KeyA) {
-            velocity -= self.right();
-        }
-        if input.key_pressed(KeyCode::Space) {
-            velocity.y += 1.0;
-        }
-        if input.key_pressed(KeyCode::ShiftLeft) {
-            velocity.y -= 1.0;
-        }
-        if velocity.length_squared() > 0.0 {
-            self.position += velocity.normalize() * self.speed * dt;
-        }
-    }
-}
-
 #[derive(ShaderType)]
 struct CameraUniforms {
     view_proj: Mat4,
@@ -337,24 +151,6 @@ struct Light {
 struct LightUniforms {
     lights: [Light; 3],
     ambient: f32,
-}
-
-const TEX_SIZE: u32 = 256;
-const CELL_SIZE: u32 = 32;
-
-fn generate_checkerboard() -> Vec<u8> {
-    let mut pixels = Vec::with_capacity((TEX_SIZE * TEX_SIZE * 4) as usize);
-    for y in 0..TEX_SIZE {
-        for x in 0..TEX_SIZE {
-            let checker = ((x / CELL_SIZE) + (y / CELL_SIZE)) % 2 == 0;
-            if checker {
-                pixels.extend_from_slice(&[255, 255, 255, 255]);
-            } else {
-                pixels.extend_from_slice(&[180, 120, 60, 255]);
-            }
-        }
-    }
-    pixels
 }
 
 const GRID_SIZE: usize = 3;
@@ -393,34 +189,13 @@ struct MaterialsDemo {
     index_buffer: Buffer,
     instance_buffer: Buffer,
     camera_uniform_buffer: Buffer,
-    camera_bind_group: wgpu::BindGroup,
+    camera_bind_group: BindGroup,
+    #[expect(dead_code)]
     light_uniform_buffer: Buffer,
-    light_bind_group: wgpu::BindGroup,
+    light_bind_group: BindGroup,
     depth_texture: Texture,
     depth_texture_view: TextureView,
     camera: Camera,
-}
-
-impl MaterialsDemo {
-    fn create_depth_texture(ctx: &GpuContext) -> (Texture, TextureView) {
-        let size = &ctx.surface_config;
-        let texture = ctx.device.create_texture(&TextureDescriptor {
-            label: Some("Depth Texture"),
-            size: Extent3d {
-                width: size.width,
-                height: size.height,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: TextureDimension::D2,
-            format: TextureFormat::Depth32Float,
-            usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::TEXTURE_BINDING,
-            view_formats: &[],
-        });
-        let view = texture.create_view(&TextureViewDescriptor::default());
-        (texture, view)
-    }
 }
 
 impl Example for MaterialsDemo {
@@ -429,11 +204,12 @@ impl Example for MaterialsDemo {
             .device
             .create_shader_module(include_wgsl!("shader.wgsl"));
 
+        let vertices = cube_vertices();
         let vertex_buffer = ctx
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(VERTICES),
+                contents: bytemuck::cast_slice(&vertices),
                 usage: BufferUsages::VERTEX,
             });
 
@@ -441,7 +217,7 @@ impl Example for MaterialsDemo {
             .device
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(INDICES),
+                contents: bytemuck::cast_slice(&CUBE_INDICES),
                 usage: BufferUsages::INDEX,
             });
 
@@ -451,11 +227,16 @@ impl Example for MaterialsDemo {
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Instance Buffer"),
                 contents: bytemuck::cast_slice(&instances),
-                usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
+                usage: BufferUsages::VERTEX,
             });
 
         // Diffuse texture
-        let pixels = generate_checkerboard();
+        let pixels = generate_checkerboard(
+            TEX_SIZE,
+            CELL_SIZE,
+            [255, 255, 255, 255],
+            [180, 120, 60, 255],
+        );
         let texture = ctx.device.create_texture(&TextureDescriptor {
             label: Some("Diffuse Texture"),
             size: Extent3d {
@@ -534,6 +315,29 @@ impl Example for MaterialsDemo {
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
+        {
+            let mut data = encase::UniformBuffer::new(Vec::new());
+            data.write(&LightUniforms {
+                lights: [
+                    Light {
+                        direction: Vec3::new(-0.5, -1.0, -0.3),
+                        color: Vec3::new(1.0, 0.95, 0.85),
+                    },
+                    Light {
+                        direction: Vec3::new(0.7, -0.3, 0.5),
+                        color: Vec3::new(0.3, 0.5, 1.0),
+                    },
+                    Light {
+                        direction: Vec3::new(-0.2, -0.5, 0.8),
+                        color: Vec3::new(0.9, 0.3, 0.3),
+                    },
+                ],
+                ambient: 0.08,
+            })
+            .unwrap();
+            ctx.queue
+                .write_buffer(&light_uniform_buffer, 0, &data.into_inner());
+        }
         let light_bgl = ctx
             .device
             .create_bind_group_layout(&BindGroupLayoutDescriptor {
@@ -620,15 +424,15 @@ impl Example for MaterialsDemo {
                 }),
                 primitive: PrimitiveState {
                     topology: PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
+                    front_face: FrontFace::Ccw,
                     polygon_mode: PolygonMode::Fill,
-                    cull_mode: Some(wgpu::Face::Back),
+                    cull_mode: Some(Face::Back),
                     ..Default::default()
                 },
                 depth_stencil: Some(DepthStencilState {
                     format: TextureFormat::Depth32Float,
                     depth_write_enabled: Some(true),
-                    depth_compare: Some(wgpu::CompareFunction::Less),
+                    depth_compare: Some(CompareFunction::Less),
                     stencil: StencilState::default(),
                     bias: DepthBiasState::default(),
                 }),
@@ -641,7 +445,7 @@ impl Example for MaterialsDemo {
                 multiview_mask: None,
             });
 
-        let (depth_texture, depth_texture_view) = Self::create_depth_texture(ctx);
+        let (depth_texture, depth_texture_view) = create_depth_texture(ctx, "Depth Texture");
         let camera = Camera::new(Vec3::new(0.0, 2.0, 6.0), 0.0, -0.25);
 
         Self {
@@ -660,7 +464,7 @@ impl Example for MaterialsDemo {
     }
 
     fn resize(&mut self, ctx: &GpuContext, _new_size: PhysicalSize<u32>) {
-        let (d, v) = Self::create_depth_texture(ctx);
+        let (d, v) = create_depth_texture(ctx, "Depth Texture");
         self.depth_texture = d;
         self.depth_texture_view = v;
     }
@@ -680,30 +484,6 @@ impl Example for MaterialsDemo {
             ctx.queue
                 .write_buffer(&self.camera_uniform_buffer, 0, &data.into_inner());
         }
-        {
-            let mut data = encase::UniformBuffer::new(Vec::new());
-            data.write(&LightUniforms {
-                lights: [
-                    Light {
-                        direction: Vec3::new(-0.5, -1.0, -0.3),
-                        color: Vec3::new(1.0, 0.95, 0.85),
-                    },
-                    Light {
-                        direction: Vec3::new(0.7, -0.3, 0.5),
-                        color: Vec3::new(0.3, 0.5, 1.0),
-                    },
-                    Light {
-                        direction: Vec3::new(-0.2, -0.5, 0.8),
-                        color: Vec3::new(0.9, 0.3, 0.3),
-                    },
-                ],
-                ambient: 0.08,
-            })
-            .unwrap();
-            ctx.queue
-                .write_buffer(&self.light_uniform_buffer, 0, &data.into_inner());
-        }
-
         let mut rpass = encoder.begin_render_pass(&RenderPassDescriptor {
             label: Some("Render Pass"),
             color_attachments: &[Some(RenderPassColorAttachment {
