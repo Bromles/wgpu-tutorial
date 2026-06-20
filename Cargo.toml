@@ -24,6 +24,7 @@ codegen-units = 1
 opt-level = 3
 
 [workspace.dependencies]
+framework = { path = "code/framework" }
 winit = "0.30"
 tracing = "0.1"
 tracing-subscriber = "0.3"
@@ -32,3 +33,4 @@ bytemuck = { version = "1.25", features = ["derive"] }
 encase = "0.12"
 glam = { version = "0.33", features = ["debug-glam-assert", "encase", "bytemuck"] }
 pollster = "0.4"
+rand = "0.9"

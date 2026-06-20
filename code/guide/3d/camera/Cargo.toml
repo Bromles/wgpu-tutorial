@@ -6,7 +6,7 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-framework = { path = "../../../framework" }
+framework.workspace = true
 wgpu.workspace = true
 winit.workspace = true
 bytemuck.workspace = true

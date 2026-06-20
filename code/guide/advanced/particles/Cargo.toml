@@ -6,9 +6,9 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
-framework = { path = "../../../framework" }
+framework.workspace = true
 wgpu.workspace = true
 encase.workspace = true
 glam.workspace = true
 winit.workspace = true
-rand = "0.9"
+rand.workspace = true
