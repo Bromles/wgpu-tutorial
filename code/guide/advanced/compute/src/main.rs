@@ -8,25 +8,25 @@ use encase::ShaderType;
 use glam::{Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
-    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState,
-    Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, ComputePassDescriptor,
-    ComputePipeline, ComputePipelineDescriptor, DepthStencilState, Extent3d, Face, FilterMode,
-    FragmentState, FrontFace, IndexFormat, LoadOp, MipmapFilterMode, MultisampleState,
-    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
-    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, Sampler,
-    SamplerBindingType, SamplerDescriptor, ShaderStages, StencilState, StorageTextureAccess,
-    StoreOp, TexelCopyBufferLayout, Texture, TextureDescriptor, TextureDimension,
-    TextureFormat, TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor,
-    TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState, Buffer,
+    BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState,
+    ColorWrites, CommandEncoder, CompareFunction, ComputePassDescriptor, ComputePipeline,
+    ComputePipelineDescriptor, DepthStencilState, Extent3d, Face, FilterMode, FragmentState,
+    FrontFace, IndexFormat, LoadOp, MipmapFilterMode, MultisampleState, Operations,
+    PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode, PrimitiveState,
+    PrimitiveTopology, RenderPassColorAttachment, RenderPassDepthStencilAttachment,
+    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, Sampler, SamplerBindingType,
+    SamplerDescriptor, ShaderStages, StencilState, StorageTextureAccess, StoreOp,
+    TexelCopyBufferLayout, Texture, TextureDescriptor, TextureDimension, TextureFormat,
+    TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor, TextureViewDimension,
+    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
 };
 use winit::dpi::PhysicalSize;
 
 use framework::{
-    create_depth_texture, generate_checkerboard, run, Camera, Example, GpuContext, Input, CUBE_INDICES,
-    CUBE_NORMALS, CUBE_POSITIONS, CUBE_UVS,
+    CUBE_INDICES, CUBE_NORMALS, CUBE_POSITIONS, CUBE_UVS, Camera, Example, GpuContext, Input,
+    create_depth_texture, generate_checkerboard, run,
 };
 
 #[repr(C)]
@@ -101,7 +101,7 @@ const FLOOR_VERTICES: &[Vertex] = &[
     },
 ];
 
-const FLOOR_INDICES: &[u16] = &[0, 1, 2, 0, 2, 3];
+const FLOOR_INDICES: &[u16] = &[0, 2, 1, 0, 3, 2];
 
 #[derive(ShaderType)]
 struct CameraUniforms {
@@ -432,7 +432,7 @@ impl Example for ComputeDemo {
                 vertex: VertexState {
                     module: &scene_shader,
                     entry_point: Some("vs_main"),
-                    buffers: &[Vertex::desc()],
+                    buffers: &[Some(Vertex::desc())],
                     compilation_options: PipelineCompilationOptions::default(),
                 },
                 fragment: Some(FragmentState {

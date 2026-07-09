@@ -7,19 +7,19 @@ use glam::{Mat4, Vec3};
 use rand::Rng;
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, BindGroup, BindGroupDescriptor, BindGroupEntry,
-    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, BlendComponent, BlendFactor, BlendOperation,
-    BlendState, Buffer, BufferBindingType, BufferDescriptor, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, ComputePassDescriptor,
-    ComputePipeline, ComputePipelineDescriptor, DepthStencilState, FragmentState, LoadOp,
-    MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
-    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderStages,
-    StencilState, StoreOp, Texture, TextureFormat, TextureView, VertexState,
+    BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingType, BlendComponent, BlendFactor, BlendOperation, BlendState,
+    Buffer, BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState,
+    ColorWrites, CommandEncoder, CompareFunction, ComputePassDescriptor, ComputePipeline,
+    ComputePipelineDescriptor, DepthStencilState, FragmentState, LoadOp, MultisampleState,
+    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PrimitiveState,
+    PrimitiveTopology, RenderPassColorAttachment, RenderPassDepthStencilAttachment,
+    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderStages, StencilState,
+    StoreOp, Texture, TextureFormat, TextureView, VertexState, include_wgsl,
 };
 use winit::dpi::PhysicalSize;
 
-use framework::{create_depth_texture, run, Camera, Example, GpuContext, Input};
+use framework::{Camera, Example, GpuContext, Input, create_depth_texture, run};
 
 const NUM_PARTICLES: u32 = 2048;
 

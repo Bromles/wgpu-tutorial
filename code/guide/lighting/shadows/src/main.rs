@@ -9,24 +9,24 @@ use encase::ShaderType;
 use glam::{Mat3, Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
-    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState,
-    Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, DepthBiasState, DepthStencilState,
-    Extent3d, Face, FilterMode, FragmentState, FrontFace, IndexFormat, LoadOp,
-    MipmapFilterMode, MultisampleState, Operations, PipelineCompilationOptions,
-    PipelineLayoutDescriptor, PolygonMode, PrimitiveState, PrimitiveTopology,
-    RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
-    RenderPipeline, RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor, ShaderStages,
-    StencilState, StoreOp, TexelCopyBufferLayout, Texture, TextureDescriptor, TextureDimension,
-    TextureFormat, TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor,
-    TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState, Buffer,
+    BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState,
+    ColorWrites, CommandEncoder, CompareFunction, DepthBiasState, DepthStencilState, Extent3d,
+    Face, FilterMode, FragmentState, FrontFace, IndexFormat, LoadOp, MipmapFilterMode,
+    MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
+    PolygonMode, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
+    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline,
+    RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor, ShaderStages, StencilState,
+    StoreOp, TexelCopyBufferLayout, Texture, TextureDescriptor, TextureDimension, TextureFormat,
+    TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor, TextureViewDimension,
+    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
 };
 use winit::dpi::PhysicalSize;
 
 use framework::{
-    create_depth_texture, generate_checkerboard, run, Camera, Example, GpuContext, Input, CUBE_INDICES,
-    CUBE_NORMALS, CUBE_POSITIONS, CUBE_UVS,
+    CUBE_INDICES, CUBE_NORMALS, CUBE_POSITIONS, CUBE_UVS, Camera, Example, GpuContext, Input,
+    create_depth_texture, generate_checkerboard, run,
 };
 
 #[repr(C)]
@@ -675,7 +675,10 @@ impl Example for ShadowsDemo {
                 vertex: VertexState {
                     module: &shadow_shader,
                     entry_point: Some("vs_main"),
-                    buffers: &[shadow_vertex_layout(), ShadowInstanceData::desc()],
+                    buffers: &[
+                        Some(shadow_vertex_layout()),
+                        Some(ShadowInstanceData::desc()),
+                    ],
                     compilation_options: PipelineCompilationOptions::default(),
                 },
                 fragment: None,
@@ -718,7 +721,7 @@ impl Example for ShadowsDemo {
                 vertex: VertexState {
                     module: &scene_shader,
                     entry_point: Some("vs_main"),
-                    buffers: &[Vertex::desc(), InstanceData::desc()],
+                    buffers: &[Some(Vertex::desc()), Some(InstanceData::desc())],
                     compilation_options: PipelineCompilationOptions::default(),
                 },
                 fragment: Some(FragmentState {

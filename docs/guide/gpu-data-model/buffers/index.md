@@ -212,7 +212,7 @@ vertex: VertexState {
     module: &shader_module,
     entry_point: Some("vs_main"),
     buffers: &[],                                   // [!code --]
-    buffers: &[Vertex::desc()],                     // [!code ++]
+    buffers: &[Some(Vertex::desc())],               // [!code ++]
     compilation_options: PipelineCompilationOptions::default(),
 },
 ```

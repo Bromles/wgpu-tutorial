@@ -37,7 +37,7 @@ sequenceDiagram
     CPU ->> GPU: queue.submit()
     GPU ->> GPU: Исполнение команд
     GPU ->> CPU: Кадр готов (неявно)
-    CPU ->> GPU: frame.present()
+    CPU ->> GPU: queue.present(frame)
 ```
 
 Ключевой момент: на нативных платформах `queue.submit` не блокирует CPU. Мы можем готовить данные для следующего кадра,
@@ -119,7 +119,7 @@ winit = "0.30"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 pollster = "0.4" # [!code ++]
-wgpu = "29.0" # [!code ++]
+wgpu = "30.0" # [!code ++]
 ```
 
 wgpu требует resolver 2 в Cargo.toml. Для edition 2021+ он стоит по умолчанию.
@@ -231,6 +231,7 @@ backends: Backends::PRIMARY,
         power_preference: PowerPreference::default(),
         force_fallback_adapter: false,
         compatible_surface: Some(&surface),
+        ..Default::default()
     }))
     .expect("Failed to request adapter");
 ```
@@ -247,7 +248,9 @@ backends: Backends::PRIMARY,
 ```rust
     let (device, queue) = pollster::block_on(adapter.request_device(&DeviceDescriptor {
         label: Some("Main device"),
-        required_features: adapter.features() - wgpu::Features::all_experimental_mask(),
+        required_features: adapter.features()
+            - wgpu::Features::all_experimental_mask()
+            - wgpu::Features::MAPPABLE_PRIMARY_BUFFERS,
         required_limits: Limits::default().using_resolution(adapter.limits()),
         memory_hints: MemoryHints::Performance,
         trace: Default::default(),
@@ -259,9 +262,11 @@ backends: Backends::PRIMARY,
 `Device` и `Queue` создаются вместе — это главные объекты для работы с GPU.
 
 - `label` — отладочное имя, появится в логах. У многих сущностей wgpu есть этот параметр
-- `required_features: adapter.features() - Features::all_experimental_mask()` — запрашиваем все фичи, которые поддерживает
-  адаптер, **кроме экспериментальных**. wgpu — нативная библиотека, и мы хотим использовать возможности GPU по полной.
-  Если бы запрашивали `Features::empty()`, получили бы только минимальный набор, определённый стандартом WebGPU
+- `required_features: adapter.features() - Features::all_experimental_mask() - Features::MAPPABLE_PRIMARY_BUFFERS` — запрашиваем все фичи, которые поддерживает
+  адаптер, **кроме экспериментальных** и `MAPPABLE_PRIMARY_BUFFERS`. wgpu — нативная библиотека, и мы хотим использовать возможности GPU по полной.
+  Если бы запрашивали `Features::empty()`, получили бы только минимальный набор, определённый стандартом WebGPU.
+  `MAPPABLE_PRIMARY_BUFFERS` исключена, потому что на дискретных видеокартах она заставляет буферы лежать в
+  системной памяти вместо VRAM — это серьёзный удар по производительности, а примерам она не нужна
 - `required_limits` — ограничения (размер текстур, количество буферов). `using_resolution` учитывает разрешение адаптера
 - `memory_hints: Performance` — подсказка менеджеру памяти: оптимизировать скорость, а не потребление
 - `trace` — запись команд в файл для отладки через [wgpu-player](https://github.com/gfx-rs/wgpu/tree/trunk/player)
@@ -291,6 +296,7 @@ backends: Backends::PRIMARY,
         desired_maximum_frame_latency: 2,
         alpha_mode: CompositeAlphaMode::Auto,
         view_formats: vec![],
+        color_space: wgpu::SurfaceColorSpace::Auto,
     };
 
     surface.configure(&device, &surface_config);
@@ -339,6 +345,7 @@ backends: Backends::PRIMARY,
    - `desired_maximum_frame_latency: 2` — сколько кадров может быть в очереди одновременно. Двойная буферизация
    - `alpha_mode: Auto` — wgpu сам выберет режим прозрачности
    - `view_formats: vec![]` — дополнительные форматы для TextureView, нам пока не нужны
+   - `color_space: Auto` — wgpu сам выберет цветовое пространство (sRGB по умолчанию)
 
 4. `surface.configure` — применяем конфигурацию. Поверхность создаёт внутренние текстуры нужного размера и формата
 
@@ -456,7 +463,7 @@ Render pass — операция рендера. Здесь мы:
 ```rust
     self.queue.submit([encoder.finish()]);
 window.pre_present_notify();
-frame.present();
+self.queue.present(frame);
 }
 ```
 
@@ -464,7 +471,7 @@ frame.present();
 flowchart LR
     A[encoder.finish] --> B[queue.submit]
     B --> C[pre_present_notify]
-    C --> D[frame.present]
+    C --> D[queue.present]
     D --> E[Экран]
 ```
 
@@ -472,7 +479,7 @@ flowchart LR
   выполнения — `device.poll`
 - `pre_present_notify` — уведомление winit о скором выводе кадра. Критично на Wayland — без этого оконный сервер
   может заблокировать приложение
-- `frame.present` — отправляем кадр в очередь отображения. Тоже не блокирует — кадр выведется, когда GPU его отрисует
+- `queue.present` — отправляем кадр в очередь отображения. Тоже не блокирует — кадр выведется, когда GPU его отрисует
 
 <div class="tip custom-block">
 <p class="custom-block-title">Оптимизации</p>
@@ -594,7 +601,7 @@ Resize помечается флагом, а обрабатывается пер
 :::
 
 ::: warning Забытый pre_present_notify
-На Wayland вызов `window.pre_present_notify()` перед `frame.present()` критичен — без него оконный сервер может заблокировать приложение. На других платформах этот вызов безопасен и ничего не делает.
+На Wayland вызов `window.pre_present_notify()` перед `queue.present(frame)` критичен — без него оконный сервер может заблокировать приложение. На других платформах этот вызов безопасен и ничего не делает.
 :::
 
 ## Попробуйте сами

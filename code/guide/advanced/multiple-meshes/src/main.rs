@@ -9,23 +9,23 @@ use encase::ShaderType;
 use glam::{Mat3, Mat4, Vec3, Vec4};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
-    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState,
-    Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, DepthBiasState, DepthStencilState,
-    Extent3d, Face, FilterMode, FragmentState, FrontFace, IndexFormat, LoadOp,
-    MipmapFilterMode, MultisampleState, Operations, PipelineCompilationOptions,
-    PipelineLayoutDescriptor, PolygonMode, PrimitiveState, PrimitiveTopology,
-    RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
-    RenderPipeline, RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor, ShaderStages,
-    StencilState, StoreOp, TexelCopyBufferLayout, Texture, TextureDescriptor, TextureDimension,
-    TextureFormat, TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor,
-    TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent, BlendState, Buffer,
+    BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState,
+    ColorWrites, CommandEncoder, CompareFunction, DepthBiasState, DepthStencilState, Extent3d,
+    Face, FilterMode, FragmentState, FrontFace, IndexFormat, LoadOp, MipmapFilterMode,
+    MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
+    PolygonMode, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
+    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline,
+    RenderPipelineDescriptor, SamplerBindingType, SamplerDescriptor, ShaderStages, StencilState,
+    StoreOp, TexelCopyBufferLayout, Texture, TextureDescriptor, TextureDimension, TextureFormat,
+    TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor, TextureViewDimension,
+    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
 };
 use winit::dpi::PhysicalSize;
 
 use framework::{
-    create_depth_texture, generate_checkerboard, run, Camera, Example, GpuContext, Input,
+    Camera, Example, GpuContext, Input, create_depth_texture, generate_checkerboard, run,
 };
 
 #[repr(C)]
@@ -95,11 +95,11 @@ fn generate_sphere(stacks: u32, slices: u32, radius: f32) -> (Vec<Vertex>, Vec<u
             let a = (stack * (slices + 1) + slice) as u16;
             let b = a + slices as u16 + 1;
             indices.push(a);
-            indices.push(b);
-            indices.push(a + 1);
             indices.push(a + 1);
             indices.push(b);
+            indices.push(a + 1);
             indices.push(b + 1);
+            indices.push(b);
         }
     }
 
@@ -216,7 +216,7 @@ impl Example for ModelLoadingDemo {
                 vertex: VertexState {
                     module: &shader,
                     entry_point: Some("vs_main"),
-                    buffers: &[Vertex::desc()],
+                    buffers: &[Some(Vertex::desc())],
                     compilation_options: PipelineCompilationOptions::default(),
                 },
                 fragment: Some(FragmentState {

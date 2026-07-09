@@ -226,7 +226,7 @@ fn ground_vertices() -> Vec<Vertex> {
     ]
 }
 
-const GROUND_INDICES: [u16; 6] = [0, 1, 2, 0, 2, 3];
+const GROUND_INDICES: [u16; 6] = [0, 2, 1, 0, 3, 2];
 ```
 
 Плоскость — квадрат от (-5, 0, -5) до (5, 0, 5). UV от 0 до 10 — текстура повторится 10 раз

@@ -9,26 +9,26 @@ use encase::ShaderType;
 use glam::{Mat3, Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry,
-    BindGroupLayout, BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType,
-    BlendComponent, BlendState, Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages,
-    Color, ColorTargetState, ColorWrites, CommandEncoder, CompareFunction,
-    DepthBiasState, DepthStencilState, Extent3d, Face, FilterMode, FragmentState, FrontFace, IndexFormat,
-    LoadOp, MipmapFilterMode, MultisampleState, Operations,
-    PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode, PrimitiveState,
-    PrimitiveTopology, RenderPassColorAttachment, RenderPassDepthStencilAttachment,
-    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, Sampler, SamplerBindingType,
-    SamplerDescriptor, ShaderStages, StencilState, StoreOp, Texture, TextureDescriptor,
-    TextureDimension, TextureFormat, TextureSampleType, TextureUsages, TextureView,
-    TextureViewDescriptor, TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat,
-    VertexState, VertexStepMode,
+    AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout,
+    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingResource, BindingType, BlendComponent,
+    BlendState, Buffer, BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color,
+    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, DepthBiasState,
+    DepthStencilState, Extent3d, Face, FilterMode, FragmentState, FrontFace, IndexFormat, LoadOp,
+    MipmapFilterMode, MultisampleState, Operations, PipelineCompilationOptions,
+    PipelineLayoutDescriptor, PolygonMode, PrimitiveState, PrimitiveTopology,
+    RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
+    RenderPipeline, RenderPipelineDescriptor, Sampler, SamplerBindingType, SamplerDescriptor,
+    ShaderStages, StencilState, StoreOp, Texture, TextureDescriptor, TextureDimension,
+    TextureFormat, TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor,
+    TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState,
+    VertexStepMode, include_wgsl,
 };
 use winit::dpi::PhysicalSize;
 use winit::keyboard::KeyCode;
 
 use framework::{
-    create_depth_texture, run, Camera, Example, GpuContext, Input, CUBE_INDICES,
-    CUBE_NORMALS, CUBE_POSITIONS,
+    CUBE_INDICES, CUBE_NORMALS, CUBE_POSITIONS, Camera, Example, GpuContext, Input,
+    create_depth_texture, run,
 };
 
 #[repr(C)]
@@ -330,7 +330,7 @@ impl Example for RenderToTextureDemo {
                 vertex: VertexState {
                     module: &scene_shader,
                     entry_point: Some("vs_main"),
-                    buffers: &[Vertex::desc(), InstanceData::desc()],
+                    buffers: &[Some(Vertex::desc()), Some(InstanceData::desc())],
                     compilation_options: PipelineCompilationOptions::default(),
                 },
                 fragment: Some(FragmentState {

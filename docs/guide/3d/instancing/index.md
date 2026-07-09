@@ -203,7 +203,7 @@ Pipeline принимает два описания буферов:
 vertex: VertexState {
     module: &shader_module,
     entry_point: Some("vs_main"),
-    buffers: &[Vertex::desc(), InstanceData::desc()],
+    buffers: &[Some(Vertex::desc()), Some(InstanceData::desc())],
     compilation_options: PipelineCompilationOptions::default(),
 },
 ```

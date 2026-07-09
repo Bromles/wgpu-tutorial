@@ -31,7 +31,7 @@ pub trait Example: 'static {
 
 Правила:
 - `GpuContext` — публичные поля `wgpu`-типов, без обёрток
-- `required_features: adapter.features() - Features::all_experimental_mask()` — запрашиваем все доступные не-экспериментальные фичи адаптера (native-only, браузер не нужен)
+- `required_features: adapter.features() - Features::all_experimental_mask() - Features::MAPPABLE_PRIMARY_BUFFERS` — запрашиваем все доступные не-экспериментальные фичи адаптера (native-only, браузер не нужен), кроме MAPPABLE_PRIMARY_BUFFERS (performance footgun на дискретных GPU)
 - Не добавлять: ECS, asset manager, scene graph, material system, renderer graph
 - Допустимый минимум: окно, surface lifecycle, device/queue, resize, frame acquire/present, timing, input
 - `ControlFlow::Wait` — event loop засыпает до нового события, мы сами запрашиваем перерисовку
@@ -106,7 +106,7 @@ pub trait Example: 'static {
 - **Диаграммы:** 34 SVG
 - **Типичные ошибки:** в каждой главе
 - **Перекрёстные ссылки:** кликабельные ссылки между главами
-- **Структура:** CTA кнопка, sidebar с «Введение», wgpu 29.0 version indicator
+- **Структура:** CTA кнопка, sidebar с «Введение», wgpu 30.0 version indicator
 
 ---
 

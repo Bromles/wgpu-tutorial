@@ -55,12 +55,15 @@ impl Renderer {
             power_preference: PowerPreference::default(),
             force_fallback_adapter: false,
             compatible_surface: Some(&surface),
+            ..Default::default()
         }))
         .expect("Failed to request adapter");
 
         let (device, queue) = pollster::block_on(adapter.request_device(&DeviceDescriptor {
             label: Some("Main device"),
-            required_features: adapter.features() - wgpu::Features::all_experimental_mask(),
+            required_features: adapter.features()
+                - wgpu::Features::all_experimental_mask()
+                - wgpu::Features::MAPPABLE_PRIMARY_BUFFERS,
             required_limits: Limits::default().using_resolution(adapter.limits()),
             memory_hints: MemoryHints::Performance,
             trace: Default::default(),
@@ -87,6 +90,7 @@ impl Renderer {
             desired_maximum_frame_latency: 2,
             alpha_mode: CompositeAlphaMode::Auto,
             view_formats: vec![],
+            color_space: wgpu::SurfaceColorSpace::Auto,
         };
 
         surface.configure(&device, &surface_config);
@@ -156,7 +160,7 @@ impl Renderer {
 
         self.queue.submit([encoder.finish()]);
         window.pre_present_notify();
-        frame.present();
+        self.queue.present(frame);
     }
 }
 

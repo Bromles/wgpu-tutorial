@@ -95,7 +95,7 @@ fn main() {
 - инициализация wgpu — `Instance`, `Adapter`, `Device`, `Queue`, `Surface`
 - обработка ошибок — `Outdated`/`Lost`/`Suboptimal` → переконфигурация, `Occluded`/`Timeout` → пропуск кадра
 - получение кадра — `get_current_texture`, создание `TextureView` и `CommandEncoder`
-- отправка — `queue.submit`, `pre_present_notify`, `frame.present`
+- отправка — `queue.submit`, `pre_present_notify`, `queue.present`
 - выход по Escape
 
 </div>
@@ -333,7 +333,7 @@ fn render(&mut self, _ctx: &GpuContext, view: &TextureView, encoder: &mut Comman
 ```
 
 Каркас уже создал `TextureView` (представление текущего кадра поверхности) и `CommandEncoder`. После возврата из
-`render` каркас вызовет `queue.submit`, `pre_present_notify` и `frame.present`.
+`render` каркас вызовет `queue.submit`, `pre_present_notify` и `queue.present`.
 
 Два ключевых вызова на `RenderPass`:
 

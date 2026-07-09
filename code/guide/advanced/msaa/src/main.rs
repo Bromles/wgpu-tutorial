@@ -9,22 +9,22 @@ use encase::ShaderType;
 use glam::{Mat3, Mat4, Vec3};
 use wgpu::util::DeviceExt;
 use wgpu::{
-    include_wgsl, BindGroup, BindGroupDescriptor, BindGroupEntry,
-    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, BlendComponent, BlendState, Buffer,
-    BufferAddress, BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState,
-    ColorWrites, CommandEncoder, CompareFunction, DepthBiasState, DepthStencilState, Extent3d,
-    Face, FragmentState, FrontFace, IndexFormat, LoadOp, MultisampleState,
-    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
-    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderStages,
-    StencilState, StoreOp, Texture, TextureDescriptor, TextureDimension, TextureFormat,
-    TextureUsages, TextureView, TextureViewDescriptor, VertexAttribute, VertexBufferLayout,
-    VertexFormat, VertexState, VertexStepMode,
+    BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingType, BlendComponent, BlendState, Buffer, BufferAddress,
+    BufferBindingType, BufferDescriptor, BufferUsages, Color, ColorTargetState, ColorWrites,
+    CommandEncoder, CompareFunction, DepthBiasState, DepthStencilState, Extent3d, Face,
+    FragmentState, FrontFace, IndexFormat, LoadOp, MultisampleState, Operations,
+    PipelineCompilationOptions, PipelineLayoutDescriptor, PolygonMode, PrimitiveState,
+    PrimitiveTopology, RenderPassColorAttachment, RenderPassDepthStencilAttachment,
+    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderStages, StencilState,
+    StoreOp, Texture, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
+    TextureView, TextureViewDescriptor, VertexAttribute, VertexBufferLayout, VertexFormat,
+    VertexState, VertexStepMode, include_wgsl,
 };
 use winit::dpi::PhysicalSize;
 
 use framework::{
-    run, Camera, Example, GpuContext, Input, CUBE_INDICES, CUBE_NORMALS, CUBE_POSITIONS,
+    CUBE_INDICES, CUBE_NORMALS, CUBE_POSITIONS, Camera, Example, GpuContext, Input, run,
 };
 
 const SAMPLE_COUNT: u32 = 4;
@@ -291,7 +291,7 @@ impl Example for MSAADemo {
                 vertex: VertexState {
                     module: &shader,
                     entry_point: Some("vs_main"),
-                    buffers: &[Vertex::desc(), InstanceData::desc()],
+                    buffers: &[Some(Vertex::desc()), Some(InstanceData::desc())],
                     compilation_options: PipelineCompilationOptions::default(),
                 },
                 fragment: Some(FragmentState {

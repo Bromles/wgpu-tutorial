@@ -7,9 +7,9 @@ use winit::event_loop::{ActiveEventLoop, ControlFlow, EventLoop};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowAttributes, WindowId};
 
+use crate::GpuContext;
 use crate::example::Example;
 use crate::input::Input;
-use crate::GpuContext;
 
 pub fn run<E: Example>(title: &str) {
     tracing_subscriber::fmt()
@@ -192,7 +192,7 @@ fn render_frame<E: Example>(ctx: &mut GpuContext, example: &mut E, window: &Wind
 
     ctx.queue.submit([encoder.finish()]);
     window.pre_present_notify();
-    frame.present();
+    ctx.queue.present(frame);
 }
 
 fn center_window(window: &Window) {
