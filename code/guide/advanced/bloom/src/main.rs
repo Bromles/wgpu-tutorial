@@ -936,8 +936,12 @@ impl Example for BloomDemo {
 
     fn render(&mut self, ctx: &GpuContext, view: &TextureView, encoder: &mut CommandEncoder) {
         let aspect = ctx.surface_config.width as f32 / ctx.surface_config.height as f32;
-        let view_proj = Mat4::perspective_rh(std::f32::consts::FRAC_PI_4, aspect, 0.1, 100.0)
-            * self.camera.view_matrix();
+        let view_proj = glam::camera::rh::proj::directx::perspective(
+            std::f32::consts::FRAC_PI_4,
+            aspect,
+            0.1,
+            100.0,
+        ) * self.camera.view_matrix();
         {
             let mut data = encase::UniformBuffer::new(Vec::new());
             data.write(&CameraUniforms {

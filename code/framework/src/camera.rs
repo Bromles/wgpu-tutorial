@@ -45,7 +45,7 @@ impl Camera {
     }
 
     pub fn view_matrix(&self) -> Mat4 {
-        Mat4::look_to_rh(self.position, self.direction(), Vec3::Y)
+        glam::camera::rh::view::look_to_mat4(self.position, self.direction(), Vec3::Y)
     }
 
     pub fn update(&mut self, dt: f32, input: &Input) {

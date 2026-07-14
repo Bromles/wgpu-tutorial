@@ -228,8 +228,9 @@ impl Example for RotatingCube {
         let time = self.start_time.elapsed().as_secs_f32();
 
         let aspect = ctx.surface_config.width as f32 / ctx.surface_config.height as f32;
-        let projection = Mat4::perspective_rh(FRAC_PI_4, aspect, 0.1, 100.0);
-        let view_mat = Mat4::look_at_rh(
+        let projection =
+            glam::camera::rh::proj::directx::perspective(FRAC_PI_4, aspect, 0.1, 100.0);
+        let view_mat = glam::camera::rh::view::look_at_mat4(
             glam::Vec3::new(4.0, 3.0, 4.0),
             glam::Vec3::ZERO,
             glam::Vec3::Y,

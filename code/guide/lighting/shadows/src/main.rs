@@ -281,12 +281,13 @@ impl ShadowsDemo {
     }
 
     fn light_matrix() -> Mat4 {
-        let light_view = Mat4::look_to_rh(
+        let light_view = glam::camera::rh::view::look_to_mat4(
             Vec3::new(3.0, 5.0, 3.0),
             Vec3::new(-1.0, -1.0, -1.0).normalize(),
             Vec3::Y,
         );
-        let light_proj = Mat4::orthographic_rh(-6.0, 6.0, -6.0, 6.0, 0.1, 20.0);
+        let light_proj =
+            glam::camera::rh::proj::directx::orthographic(-6.0, 6.0, -6.0, 6.0, 0.1, 20.0);
         light_proj * light_view
     }
 }
@@ -798,7 +799,8 @@ impl Example for ShadowsDemo {
 
     fn render(&mut self, ctx: &GpuContext, view: &TextureView, encoder: &mut CommandEncoder) {
         let aspect = ctx.surface_config.width as f32 / ctx.surface_config.height as f32;
-        let projection = Mat4::perspective_rh(FRAC_PI_4, aspect, 0.1, 100.0);
+        let projection =
+            glam::camera::rh::proj::directx::perspective(FRAC_PI_4, aspect, 0.1, 100.0);
         let view_proj = projection * self.camera.view_matrix();
 
         {

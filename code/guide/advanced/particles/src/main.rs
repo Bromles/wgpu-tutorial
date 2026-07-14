@@ -357,7 +357,12 @@ impl Example for ParticlesDemo {
         }
 
         let aspect = ctx.surface_config.width as f32 / ctx.surface_config.height as f32;
-        let proj = Mat4::perspective_rh(std::f32::consts::FRAC_PI_4, aspect, 0.1, 100.0);
+        let proj = glam::camera::rh::proj::directx::perspective(
+            std::f32::consts::FRAC_PI_4,
+            aspect,
+            0.1,
+            100.0,
+        );
         let view_mat = self.camera.view_matrix();
         let vp = proj * view_mat;
         {

@@ -475,7 +475,8 @@ impl Example for MaterialsDemo {
 
     fn render(&mut self, ctx: &GpuContext, view: &TextureView, encoder: &mut CommandEncoder) {
         let aspect = ctx.surface_config.width as f32 / ctx.surface_config.height as f32;
-        let projection = Mat4::perspective_rh(FRAC_PI_4, aspect, 0.1, 100.0);
+        let projection =
+            glam::camera::rh::proj::directx::perspective(FRAC_PI_4, aspect, 0.1, 100.0);
         let view_proj = projection * self.camera.view_matrix();
 
         {

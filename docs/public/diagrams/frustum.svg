@@ -39,7 +39,7 @@
   <!-- Aspect ratio label -->
   <g transform="translate(280, 140)">
     <rect x="0" y="0" width="140" height="55" rx="4" fill="#1e1e30" stroke="#555" stroke-width="0.5"/>
-    <text x="70" y="18" text-anchor="middle" fill="#aaa" font-size="10">perspective_rh(fov, aspect, near, far)</text>
+    <text x="70" y="18" text-anchor="middle" fill="#aaa" font-size="10">directx::perspective(fov, aspect, near, far)</text>
     <text x="70" y="35" text-anchor="middle" fill="#888" font-size="9">aspect = width / height</text>
     <text x="70" y="48" text-anchor="middle" fill="#888" font-size="9">fov обычно = π/4 = 45°</text>
   </g>

@@ -316,8 +316,10 @@ impl Example for DepthBufferDemo {
         let time = self.start_time.elapsed().as_secs_f32();
 
         let aspect = ctx.surface_config.width as f32 / ctx.surface_config.height as f32;
-        let projection = Mat4::perspective_rh(FRAC_PI_4, aspect, 0.1, 100.0);
-        let view_mat = Mat4::look_at_rh(Vec3::new(1.0, 1.5, 4.0), Vec3::ZERO, Vec3::Y);
+        let projection =
+            glam::camera::rh::proj::directx::perspective(FRAC_PI_4, aspect, 0.1, 100.0);
+        let view_mat =
+            glam::camera::rh::view::look_at_mat4(Vec3::new(1.0, 1.5, 4.0), Vec3::ZERO, Vec3::Y);
 
         for cube in &self.cubes {
             let model = Mat4::from_translation(cube.position)

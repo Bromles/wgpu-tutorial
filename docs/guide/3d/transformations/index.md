@@ -83,7 +83,7 @@ let model = Mat4::from_scale(Vec3::splat(0.5))
 Перестраивает мировые координаты так, чтобы камера оказалась в начале координат и смотрела вдоль -Z:
 
 ```rust
-let view = Mat4::look_at_rh(
+let view = glam::camera::rh::view::look_at_mat4(
     Vec3::new(4.0, 3.0, 4.0),    // позиция камеры (eye)
     Vec3::ZERO,                   // точка, куда смотрит камера (target)
     Vec3::Y,                      // вектор «вверх»
@@ -91,7 +91,7 @@ let view = Mat4::look_at_rh(
 ```
 
 Камера расположена в точке (4, 3, 4) и смотрит в начало координат — туда, где находятся кубы. В отличие от
-`look_to_rh`, принимающего направление взгляда, `look_at_rh` принимает целевую точку — удобнее, когда мы знаем,
+`look_to_mat4`, принимающего направление взгляда, `look_at_mat4` принимает целевую точку — удобнее, когда мы знаем,
 куда хотим смотреть.
 
 ### Projection matrix
@@ -99,7 +99,7 @@ let view = Mat4::look_at_rh(
 Проецирует 3D-пространство на 2D-плоскость с учётом перспективы — далёкие объекты выглядят меньше:
 
 ```rust
-let projection = Mat4::perspective_rh(
+let projection = glam::camera::rh::proj::directx::perspective(
     FRAC_PI_4,  // угол обзора (FOV) — 45°
     aspect,     // соотношение сторон окна
     0.1,        // ближняя плоскость отсечения
@@ -271,8 +271,8 @@ let bind_groups: [BindGroup; 3] = std::array::from_fn(|i| {
 let time = self.start_time.elapsed().as_secs_f32();
 let aspect = ctx.surface_config.width as f32 / ctx.surface_config.height as f32;
 
-let projection = Mat4::perspective_rh(FRAC_PI_4, aspect, 0.1, 100.0);
-let view_mat = Mat4::look_at_rh(
+let projection = glam::camera::rh::proj::directx::perspective(FRAC_PI_4, aspect, 0.1, 100.0);
+let view_mat = glam::camera::rh::view::look_at_mat4(
     Vec3::new(4.0, 3.0, 4.0),
     Vec3::ZERO,
     Vec3::Y,
@@ -316,15 +316,15 @@ for (i, model) in models.iter().enumerate() {
 вызовов `draw_indexed`. Vertex buffer, index buffer и pipeline общие для всех.
 
 Projection зависит от соотношения сторон окна и пересчитывается каждый кадр — при resize изображение не будет
-растянуто. Для камеры используется `look_at_rh` — он принимает позицию глаза и **целевую точку**, на которую
+растянуто. Для камеры используется `look_at_mat4` — он принимает позицию глаза и **целевую точку**, на которую
 смотрим. Есть и другой вариант:
 
 ```rust
 // Целевая точка — удобно для статичных сцен
-let view = Mat4::look_at_rh(eye, target, up);
+let view = glam::camera::rh::view::look_at_mat4(eye, target, up);
 
 // Направление взгляда — удобно для свободной камеры (глава «Камера»)
-let view = Mat4::look_to_rh(eye, direction, up);
+let view = glam::camera::rh::view::look_to_mat4(eye, direction, up);
 ```
 
 Обе функции создают одну и ту же view-матрицу, отличаются только способом задания ориентации камеры.
@@ -369,9 +369,9 @@ GPU определяет переднюю грань через векторно
 ## Что получилось
 
 ::: warning Типичные ошибки
-- `near = 0` в `perspective_rh` вызовет panic или деление на ноль — ближняя плоскость всегда > 0
+- `near = 0` в `directx::perspective` вызовет panic или деление на ноль — ближняя плоскость всегда > 0
 - Порядок умножения матриц: `projection * view * model` — не `model * view * projection`
-- `look_at_rh` panics если eye = target — целевая точка должна отличаться от позиции камеры
+- `look_at_mat4` panics если eye = target — целевая точка должна отличаться от позиции камеры
 :::
 
 Три куба с разными трансформациями (вращение, орбита, масштаб). Backface culling убирает задние грани, цвета граней — интерполяция между вершинами.
@@ -382,7 +382,7 @@ GPU определяет переднюю грань через векторно
 <p class="custom-block-title">Попробуем</p>
 
 - Убрать `cull_mode: Some(Face::Back)` — увидеть задние грани
-- Изменить позицию камеры в `look_at_rh` — посмотреть с другой стороны
+- Изменить позицию камеры в `look_at_mat4` — посмотреть с другой стороны
 - Добавить поворот вокруг X или Z: `Mat4::from_rotation_x(time * 0.7)`
 - Уменьшить дальнюю плоскость отсечения до 1.0 — куб будет частично обрезан
 

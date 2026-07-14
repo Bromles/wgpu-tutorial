@@ -41,16 +41,16 @@ editLink: false
 Для направленного света используем ортографическую проекцию — параллельные лучи:
 
 ```rust
-let light_view = Mat4::look_to_rh(
+let light_view = glam::camera::rh::view::look_to_mat4(
     Vec3::new(3.0, 5.0, 3.0),
     Vec3::new(-1.0, -1.0, -1.0).normalize(),
     Vec3::Y,
 );
-let light_proj = Mat4::orthographic_rh(-6.0, 6.0, -6.0, 6.0, 0.1, 20.0);
+let light_proj = glam::camera::rh::proj::directx::orthographic(-6.0, 6.0, -6.0, 6.0, 0.1, 20.0);
 let light_view_proj = light_proj * light_view;
 ```
 
-`look_to_rh` задаёт позицию и направление взгляда света. Ортографическая проекция задаёт
+`look_to_mat4` задаёт позицию и направление взгляда света. Ортографическая проекция задаёт
 прямоугольную область видимости — все объекты в ней попадут в shadow map.
 
 ## Shadow map
@@ -204,7 +204,7 @@ rpass.draw_indexed(0..6, 0, 0..1);
 ## Что получилось
 
 ::: warning Типичные ошибки
-- `orthographic_rh_gl` вместо `orthographic_rh` — Z range будет [-1,1] вместо [0,1], тени сломаются
+- `opengl::orthographic` вместо `directx::orthographic` — Z range будет [-1,1] вместо [0,1], тени сломаются
 - Без perspective divide (`light_clip.xyz / light_clip.w`) координаты тени неправильные
 - `fragment: None` в shadow pipeline — это depth-only rendering, фрагментный шейдер не нужен
 - Слишком большой bias → Peter Panning (тень «отрывается» от объекта)

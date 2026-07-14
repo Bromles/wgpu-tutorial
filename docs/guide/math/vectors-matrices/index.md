@@ -154,8 +154,8 @@ $$
 use glam::Mat4;
 
 let model = Mat4::from_translation(Vec3::new(1.0, 0.0, 0.0));
-let view = Mat4::look_at_rh(eye, target, up);
-let projection = Mat4::perspective_rh(fov, aspect, near, far);
+let view = glam::camera::rh::view::look_at_mat4(eye, target, up);
+let projection = glam::camera::rh::proj::directx::perspective(fov, aspect, near, far);
 
 let mvp = projection * view * model;
 ```
@@ -179,7 +179,7 @@ let identity = Mat4::IDENTITY;
 | Сдвиг (translation) | Перемещает объект | `Mat4::from_translation(v)` |
 | Поворот (rotation) | Вращает вокруг оси | `Mat4::from_axis_angle(axis, angle)` |
 | Масштаб (scale) | Увеличивает/уменьшает | `Mat4::from_scale(v)` |
-| Проекция (projection) | Проецирует 3D → 2D | `Mat4::perspective_rh(...)` / `Mat4::orthographic_rh(...)` |
+| Проекция (projection) | Проецирует 3D → 2D | `glam::camera::rh::proj::directx::perspective(...)` / `glam::camera::rh::proj::directx::orthographic(...)` |
 
 Любая комбинация сдвигов, поворотов и масштабов — это одна матрица 4×4. GPU умножает её на каждую вершину за одну
 операцию.
