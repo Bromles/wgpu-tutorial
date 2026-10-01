@@ -75,7 +75,7 @@ bytemuck = { version = "1.25", features = ["derive"] }
 encase = "0.13"
 glam = { version = "0.33", features = ["debug-glam-assert", "encase-013", "bytemuck"] }
 pollster = "1.0"
-rand = "0.9"
+rand = "0.10"
 png = "0.18"
 nv-flip = "0.1"
  
