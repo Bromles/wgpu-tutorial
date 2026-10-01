@@ -1,3 +1,42 @@
 footer.VPFooter {
     display: block !important;
 }
+
+/* Mermaid measures label bounding boxes in a temporary container attached to
+   <body>, then injects the finished SVG into the page content. Padding must be
+   scoped only by the svg itself so the measurement and display contexts match;
+   scoping to .vp-doc would add padding after the shapes are already sized. */
+svg .nodeLabel {
+    padding: 0.25em 0.6em;
+}
+
+svg .edgeLabel {
+    padding: 0.15em 0.4em;
+}
+
+/* Accent palette for the hand-made guide diagrams (Vue components).
+   Light theme uses saturated mid-tones readable on white; dark theme keeps
+   the original pastels. Structural chrome (text, dividers, rings) uses the
+   VitePress variables directly inside the components. */
+:root {
+    --dg-red: #b0524d;
+    --dg-green: #3f8a5f;
+    --dg-blue: #4f74a8;
+    --dg-blue2: #3d7aa8;
+    --dg-curve: #4a86b8;
+}
+
+.dark {
+    --dg-red: #e2a0a0;
+    --dg-green: #9ed0b0;
+    --dg-blue: #a8c0e0;
+    --dg-blue2: #a8cbe4;
+    --dg-curve: #7fb0d8;
+}
+
+/* Inline SVG diagrams scale like images: never wider than the content column. */
+.guide-diagram {
+    display: block;
+    width: 100%;
+    height: auto;
+}

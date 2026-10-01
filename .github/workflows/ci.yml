@@ -1,0 +1,32 @@
+# Pull-request checks: Rust workspace + site build, without deploying.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+      - name: Check Rust workspace
+        run: cargo check --workspace --all-targets --locked
+      - name: Run non-GPU unit tests
+        run: cargo test --workspace --locked --lib --bins
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: yarn
+      - name: Install dependencies
+        run: yarn install
+      - name: Build docs
+        run: yarn docs:build

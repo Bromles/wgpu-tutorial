@@ -2,12 +2,9 @@
 resolver = "2"
 
 members = [
-    "code/framework",
-    "code/guide/getting-started/*",
-    "code/guide/gpu-data-model/*",
-    "code/guide/3d/*",
-    "code/guide/lighting/*",
-    "code/guide/advanced/*"
+    "code/guide/foundations/*",
+    "code/guide/space-light/*",
+    "code/guide/frame/*",
 ]
 
 [workspace.package]
@@ -23,14 +20,62 @@ strip = true
 codegen-units = 1
 opt-level = 3
 
+[profile.dev.package."nv-flip-sys"]
+opt-level = 3
+
 [workspace.dependencies]
-framework = { path = "code/framework" }
+# local
+shell = { path = "code/guide/foundations/shell" }
+first-triangle = { path = "code/guide/foundations/first-triangle" }
+shell-triangle = { path = "code/guide/foundations/shell-triangle" }
+vertex-colors = { path = "code/guide/foundations/vertex-colors" }
+vertex-fetch = { path = "code/guide/foundations/vertex-fetch" }
+indexed-geometry = { path = "code/guide/foundations/indexed-geometry" }
+uniform-tint = { path = "code/guide/foundations/uniform-tint" }
+uniform-params = { path = "code/guide/foundations/uniform-params" }
+gain-animation = { path = "code/guide/foundations/gain-animation" }
+vertex-pulling = { path = "code/guide/foundations/vertex-pulling" }
+draw-immediates = { path = "code/guide/foundations/draw-immediates" }
+srgb-mixing = { path = "code/guide/foundations/srgb-mixing" }
+texture-load = { path = "code/guide/foundations/texture-load" }
+texture-sampling = { path = "code/guide/foundations/texture-sampling" }
+mipmap-minification = { path = "code/guide/foundations/mipmap-minification" }
+triangle-motion = { path = "code/guide/space-light/triangle-motion" }
+matrix-compose = { path = "code/guide/space-light/matrix-compose" }
+basis3d = { path = "code/guide/space-light/basis3d" }
+look-at = { path = "code/guide/space-light/look-at" }
+camera-fly = { path = "code/guide/space-light/camera-fly" }
+ortho-perspective = { path = "code/guide/space-light/ortho-perspective" }
+clip-viewport = { path = "code/guide/space-light/clip-viewport" }
+depth-culling = { path = "code/guide/space-light/depth-culling" }
+blend-over = { path = "code/guide/space-light/blend-over" }
+blend-order = { path = "code/guide/space-light/blend-order" }
+scene-objects = { path = "code/guide/space-light/scene-objects" }
+compute-basics = { path = "code/guide/frame/compute-basics" }
+render-to-texture = { path = "code/guide/frame/render-to-texture" }
+image-pipeline = { path = "code/guide/frame/image-pipeline" }
+shadow-mapping = { path = "code/guide/frame/shadow-mapping" }
+shadow-pcf = { path = "code/guide/frame/shadow-pcf" }
+msaa-resolve = { path = "code/guide/frame/msaa-resolve" }
+hdr-output = { path = "code/guide/frame/hdr-output" }
+full-frame = { path = "code/guide/frame/full-frame" }
+cube-uv = { path = "code/guide/space-light/cube-uv" }
+lambert = { path = "code/guide/space-light/lambert" }
+normal-matrix = { path = "code/guide/space-light/normal-matrix" }
+blinn-phong = { path = "code/guide/space-light/blinn-phong" }
+light-point = { path = "code/guide/space-light/light-point" }
+light-list = { path = "code/guide/space-light/light-list" }
+
+# external
 winit = "0.30"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 wgpu = "30.0"
 bytemuck = { version = "1.25", features = ["derive"] }
-encase = "0.12"
-glam = { version = "0.33", features = ["debug-glam-assert", "encase", "bytemuck"] }
-pollster = "0.4"
+encase = "0.13"
+glam = { version = "0.33", features = ["debug-glam-assert", "encase-013", "bytemuck"] }
+pollster = "1.0"
 rand = "0.9"
+png = "0.18"
+nv-flip = "0.1"
+ 
