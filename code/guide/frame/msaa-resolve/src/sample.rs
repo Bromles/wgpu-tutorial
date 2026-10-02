@@ -399,13 +399,12 @@ impl Sample for MsaaResolve {
             WindowEvent::KeyboardInput {
                 event: key_event, ..
             } if key_event.state == ElementState::Pressed
-                && let PhysicalKey::Code(key_code) = key_event.physical_key =>
-            {
+                && let PhysicalKey::Code(key_code) = key_event.physical_key
                 // Static frame: repaint only when a key changed it.
-                if key_code == KeyCode::KeyM {
-                    self.msaa_enabled = !self.msaa_enabled;
-                    window.request_redraw();
-                }
+                && key_code == KeyCode::KeyM =>
+            {
+                self.msaa_enabled = !self.msaa_enabled;
+                window.request_redraw();
             }
             _ => {}
         }

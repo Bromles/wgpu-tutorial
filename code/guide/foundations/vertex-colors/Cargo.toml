@@ -8,6 +8,6 @@ publish.workspace = true
 
 [dependencies]
 wgpu.workspace = true
-shell = { path = "../shell" }
+shell.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true

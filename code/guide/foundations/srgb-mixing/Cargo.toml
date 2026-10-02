@@ -8,7 +8,7 @@ publish.workspace = true
 
 [dependencies]
 wgpu.workspace = true
-shell = { path = "../shell" }
+shell.workspace = true
 bytemuck.workspace = true
 encase.workspace = true
 glam.workspace = true

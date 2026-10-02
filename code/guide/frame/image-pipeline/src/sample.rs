@@ -488,15 +488,14 @@ impl Sample for ImagePipeline {
             WindowEvent::KeyboardInput {
                 event: key_event, ..
             } if key_event.state == ElementState::Pressed
-                && let PhysicalKey::Code(key_code) = key_event.physical_key =>
+                && let PhysicalKey::Code(key_code) = key_event.physical_key
+                && key_code == KeyCode::KeyP =>
             {
-                if key_code == KeyCode::KeyP {
-                    self.mode = match self.mode {
-                        OutputMode::Fragment => OutputMode::Compute,
-                        OutputMode::Compute => OutputMode::Fragment,
-                    };
-                    window.request_redraw();
-                }
+                self.mode = match self.mode {
+                    OutputMode::Fragment => OutputMode::Compute,
+                    OutputMode::Compute => OutputMode::Fragment,
+                };
+                window.request_redraw();
             }
             _ => {}
         }

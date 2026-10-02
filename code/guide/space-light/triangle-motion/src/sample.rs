@@ -275,7 +275,10 @@ mod tests {
         for step in 0..2000 {
             let t = step as f32 * 0.01;
             let x = ping_pong_x(t);
-            assert!(x <= TRAVEL + 1e-6 && x >= -TRAVEL - 1e-6, "x={x} at t={t}");
+            assert!(
+                (-TRAVEL - 1e-6..=TRAVEL + 1e-6).contains(&x),
+                "x={x} at t={t}"
+            );
         }
     }
 

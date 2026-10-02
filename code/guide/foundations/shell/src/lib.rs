@@ -361,10 +361,11 @@ impl<S: Sample> ApplicationHandler for App<S> {
                 }
                 // Raw forwarding still delivers Resized; the resize callback
                 // is filtered to nonzero sizes (zero = minimized).
-                if size.width != 0 && size.height != 0 {
-                    if let Some(sample) = &mut self.sample {
-                        sample.resize(size.width, size.height);
-                    }
+                if size.width != 0
+                    && size.height != 0
+                    && let Some(sample) = &mut self.sample
+                {
+                    sample.resize(size.width, size.height);
                 }
                 if self.active && !self.occluded && size.width != 0 && size.height != 0 {
                     window.request_redraw();

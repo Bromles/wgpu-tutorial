@@ -174,7 +174,7 @@ fn frame_composes_shadow_transparency_and_tone_map() {
 
     // Panel: blends over the HDR background in linear light, then one encode.
     let (px, py) = project(PANEL_PROBE);
-    let panel_expected: [u8; 3] = std::array::from_fn(|channel| panel_code(channel));
+    let panel_expected: [u8; 3] = std::array::from_fn(panel_code);
     let panel_pixel = pixel(&bytes, px, py);
     for channel in 0..3 {
         assert!(

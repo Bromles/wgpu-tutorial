@@ -42,7 +42,6 @@ texture-sampling = { path = "code/guide/foundations/texture-sampling" }
 mipmap-minification = { path = "code/guide/foundations/mipmap-minification" }
 triangle-motion = { path = "code/guide/space-light/triangle-motion" }
 matrix-compose = { path = "code/guide/space-light/matrix-compose" }
-basis3d = { path = "code/guide/space-light/basis3d" }
 look-at = { path = "code/guide/space-light/look-at" }
 camera-fly = { path = "code/guide/space-light/camera-fly" }
 ortho-perspective = { path = "code/guide/space-light/ortho-perspective" }
@@ -75,7 +74,5 @@ bytemuck = { version = "1.25", features = ["derive"] }
 encase = "0.13"
 glam = { version = "0.33", features = ["debug-glam-assert", "encase-013", "bytemuck"] }
 pollster = "1.0"
-rand = "0.10"
 png = "0.18"
 nv-flip = "0.1"
- 

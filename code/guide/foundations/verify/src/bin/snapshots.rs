@@ -26,7 +26,7 @@ fn check(name: &str, width: u32, height: u32, bytes: &[u8]) {
     let mut min = [255u8; 3];
     let mut max = [0u8; 3];
     let mut unique = std::collections::HashSet::new();
-    for px in bytes.chunks_exact(4) {
+    for px in bytes.as_chunks::<4>().0 {
         for c in 0..3 {
             min[c] = min[c].min(px[c]);
             max[c] = max[c].max(px[c]);
