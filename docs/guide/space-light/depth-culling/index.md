@@ -133,7 +133,7 @@ pipeline без depth-теста просто игнорирует attachment �
 
 ```sh
 cargo run -p depth-culling
-cargo test -p foundations-verify --test depth_culling
+cargo test -p verify --test depth_culling
 ```
 
 ## Проверьте модель

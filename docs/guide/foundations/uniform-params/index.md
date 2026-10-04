@@ -127,7 +127,7 @@ fn params_layout_matches_wgsl_uniform_contract() {
 
 ```sh
 cargo run -p uniform-params
-cargo test -p uniform-params -p foundations-verify
+cargo test -p uniform-params -p verify
 ```
 
 ## Проверьте модель

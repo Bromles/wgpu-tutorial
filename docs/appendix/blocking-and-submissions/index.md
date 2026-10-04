@@ -56,7 +56,7 @@ wgpu удерживает ресурс, пока его читает или пи
 
 ## Как это выглядит вместе: readback из verify
 
-Фрагмент `foundations-verify` — снять результат offscreen-кадра в байты:
+Фрагмент `verify` — снять результат offscreen-кадра в байты:
 
 ```rust
 ctx.queue.submit([encoder.finish()]);

@@ -132,7 +132,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 
 ```sh
 cargo run -p mipmap-minification
-cargo test -p foundations-verify
+cargo test -p verify
 ```
 
 ## Что дали мипы

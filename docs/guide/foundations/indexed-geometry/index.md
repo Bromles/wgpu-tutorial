@@ -111,7 +111,7 @@ pass.draw_indexed(0..6, 0, 0..1);
 
 ```sh
 cargo run -p indexed-geometry
-cargo test -p foundations-verify
+cargo test -p verify
 ```
 
 ## Проверьте модель

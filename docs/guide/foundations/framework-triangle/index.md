@@ -140,14 +140,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with_max_level(tracing::Level::INFO)
         .init();
     framework::run::<Triangle>(framework::Settings {
-        title: "wgpu | Shell triangle".into(),
+        title: "wgpu | Framework triangle".into(),
         ..framework::Settings::default()
     })
 }
 ```
 
 Тонкая деталь для будущих глав: у пакета есть и `lib.rs`, открывающий `sample` наружу.
-Единственный потребитель — крейт `foundations-verify`, который рисует тот же кадр offscreen без окна; статья не показывает `lib.rs`, потому что читателю он не нужен.
+Единственный потребитель — крейт `verify`, который рисует тот же кадр offscreen без окна; статья не показывает `lib.rs`, потому что читателю он не нужен.
 
 ## Заморозка
 

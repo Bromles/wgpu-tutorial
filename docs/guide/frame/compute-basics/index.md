@@ -136,7 +136,7 @@ dispatch_workgroups(5, 1, 1) при workgroup_size(64):
 
 ```sh
 cargo run -p compute-basics
-cargo test -p foundations-verify
+cargo test -p verify
 ```
 
 ![Полоса индикаторов compute-прохода: слева 257 ячеек, справа 256 после R.](/results/compute-basics-strip.png)

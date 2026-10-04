@@ -22,7 +22,7 @@ cargo test --workspace --locked
 Перегенерация изображений для статей:
 
 ```bash
-cargo run -p foundations-verify --bin snapshots
+cargo run -p verify --bin snapshots
 ```
 
 Сборка сайта с руководством:

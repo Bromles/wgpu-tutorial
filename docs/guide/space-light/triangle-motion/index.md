@@ -129,7 +129,7 @@ let x = (distance - 2.0 * TRAVEL).abs() - TRAVEL;
 
 ```sh
 cargo run -p triangle-motion
-cargo test -p foundations-verify
+cargo test -p verify
 ```
 
 ## Проверьте модель

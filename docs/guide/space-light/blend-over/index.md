@@ -176,7 +176,7 @@ fn vertices() -> [Vertex; 20] {
 ```sh
 cargo run -p blend-over
 cargo test -p blend-over
-cargo test -p foundations-verify
+cargo test -p verify
 ```
 
 ## Проверьте модель

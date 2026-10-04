@@ -139,7 +139,7 @@ fn cutout_vertices() -> [Vertex; 16] {
 ```sh
 cargo run -p blend-order
 cargo test -p blend-order
-cargo test -p foundations-verify
+cargo test -p verify
 ```
 
 ## Проверьте модель

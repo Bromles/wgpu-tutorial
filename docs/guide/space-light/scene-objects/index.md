@@ -184,7 +184,7 @@ Immediates — механизм стандарта WebGPU/WGSL, но его по
 ```sh
 cargo run -p scene-objects
 cargo test -p scene-objects
-cargo test -p foundations-verify
+cargo test -p verify
 ```
 
 ## Проверьте модель

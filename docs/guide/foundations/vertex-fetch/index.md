@@ -157,7 +157,7 @@ pass.draw(0..3, 0..1);
 
 ```sh
 cargo run -p vertex-fetch
-cargo test -p foundations-verify
+cargo test -p verify
 ```
 
 ## Проверьте модель

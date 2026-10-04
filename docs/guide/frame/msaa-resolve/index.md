@@ -130,7 +130,7 @@ count = 4:  сцена → мультисэмловая пара + resolve в к
 
 ```sh
 cargo run -p msaa-resolve
-cargo test -p foundations-verify --test msaa_resolve
+cargo test -p verify --test msaa_resolve
 ```
 
 Неподвижный кадр, `M` переключает count: меняется покрытие силуэта, не геометрия.

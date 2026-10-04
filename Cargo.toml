@@ -2,6 +2,8 @@
 resolver = "2"
 
 members = [
+    "code/framework",
+    "code/verify",
     "code/guide/foundations/*",
     "code/guide/space-light/*",
     "code/guide/frame/*",
@@ -25,7 +27,7 @@ opt-level = 3
 
 [workspace.dependencies]
 # local
-framework = { path = "code/guide/foundations/framework" }
+framework = { path = "code/framework" }
 first-triangle = { path = "code/guide/foundations/first-triangle" }
 framework-triangle = { path = "code/guide/foundations/framework-triangle" }
 vertex-colors = { path = "code/guide/foundations/vertex-colors" }

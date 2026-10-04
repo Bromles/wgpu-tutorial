@@ -124,7 +124,7 @@ Storage-буфер пишется один раз при создании — п
 ```sh
 cargo run -p light-list
 cargo test -p light-list
-cargo test -p foundations-verify
+cargo test -p verify
 ```
 
 ## Проверьте модель

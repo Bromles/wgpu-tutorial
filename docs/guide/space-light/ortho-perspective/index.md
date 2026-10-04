@@ -155,7 +155,7 @@ WindowEvent::KeyboardInput { event: key_event, .. }
 
 ```sh
 cargo run -p ortho-perspective
-cargo test -p foundations-verify --test ortho_perspective
+cargo test -p verify --test ortho_perspective
 ```
 
 ## Проверьте модель

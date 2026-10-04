@@ -119,7 +119,7 @@ Reinhard — учебный оператор, а не обещание фото�
 
 ```sh
 cargo run -p hdr-output
-cargo test -p foundations-verify --test hdr_output
+cargo test -p verify --test hdr_output
 ```
 
 Проверка зеркалит формулу Blinn–Phong на CPU (как в [главе «Материал и блик»](../../space-light/blinn-phong/)), прогоняет результат через экспозицию и Reinhard и сравнивает байт центра кадра: при exposure=1 и интенсивности 0.6, затем при exposure=2 — по формуле Reinhard(2c).

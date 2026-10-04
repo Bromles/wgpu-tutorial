@@ -137,7 +137,7 @@ pass.draw_indexed(3..6, 0, 0..1);
 
 ```sh
 cargo run -p gain-animation
-cargo test -p foundations-verify
+cargo test -p verify
 ```
 
 ## Проверьте модель

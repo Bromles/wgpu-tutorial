@@ -660,56 +660,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 
 [[package]]
-name = "foundations-verify"
-version = "0.1.0"
-dependencies = [
- "blend-order",
- "blend-over",
- "blinn-phong",
- "camera-fly",
- "clip-viewport",
- "compute-basics",
- "cube-uv",
- "depth-culling",
- "draw-immediates",
- "first-triangle",
- "framework",
- "framework-triangle",
- "full-frame",
- "gain-animation",
- "glam",
- "hdr-output",
- "image-pipeline",
- "indexed-geometry",
- "lambert",
- "light-list",
- "light-point",
- "look-at",
- "matrix-compose",
- "mipmap-minification",
- "msaa-resolve",
- "normal-matrix",
- "nv-flip",
- "ortho-perspective",
- "png",
- "pollster",
- "render-to-texture",
- "scene-objects",
- "shadow-mapping",
- "shadow-pcf",
- "srgb-mixing",
- "texture-load",
- "texture-sampling",
- "triangle-motion",
- "uniform-params",
- "uniform-tint",
- "vertex-colors",
- "vertex-fetch",
- "vertex-pulling",
- "wgpu",
-]
-
-[[package]]
 name = "framework"
 version = "0.1.0"
 dependencies = [
@@ -2569,6 +2519,56 @@ name = "valuable"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba73ea9cf16a25df0c8caa16c51acb937d5712a8429db78a3ee29d5dcacd3a65"
+
+[[package]]
+name = "verify"
+version = "0.1.0"
+dependencies = [
+ "blend-order",
+ "blend-over",
+ "blinn-phong",
+ "camera-fly",
+ "clip-viewport",
+ "compute-basics",
+ "cube-uv",
+ "depth-culling",
+ "draw-immediates",
+ "first-triangle",
+ "framework",
+ "framework-triangle",
+ "full-frame",
+ "gain-animation",
+ "glam",
+ "hdr-output",
+ "image-pipeline",
+ "indexed-geometry",
+ "lambert",
+ "light-list",
+ "light-point",
+ "look-at",
+ "matrix-compose",
+ "mipmap-minification",
+ "msaa-resolve",
+ "normal-matrix",
+ "nv-flip",
+ "ortho-perspective",
+ "png",
+ "pollster",
+ "render-to-texture",
+ "scene-objects",
+ "shadow-mapping",
+ "shadow-pcf",
+ "srgb-mixing",
+ "texture-load",
+ "texture-sampling",
+ "triangle-motion",
+ "uniform-params",
+ "uniform-tint",
+ "vertex-colors",
+ "vertex-fetch",
+ "vertex-pulling",
+ "wgpu",
+]
 
 [[package]]
 name = "version_check"
