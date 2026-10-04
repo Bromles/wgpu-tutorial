@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<BlendOver>(shell::Settings {
+    framework::run::<BlendOver>(framework::Settings {
         title: "wgpu | Blend over".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

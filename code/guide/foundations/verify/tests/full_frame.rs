@@ -6,7 +6,7 @@ use full_frame::geometry::PANEL_Y;
 use full_frame::sample::FullFrame;
 use full_frame::scene;
 use glam::Vec3;
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 
 const WIDTH: u32 = 768;
 const HEIGHT: u32 = 576;

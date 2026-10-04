@@ -1,4 +1,4 @@
-//! Frozen minimal window shell shared by the foundation snapshots.
+//! Frozen minimal window framework shared by the foundation snapshots.
 //! Owns window/surface lifecycle, acquire/submit/present, resize, and raw
 //! event forwarding; device requirements arrive via [`Settings`].
 
@@ -24,18 +24,18 @@ pub struct Gpu {
     pub format: wgpu::TextureFormat,
 }
 
-/// Chapter-local drawing code: the shell calls it, never the other way round.
+/// Chapter-local drawing code: the framework calls it, never the other way round.
 pub trait Sample: 'static {
     /// Creates resources; called again after every surface loss, with the new device.
     fn init(gpu: &Gpu) -> Result<Self, Box<dyn Error>>
     where
         Self: Sized;
 
-    /// Records one frame into `encoder`; the shell submits, presents, owns the frame.
+    /// Records one frame into `encoder`; the framework submits, presents, owns the frame.
     fn draw(&mut self, gpu: &Gpu, encoder: &mut wgpu::CommandEncoder, view: &wgpu::TextureView);
 
     /// Called right after `init`, before the first `draw`, and on every resize;
-    /// zero sizes are filtered out by the shell. Optional.
+    /// zero sizes are filtered out by the framework. Optional.
     fn resize(&mut self, _width: u32, _height: u32) {}
 
     /// Raw window-event forwarding while a context exists; during the ~100 ms
@@ -61,7 +61,7 @@ impl Default for Settings {
             title: "wgpu".to_string(),
             inner_size: (800, 600),
             device_descriptor: wgpu::DeviceDescriptor {
-                label: Some("Shell device"),
+                label: Some("Framework device"),
                 required_features: wgpu::Features::empty(),
                 required_limits: wgpu::Limits::default(),
                 ..Default::default()
@@ -180,13 +180,13 @@ impl Context {
 
     fn render<S: Sample>(&mut self, window: &Window, frame: wgpu::SurfaceTexture, sample: &mut S) {
         let view = frame.texture.create_view(&wgpu::TextureViewDescriptor {
-            label: Some("Shell surface view"),
+            label: Some("Framework surface view"),
             ..Default::default()
         });
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                label: Some("Shell encoder"),
+                label: Some("Framework encoder"),
             });
         sample.draw(&self.gpu(), &mut encoder, &view);
         self.queue.submit([encoder.finish()]);
@@ -423,7 +423,7 @@ impl<S: Sample> ApplicationHandler for App<S> {
     }
 }
 
-/// Runs the shell with the chapter sample until the window closes.
+/// Runs the framework with the chapter sample until the window closes.
 pub fn run<S: Sample>(settings: Settings) -> Result<(), Box<dyn Error>> {
     let event_loop = EventLoop::new()?;
     let shared_failure: SharedFailure = Arc::default();

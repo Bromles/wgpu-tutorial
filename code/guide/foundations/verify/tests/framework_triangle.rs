@@ -1,11 +1,11 @@
 use foundations_verify::{ComparisonType, gpu_context, reference_path, render_and_readback};
-use shell::{Gpu, Sample};
-use shell_triangle::sample::Triangle;
+use framework::{Gpu, Sample};
+use framework_triangle::sample::Triangle;
 
-/// Snapshot 05: the same triangle behind the extracted shell. The frame must
+/// Snapshot 05: the same triangle behind the extracted framework. The frame must
 /// be pixel-identical to the chapter 04 reference.
 #[test]
-fn shell_triangle_matches_first_triangle_reference() {
+fn framework_triangle_matches_first_triangle_reference() {
     let Some(ctx) = gpu_context() else {
         println!("skip: no suitable GPU adapter");
         return;

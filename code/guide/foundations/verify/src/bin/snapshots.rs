@@ -2,7 +2,7 @@
 //! Run: cargo run -p foundations-verify --bin snapshots
 
 use foundations_verify::{gpu_context, gpu_context_with, render_and_readback};
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use std::path::{Path, PathBuf};
 
 const W: u32 = 768;

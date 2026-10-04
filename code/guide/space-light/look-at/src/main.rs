@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<LookAt>(shell::Settings {
+    framework::run::<LookAt>(framework::Settings {
         title: "wgpu | Look-at".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

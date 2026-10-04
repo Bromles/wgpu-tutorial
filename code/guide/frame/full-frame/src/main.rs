@@ -6,7 +6,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<FullFrame>(shell::Settings {
+    framework::run::<FullFrame>(framework::Settings {
         title: "wgpu | Full frame".into(),
         device_descriptor: wgpu::DeviceDescriptor {
             label: Some("Full frame device"),
@@ -17,6 +17,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             },
             ..Default::default()
         },
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

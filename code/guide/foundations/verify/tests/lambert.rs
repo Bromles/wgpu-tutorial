@@ -1,7 +1,7 @@
 use foundations_verify::{gpu_context, render_and_readback};
 use glam::{Mat4, Vec3, Vec4Swizzles};
 use lambert::sample::Lambert;
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 
 const WIDTH: u32 = 768;
 const HEIGHT: u32 = 576;

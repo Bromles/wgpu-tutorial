@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<MatrixCompose>(shell::Settings {
+    framework::run::<MatrixCompose>(framework::Settings {
         title: "wgpu | Matrix compose".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

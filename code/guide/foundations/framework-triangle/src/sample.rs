@@ -1,4 +1,4 @@
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use std::error::Error;
 use wgpu::{
     Color, ColorTargetState, ColorWrites, CommandEncoder, FragmentState, FrontFace, LoadOp,
@@ -7,7 +7,7 @@ use wgpu::{
     StoreOp, TextureView, VertexState, include_wgsl,
 };
 
-/// Chapter 04 triangle, unchanged, now behind the shell boundary.
+/// Chapter 04 triangle, unchanged, now behind the framework boundary.
 pub struct Triangle {
     pipeline: RenderPipeline,
 }
@@ -20,7 +20,7 @@ impl Sample for Triangle {
         let pipeline = gpu
             .device
             .create_render_pipeline(&RenderPipelineDescriptor {
-                label: Some("Shell triangle pipeline"),
+                label: Some("Framework triangle pipeline"),
                 layout: None,
                 vertex: VertexState {
                     module: &shader,
@@ -54,7 +54,7 @@ impl Sample for Triangle {
 
     fn draw(&mut self, _gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
         let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
-            label: Some("Shell triangle pass"),
+            label: Some("Framework triangle pass"),
             color_attachments: &[Some(RenderPassColorAttachment {
                 view,
                 resolve_target: None,

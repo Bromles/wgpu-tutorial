@@ -1,5 +1,5 @@
 use encase::UniformBuffer;
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use std::error::Error;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,

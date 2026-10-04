@@ -157,7 +157,7 @@ pub const FACE_VIEWS: [FaceView; 6] = [
 ];
 
 /// Fixed orthographic volume: -2..2 x -1.5..1.5 fits the cube with margins
-/// and matches the 4:3 frame of the shell defaults.
+/// and matches the 4:3 frame of the framework defaults.
 fn ortho() -> Mat4 {
     glam::camera::rh::proj::directx::orthographic(-2.0, 2.0, -1.5, 1.5, 0.1, 10.0)
 }

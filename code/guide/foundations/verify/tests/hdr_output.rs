@@ -1,7 +1,7 @@
 use foundations_verify::{gpu_context, render_and_readback};
 use hdr_output::params::EXPOSURES;
 use hdr_output::sample::HdrOutput;
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 
 const WIDTH: u32 = 768;
 const HEIGHT: u32 = 576;

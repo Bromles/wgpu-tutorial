@@ -1,4 +1,4 @@
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use std::error::Error;
 use wgpu::{
     Color, ColorTargetState, ColorWrites, CommandEncoder, FragmentState, FrontFace, LoadOp,

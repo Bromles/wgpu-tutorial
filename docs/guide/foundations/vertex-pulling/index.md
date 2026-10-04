@@ -12,7 +12,7 @@ next:
 # Read-only storage и vertex pulling
 
 ::: info Только native
-Продолжаем через [оболочку](../shell-triangle/); проверка поддержки limits — на месте, до создания binding.
+Продолжаем через [фреймворк](../framework-triangle/); проверка поддержки limits — на месте, до создания binding.
 :::
 
 До сих пор адрес записи вершины определял layout — шейдер не мог выбрать запись сам.

@@ -2,7 +2,7 @@ use std::error::Error;
 
 use encase::UniformBuffer;
 use glam::Mat4;
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
@@ -506,7 +506,7 @@ impl Sample for ShadowMapping {
         })
     }
 
-    /// Shell contract: called right after `init` and on every resize.
+    /// Framework contract: called right after `init` and on every resize.
     fn resize(&mut self, width: u32, height: u32) {
         if width > 0 && height > 0 {
             self.pending_size = Some(PhysicalSize::new(width, height));

@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use encase::UniformBuffer;
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, BlendComponent, BlendFactor, BlendOperation, BlendState,

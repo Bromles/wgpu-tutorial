@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferDescriptor, BufferUsages, Color,
@@ -230,7 +230,7 @@ impl Sample for RenderToTexture {
         })
     }
 
-    /// Shell contract: called right after `init` and on every resize.
+    /// Framework contract: called right after `init` and on every resize.
     fn resize(&mut self, width: u32, height: u32) {
         if width > 0 && height > 0 {
             self.pending_size = Some(PhysicalSize::new(width, height));

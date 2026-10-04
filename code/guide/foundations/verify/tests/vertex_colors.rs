@@ -1,5 +1,5 @@
 use foundations_verify::{ComparisonType, gpu_context, reference_path, render_and_readback};
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use vertex_colors::sample::VertexColors;
 
 const WIDTH: u32 = 768;

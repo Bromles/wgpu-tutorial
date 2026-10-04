@@ -51,7 +51,7 @@ const vitePressConfig = defineConfig({
           { text: "Первый кадр", link: "/guide/foundations/first-frame/" },
           { text: "Жизненный цикл поверхности", link: "/guide/foundations/surface-lifecycle/" },
           { text: "От трёх точек к треугольнику", link: "/guide/foundations/first-triangle/" },
-          { text: "Граница оконной оболочки", link: "/guide/foundations/shell-triangle/" },
+          { text: "Граница оконного фреймворка", link: "/guide/foundations/framework-triangle/" },
         ],
       },
       {

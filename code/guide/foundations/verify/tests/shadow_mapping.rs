@@ -3,7 +3,7 @@ use glam::{Vec3, Vec4Swizzles};
 use shadow_mapping::params::SceneParams;
 use shadow_mapping::sample::ShadowMapping;
 use shadow_mapping::scene;
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 
 const WIDTH: u32 = 768;
 const HEIGHT: u32 = 576;

@@ -1,5 +1,5 @@
 use foundations_verify::{ComparisonType, gpu_context, reference_path, render_and_readback};
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use texture_sampling::sample::{Address, Filter, TextureSampling};
 
 fn pixel(bytes: &[u8], width: u32, px: u32, py: u32) -> [u8; 4] {

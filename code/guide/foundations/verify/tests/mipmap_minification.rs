@@ -1,6 +1,6 @@
 use foundations_verify::{ComparisonType, gpu_context, reference_path, render_and_readback};
 use mipmap_minification::sample::{LodClamp, MipmapMinification};
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 
 fn pixel(bytes: &[u8], width: u32, px: u32, py: u32) -> [u8; 4] {
     let offset = ((py * width + px) * 4) as usize;

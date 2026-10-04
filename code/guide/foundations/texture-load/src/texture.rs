@@ -1,4 +1,4 @@
-use shell::Gpu;
+use framework::Gpu;
 use wgpu::{
     Extent3d, TexelCopyBufferLayout, TexelCopyTextureInfo, Texture, TextureAspect,
     TextureDescriptor, TextureDimension, TextureFormat, TextureUsages, TextureView,

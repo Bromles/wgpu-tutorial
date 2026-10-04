@@ -6,7 +6,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<SceneObjects>(shell::Settings {
+    framework::run::<SceneObjects>(framework::Settings {
         title: "wgpu | Scene objects".into(),
         device_descriptor: wgpu::DeviceDescriptor {
             label: Some("Scene objects device"),
@@ -17,6 +17,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             },
             ..Default::default()
         },
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

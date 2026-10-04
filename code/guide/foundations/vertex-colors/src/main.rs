@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<VertexColors>(shell::Settings {
+    framework::run::<VertexColors>(framework::Settings {
         title: "wgpu | Vertex colors".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

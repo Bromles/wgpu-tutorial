@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<TriangleMotion>(shell::Settings {
+    framework::run::<TriangleMotion>(framework::Settings {
         title: "wgpu | Triangle motion".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

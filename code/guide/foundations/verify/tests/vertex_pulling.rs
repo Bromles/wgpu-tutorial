@@ -1,5 +1,5 @@
 use foundations_verify::{ComparisonType, gpu_context, reference_path, render_and_readback};
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use vertex_pulling::sample::{Mode, VertexPulling};
 
 /// Snapshot 10: at gain = 1 both feeding paths must reproduce the 07b frame

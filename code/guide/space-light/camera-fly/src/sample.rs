@@ -3,7 +3,7 @@ use std::error::Error;
 use std::time::Instant;
 
 use encase::UniformBuffer;
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,

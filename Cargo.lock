@@ -122,8 +122,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -162,8 +162,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -176,8 +176,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -190,8 +190,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -280,8 +280,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -318,8 +318,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -352,7 +352,7 @@ name = "compute-basics"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
- "shell",
+ "framework",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -444,8 +444,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -464,8 +464,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -524,8 +524,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -673,6 +673,8 @@ dependencies = [
  "depth-culling",
  "draw-immediates",
  "first-triangle",
+ "framework",
+ "framework-triangle",
  "full-frame",
  "gain-animation",
  "glam",
@@ -695,8 +697,6 @@ dependencies = [
  "scene-objects",
  "shadow-mapping",
  "shadow-pcf",
- "shell",
- "shell-triangle",
  "srgb-mixing",
  "texture-load",
  "texture-sampling",
@@ -710,13 +710,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "framework"
+version = "0.1.0"
+dependencies = [
+ "pollster",
+ "tracing",
+ "wgpu",
+ "winit",
+]
+
+[[package]]
+name = "framework-triangle"
+version = "0.1.0"
+dependencies = [
+ "framework",
+ "tracing",
+ "tracing-subscriber",
+ "wgpu",
+]
+
+[[package]]
 name = "full-frame"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -753,8 +773,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -888,8 +908,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -911,7 +931,7 @@ name = "image-pipeline"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
- "shell",
+ "framework",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -923,7 +943,7 @@ name = "indexed-geometry"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
- "shell",
+ "framework",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -1041,8 +1061,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -1095,8 +1115,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -1109,8 +1129,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -1156,8 +1176,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -1169,8 +1189,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -1218,8 +1238,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -1232,8 +1252,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -1314,8 +1334,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -1695,8 +1715,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -1943,7 +1963,7 @@ name = "render-to-texture"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
- "shell",
+ "framework",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -2018,8 +2038,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -2093,8 +2113,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -2107,8 +2127,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -2122,26 +2142,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6"
 dependencies = [
  "lazy_static",
-]
-
-[[package]]
-name = "shell"
-version = "0.1.0"
-dependencies = [
- "pollster",
- "tracing",
- "wgpu",
- "winit",
-]
-
-[[package]]
-name = "shell-triangle"
-version = "0.1.0"
-dependencies = [
- "shell",
- "tracing",
- "tracing-subscriber",
- "wgpu",
 ]
 
 [[package]]
@@ -2242,8 +2242,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -2308,7 +2308,7 @@ name = "texture-load"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
- "shell",
+ "framework",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -2319,7 +2319,7 @@ name = "texture-sampling"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
- "shell",
+ "framework",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -2502,8 +2502,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -2546,8 +2546,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -2558,7 +2558,7 @@ name = "uniform-tint"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
- "shell",
+ "framework",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -2580,7 +2580,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 name = "vertex-colors"
 version = "0.1.0"
 dependencies = [
- "shell",
+ "framework",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -2591,7 +2591,7 @@ name = "vertex-fetch"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
- "shell",
+ "framework",
  "tracing",
  "tracing-subscriber",
  "wgpu",
@@ -2603,8 +2603,8 @@ version = "0.1.0"
 dependencies = [
  "bytemuck",
  "encase",
+ "framework",
  "glam",
- "shell",
  "tracing",
  "tracing-subscriber",
  "wgpu",

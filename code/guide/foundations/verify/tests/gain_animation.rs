@@ -1,6 +1,6 @@
 use foundations_verify::{ComparisonType, gpu_context, reference_path, render_and_readback};
 use gain_animation::sample::GainAnimation;
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 
 fn srgb_encode(x: f32) -> f32 {
     if x <= 0.003_130_8 {

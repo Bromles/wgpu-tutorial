@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<VertexFetch>(shell::Settings {
+    framework::run::<VertexFetch>(framework::Settings {
         title: "wgpu | Vertex fetch".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

@@ -1,7 +1,7 @@
 use foundations_verify::{gpu_context, render_and_readback};
 use light_list::params::shade;
 use light_list::sample::LightList;
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 
 const WIDTH: u32 = 768;
 const HEIGHT: u32 = 576;

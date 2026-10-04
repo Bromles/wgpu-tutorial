@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<MipmapMinification>(shell::Settings {
+    framework::run::<MipmapMinification>(framework::Settings {
         title: "wgpu | Mipmap minification".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

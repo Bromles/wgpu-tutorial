@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<CameraFly>(shell::Settings {
+    framework::run::<CameraFly>(framework::Settings {
         title: "wgpu | Camera fly".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

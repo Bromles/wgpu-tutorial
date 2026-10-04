@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<LightList>(shell::Settings {
+    framework::run::<LightList>(framework::Settings {
         title: "wgpu | Light list".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

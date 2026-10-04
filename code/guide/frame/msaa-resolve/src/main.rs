@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<MsaaResolve>(shell::Settings {
+    framework::run::<MsaaResolve>(framework::Settings {
         title: "wgpu | MSAA resolve".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

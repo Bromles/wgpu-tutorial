@@ -1,13 +1,13 @@
 use std::error::Error;
 
-use gain_animation::sample::GainAnimation;
+use framework_triangle::sample::Triangle;
 
 fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    framework::run::<GainAnimation>(framework::Settings {
-        title: "wgpu | Gain animation".into(),
+    framework::run::<Triangle>(framework::Settings {
+        title: "wgpu | Framework triangle".into(),
         ..framework::Settings::default()
     })
 }

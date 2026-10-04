@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use encase::{StorageBuffer, UniformBuffer};
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,

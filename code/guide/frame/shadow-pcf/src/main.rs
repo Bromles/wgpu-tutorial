@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<ShadowPcf>(shell::Settings {
+    framework::run::<ShadowPcf>(framework::Settings {
         title: "wgpu | Shadow PCF".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

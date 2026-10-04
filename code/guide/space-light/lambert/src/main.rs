@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<Lambert>(shell::Settings {
+    framework::run::<Lambert>(framework::Settings {
         title: "wgpu | Lambert".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

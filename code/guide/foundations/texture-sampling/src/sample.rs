@@ -1,4 +1,4 @@
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use std::error::Error;
 use wgpu::{
     AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,

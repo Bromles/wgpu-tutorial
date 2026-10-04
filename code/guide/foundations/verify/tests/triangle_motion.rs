@@ -1,5 +1,5 @@
 use foundations_verify::{gpu_context, render_and_readback};
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use triangle_motion::params::Params;
 use triangle_motion::sample::TriangleMotion;
 

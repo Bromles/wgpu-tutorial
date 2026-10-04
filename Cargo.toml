@@ -25,9 +25,9 @@ opt-level = 3
 
 [workspace.dependencies]
 # local
-shell = { path = "code/guide/foundations/shell" }
+framework = { path = "code/guide/foundations/framework" }
 first-triangle = { path = "code/guide/foundations/first-triangle" }
-shell-triangle = { path = "code/guide/foundations/shell-triangle" }
+framework-triangle = { path = "code/guide/foundations/framework-triangle" }
 vertex-colors = { path = "code/guide/foundations/vertex-colors" }
 vertex-fetch = { path = "code/guide/foundations/vertex-fetch" }
 indexed-geometry = { path = "code/guide/foundations/indexed-geometry" }

@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<ShadowMapping>(shell::Settings {
+    framework::run::<ShadowMapping>(framework::Settings {
         title: "wgpu | Shadow mapping".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

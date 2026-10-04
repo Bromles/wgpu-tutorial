@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<SrgbMixing>(shell::Settings {
+    framework::run::<SrgbMixing>(framework::Settings {
         title: "wgpu | sRGB mixing".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<BlinnPhong>(shell::Settings {
+    framework::run::<BlinnPhong>(framework::Settings {
         title: "wgpu | Blinn-Phong".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

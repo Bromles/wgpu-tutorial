@@ -2,7 +2,7 @@ use foundations_verify::{
     ComparisonType, compare_reference, gpu_context, reference_path, render_and_readback,
 };
 use render_to_texture::sample::RenderToTexture;
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 
 fn srgb_encode(x: f32) -> f32 {
     if x <= 0.003_130_8 {

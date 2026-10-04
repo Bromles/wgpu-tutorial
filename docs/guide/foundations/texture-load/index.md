@@ -17,7 +17,7 @@ import TexelsUploadDiagram from './TexelsUploadDiagram.vue'
 # Текстуры и sampling: тексели и upload
 
 ::: info Только native
-Продолжаем через [оболочку](../shell-triangle/); новый ресурс — текстура.
+Продолжаем через [фреймворк](../framework-triangle/); новый ресурс — текстура.
 :::
 
 Изображение курса до сих пор было либо clear-цветом, либо аналитическим цветом вершин.

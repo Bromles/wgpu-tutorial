@@ -2,7 +2,7 @@ use std::error::Error;
 
 use encase::UniformBuffer;
 use glam::{Mat4, Vec3};
-use shell::{Gpu, Sample};
+use framework::{Gpu, Sample};
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,

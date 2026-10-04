@@ -180,7 +180,7 @@ WindowEvent::Focused(false) => {
 
 ```rust
 // The depth attachment must match the frame. The size comes from
-// the shell's resize contract (guaranteed before the first draw),
+// the framework's resize contract (guaranteed before the first draw),
 // so a pending size (re)creates the attachment here, in draw.
 if let Some(size) = self.pending_size.take()
     && self.depth_size != (size.width, size.height)

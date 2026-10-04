@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    shell::run::<CubeUv>(shell::Settings {
+    framework::run::<CubeUv>(framework::Settings {
         title: "wgpu | Cube UV".into(),
-        ..shell::Settings::default()
+        ..framework::Settings::default()
     })
 }

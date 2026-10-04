@@ -38,10 +38,10 @@ next:
 ## Требования к устройству
 
 Immediates — опциональная возможность устройства: её запрашивают явно. Размер блока ограничен лимитом `max_immediate_size`.
-Оба объявляются локальным примером через `Settings` — оболочка ничего о них не знает:
+Оба объявляются локальным примером через `Settings` — фреймворк ничего о них не знает:
 
 ```rust
-shell::run::<DrawImmediates>(shell::Settings {
+framework::run::<DrawImmediates>(framework::Settings {
     title: "wgpu | Draw immediates".into(),
     device_descriptor: wgpu::DeviceDescriptor {
         label: Some("Immediates device"),
@@ -52,7 +52,7 @@ shell::run::<DrawImmediates>(shell::Settings {
         },
         ..Default::default()
     },
-    ..shell::Settings::default()
+    ..framework::Settings::default()
 })
 ```
 
