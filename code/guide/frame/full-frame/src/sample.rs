@@ -1,101 +1,66 @@
 use std::error::Error;
 
 use encase::{StorageBuffer, UniformBuffer};
-use glam::{Mat4, Vec3};
 use framework::{Gpu, Sample};
-use wgpu::{
-    BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, BlendComponent, BlendFactor, BlendOperation, BlendState,
-    Buffer, BufferBinding, BufferBindingType, BufferDescriptor, BufferSize, BufferUsages, Color,
-    ColorTargetState, ColorWrites, CommandEncoder, CompareFunction, DepthStencilState, Extent3d,
-    FragmentState, FrontFace, LoadOp, Operations, PipelineCompilationOptions, PipelineLayout,
-    PipelineLayoutDescriptor, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
-    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline,
-    RenderPipelineDescriptor, ShaderModule, ShaderStages, StoreOp, Texture, TextureDescriptor,
+use glam::{Mat4, Vec3};
+use wgpu::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout,
+    BindGroupLayoutDescriptor, BindGroupLayoutEntry, BindingType, Buffer, BufferBinding,
+    BufferBindingType, BufferDescriptor, BufferSize, BufferUsages, CommandEncoder, Extent3d,
+    PipelineLayoutDescriptor, RenderPipeline, ShaderStages, Texture, TextureDescriptor,
     TextureDimension, TextureFormat, TextureSampleType, TextureUsages, TextureView,
-    TextureViewDescriptor, TextureViewDimension, VertexState, include_wgsl,
-};
+    TextureViewDescriptor, TextureViewDimension, include_wgsl,  Features, BindingResource,};
 use winit::dpi::PhysicalSize;
-use winit::event::{ElementState, WindowEvent};
-use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::event::{ElementState,WindowEvent};
 use winit::window::Window;
 
-use crate::geometry::{self, CUBE_MESH, FLOOR_MESH, PANEL_INDICES, PanelVertex, Vertex};
-use crate::scene::{self, ObjectRecord};
+use crate::geometry::{self,PANEL_INDICES};
+use crate::params::PassParams;
+use pipelines::{
+    create_lit_pipeline, create_panel_pipeline, create_shadow_pipeline, create_tone_pipeline,
+};
+use crate::scene::{self,ObjectRecord};
 
 /// Fallback target size until the first resize; matches the default window.
+use crate::pipelines;
+use bytemuck::cast_slice;
+use glam::camera::rh::proj::directx::perspective;
+use glam::camera::rh::view::look_at_mat4;
+use winit::keyboard::PhysicalKey;
+use winit::keyboard::KeyCode;
 const FALLBACK_SIZE: (u32, u32) = (800, 600);
 
 /// The two sample counts; the M key walks between them.
 const SAMPLE_COUNTS: [u32; 2] = [1, 4];
 
-/// The HDR clear color, linear: tone mapping sees the background too.
-const CLEAR: Color = Color {
-    r: 0.1,
-    g: 0.1,
-    b: 0.12,
-    a: 1.0,
-};
-
-/// Camera uniforms of the lit passes; encase rounds the struct to 80 bytes.
-#[derive(encase::ShaderType, Debug, Clone, Copy)]
-struct PassParams {
-    view_proj: Mat4,
-    shadows: u32,
-}
-
-/// Straight-alpha over: RGB weighed by the source alpha itself.
-const STRAIGHT: BlendState = BlendState {
-    color: BlendComponent {
-        src_factor: BlendFactor::SrcAlpha,
-        dst_factor: BlendFactor::OneMinusSrcAlpha,
-        operation: BlendOperation::Add,
-    },
-    alpha: BlendComponent {
-        src_factor: BlendFactor::One,
-        dst_factor: BlendFactor::OneMinusSrcAlpha,
-        operation: BlendOperation::Add,
-    },
-};
-
 /// The finished frame as one explicit graph: shadow depth, opaque and
 /// transparent HDR, resolve (with MSAA), tone map, surface.
 pub struct FullFrame {
-    shadow_pipeline: RenderPipeline,
-    lit_pipelines: [RenderPipeline; 2],
-    panel_pipelines: [RenderPipeline; 2],
-    tone_pipeline: RenderPipeline,
-    frame_layout: BindGroupLayout,
-    camera_bind_group: BindGroup,
-    light_bind_group: BindGroup,
-    panel_bind_group: BindGroup,
-    shadow_bind_group: BindGroup,
-    objects_bind_group: BindGroup,
-    material_bind_groups: [BindGroup; 2],
-    camera_buffer: Buffer,
-    vertex_buffer: Buffer,
-    index_buffer: Buffer,
-    panel_vertex_buffer: Buffer,
-    panel_index_buffer: Buffer,
-    shadow_view: TextureView,
+    pub(crate) shadow_pipeline: RenderPipeline,
+    pub(crate) lit_pipelines: [RenderPipeline; 2],
+    pub(crate) panel_pipelines: [RenderPipeline; 2],
+    pub(crate) tone_pipeline: RenderPipeline,
+    pub(crate) frame_layout: BindGroupLayout,
+    pub(crate) camera_bind_group: BindGroup,
+    pub(crate) light_bind_group: BindGroup,
+    pub(crate) panel_bind_group: BindGroup,
+    pub(crate) shadow_bind_group: BindGroup,
+    pub(crate) objects_bind_group: BindGroup,
+    pub(crate) material_bind_groups: [BindGroup; 2],
+    pub(crate) camera_buffer: Buffer,
+    pub(crate) vertex_buffer: Buffer,
+    pub(crate) index_buffer: Buffer,
+    pub(crate) panel_vertex_buffer: Buffer,
+    pub(crate) panel_index_buffer: Buffer,
+    pub(crate) shadow_view: TextureView,
     /// Single-sample HDR frame; always the tone mapper input.
-    resolve_texture: Option<Texture>,
-    resolve_view: Option<TextureView>,
-    tone_bind_group: Option<BindGroup>,
-    msaa_color_view: Option<TextureView>,
-    single_depth_view: Option<TextureView>,
-    msaa_depth_view: Option<TextureView>,
-    target_size: (u32, u32),
+    pub(crate) resolve_texture: Option<Texture>, pub(crate) resolve_view: Option<TextureView>, pub(crate) tone_bind_group: Option<BindGroup>, pub(crate) msaa_color_view: Option<TextureView>, pub(crate) single_depth_view: Option<TextureView>, pub(crate) msaa_depth_view: Option<TextureView>, pub(crate) target_size: (u32, u32),
     /// Nonzero target size seen in the events; consumed by the next draw.
-    pending_size: Option<PhysicalSize<u32>>,
-    msaa_enabled: bool,
-    shadows_enabled: bool,
-    projection: Mat4,
+    pub(crate) pending_size: Option<PhysicalSize<u32>>, pub(crate) msaa_enabled: bool, pub(crate) shadows_enabled: bool, pub(crate) projection: Mat4,
 }
 
 impl Sample for FullFrame {
     fn init(gpu: &Gpu) -> Result<Self, Box<dyn Error>> {
-        if !gpu.device.features().contains(wgpu::Features::IMMEDIATES) {
+        if !gpu.device.features().contains(Features::IMMEDIATES) {
             return Err("This example requires Features::IMMEDIATES (adapter support varies): the object index travels in the command state".into());
         }
         if gpu.device.limits().max_immediate_size < 4 {
@@ -206,7 +171,7 @@ impl Sample for FullFrame {
                 label: Some("Frame bind group layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    visibility: ShaderStages::FRAGMENT,
                     ty: BindingType::Texture {
                         sample_type: TextureSampleType::Float { filterable: false },
                         view_dimension: TextureViewDimension::D2,
@@ -269,7 +234,7 @@ impl Sample for FullFrame {
             layout: &pass_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &camera_buffer,
                     offset: 0,
                     size: None,
@@ -296,7 +261,7 @@ impl Sample for FullFrame {
             layout: &matrix_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &light_buffer,
                     offset: 0,
                     size: None,
@@ -309,7 +274,7 @@ impl Sample for FullFrame {
             layout: &matrix_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &camera_buffer,
                     offset: 0,
                     size: None,
@@ -336,7 +301,7 @@ impl Sample for FullFrame {
             layout: &objects_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &objects_buffer,
                     offset: 0,
                     size: None,
@@ -360,7 +325,7 @@ impl Sample for FullFrame {
                 layout: &material_layout,
                 entries: &[BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer: &buffer,
                         offset: 0,
                         size: None,
@@ -394,7 +359,7 @@ impl Sample for FullFrame {
             entries: &[
                 BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer: &light_buffer,
                         offset: 0,
                         size: None,
@@ -402,7 +367,7 @@ impl Sample for FullFrame {
                 },
                 BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&shadow_view),
+                    resource: BindingResource::TextureView(&shadow_view),
                 },
             ],
         });
@@ -417,7 +382,7 @@ impl Sample for FullFrame {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&vertices));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&vertices));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Scene indices"),
             size: size_of_val(&indices) as u64,
@@ -425,7 +390,7 @@ impl Sample for FullFrame {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&indices));
+            .write_buffer(&index_buffer, 0, cast_slice(&indices));
 
         let panel_vertices = geometry::panel_vertices();
         let panel_vertex_buffer = gpu.device.create_buffer(&BufferDescriptor {
@@ -437,7 +402,7 @@ impl Sample for FullFrame {
         gpu.queue.write_buffer(
             &panel_vertex_buffer,
             0,
-            bytemuck::cast_slice(&panel_vertices),
+            cast_slice(&panel_vertices),
         );
         let panel_index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Panel indices"),
@@ -446,7 +411,7 @@ impl Sample for FullFrame {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&panel_index_buffer, 0, bytemuck::cast_slice(&PANEL_INDICES));
+            .write_buffer(&panel_index_buffer, 0, cast_slice(&PANEL_INDICES));
 
         Ok(Self {
             shadow_pipeline,
@@ -476,7 +441,7 @@ impl Sample for FullFrame {
             pending_size: None,
             msaa_enabled: false,
             shadows_enabled: true,
-            projection: glam::camera::rh::proj::directx::perspective(
+            projection: perspective(
                 scene::FOV_Y,
                 FALLBACK_SIZE.0 as f32 / FALLBACK_SIZE.1 as f32,
                 scene::NEAR,
@@ -486,19 +451,15 @@ impl Sample for FullFrame {
     }
 
     /// Framework contract: called right after `init` and on every resize.
-    fn resize(&mut self, width: u32, height: u32) {
-        if width > 0 && height > 0 {
-            self.pending_size = Some(PhysicalSize::new(width, height));
-            self.projection = glam::camera::rh::proj::directx::perspective(
-                scene::FOV_Y,
-                width as f32 / height as f32,
-                scene::NEAR,
-                scene::FAR,
+    fn resize(&mut self, width: u32, height: u32) { if width > 0 && height > 0 { self.pending_size = Some(PhysicalSize::new(width, height)); self.projection = perspective( scene::FOV_Y, width as f32 / height as f32, scene::NEAR, scene::FAR,
             );
         }
     }
 
-    fn draw(&mut self, gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
+    fn draw(&mut self,
+    gpu: &Gpu,
+    encoder: &mut CommandEncoder,
+    view: &TextureView) {
         // A pending size (re)creates the HDR kit here, in draw.
         if let Some(size) = self.pending_size.take()
             && self.target_size != (size.width, size.height)
@@ -507,7 +468,7 @@ impl Sample for FullFrame {
         }
 
         let view_proj = self.projection
-            * glam::camera::rh::view::look_at_mat4(scene::EYE, scene::TARGET, Vec3::Y);
+            * look_at_mat4(scene::EYE, scene::TARGET, Vec3::Y);
         let camera = PassParams {
             view_proj,
             shadows: u32::from(self.shadows_enabled),
@@ -519,175 +480,17 @@ impl Sample for FullFrame {
 
         let mode = usize::from(self.msaa_enabled);
 
-        // Pass 1: shadow depth; only the cube casts.
         if self.shadows_enabled {
-            let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
-                label: Some("Shadow depth pass"),
-                color_attachments: &[],
-                depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
-                    view: &self.shadow_view,
-                    depth_ops: Some(Operations {
-                        load: LoadOp::Clear(1.0),
-                        store: StoreOp::Store,
-                    }),
-                    stencil_ops: None,
-                }),
-                ..RenderPassDescriptor::default()
-            });
-            pass.set_pipeline(&self.shadow_pipeline);
-            pass.set_bind_group(0, &self.light_bind_group, &[]);
-            pass.set_bind_group(2, &self.objects_bind_group, &[]);
-            pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            let cube: u32 = 0;
-            pass.set_immediates(0, bytemuck::bytes_of(&cube));
-            pass.draw_indexed(CUBE_MESH.clone(), 0, 0..1);
+            self.shadow_pass(encoder);
         }
-
-        // Pass 2: opaque HDR; no resolve yet - the panel still blends into samples.
-        {
-            let (color_view, depth_view) = if self.msaa_enabled {
-                (
-                    self.msaa_color_view
-                        .as_ref()
-                        .expect("msaa kit exists after recreate"),
-                    self.msaa_depth_view
-                        .as_ref()
-                        .expect("msaa kit exists after recreate"),
-                )
-            } else {
-                (
-                    self.resolve_view
-                        .as_ref()
-                        .expect("resolve view exists after recreate"),
-                    self.single_depth_view
-                        .as_ref()
-                        .expect("single kit exists after recreate"),
-                )
-            };
-            let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
-                label: Some("Opaque HDR pass"),
-                color_attachments: &[Some(RenderPassColorAttachment {
-                    view: color_view,
-                    resolve_target: None,
-                    ops: Operations {
-                        load: LoadOp::Clear(CLEAR),
-                        store: StoreOp::Store,
-                    },
-                    depth_slice: None,
-                })],
-                depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
-                    view: depth_view,
-                    depth_ops: Some(Operations {
-                        load: LoadOp::Clear(1.0),
-                        store: StoreOp::Store,
-                    }),
-                    stencil_ops: None,
-                }),
-                ..RenderPassDescriptor::default()
-            });
-            pass.set_pipeline(&self.lit_pipelines[mode]);
-            pass.set_bind_group(0, &self.camera_bind_group, &[]);
-            pass.set_bind_group(2, &self.objects_bind_group, &[]);
-            // Group 3: the shadow map for the lit fragment stage.
-            pass.set_bind_group(3, &self.shadow_bind_group, &[]);
-            pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            // Mesh = draw range, material = group, object = immediate index.
-            for (object, mesh, material) in
-                [(0u32, &CUBE_MESH, 0usize), (1u32, &FLOOR_MESH, 1usize)]
-            {
-                pass.set_bind_group(1, &self.material_bind_groups[material], &[]);
-                pass.set_immediates(0, bytemuck::bytes_of(&object));
-                pass.draw_indexed(mesh.clone(), 0, 0..1);
-            }
-        }
-
-        // Pass 3: transparent panel; depth writes off, MSAA resolves here.
-        {
-            let resolve_view = self
-                .resolve_view
-                .as_ref()
-                .expect("resolve view exists after recreate");
-            let (color_view, depth_view, resolve_target) = if self.msaa_enabled {
-                (
-                    self.msaa_color_view
-                        .as_ref()
-                        .expect("msaa kit exists after recreate"),
-                    self.msaa_depth_view
-                        .as_ref()
-                        .expect("msaa kit exists after recreate"),
-                    Some(resolve_view),
-                )
-            } else {
-                (
-                    resolve_view,
-                    self.single_depth_view
-                        .as_ref()
-                        .expect("single depth exists after recreate"),
-                    None,
-                )
-            };
-            let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
-                label: Some("Transparent HDR pass"),
-                color_attachments: &[Some(RenderPassColorAttachment {
-                    view: color_view,
-                    resolve_target,
-                    ops: Operations {
-                        load: LoadOp::Load,
-                        // Resolve happens at pass end regardless; the MSAA
-                        // texture itself is never read again, so in the
-                        // multisampled mode its store can be discarded.
-                        store: if resolve_target.is_some() {
-                            StoreOp::Discard
-                        } else {
-                            StoreOp::Store
-                        },
-                    },
-                    depth_slice: None,
-                })],
-                depth_stencil_attachment: Some(RenderPassDepthStencilAttachment {
-                    view: depth_view,
-                    depth_ops: Some(Operations {
-                        load: LoadOp::Load,
-                        store: StoreOp::Store,
-                    }),
-                    stencil_ops: None,
-                }),
-                ..RenderPassDescriptor::default()
-            });
-            pass.set_pipeline(&self.panel_pipelines[mode]);
-            pass.set_bind_group(0, &self.panel_bind_group, &[]);
-            pass.set_vertex_buffer(0, self.panel_vertex_buffer.slice(..));
-            pass.set_index_buffer(self.panel_index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            pass.draw_indexed(0..PANEL_INDICES.len() as u32, 0, 0..1);
-        }
-
-        // Pass 4: tone map the HDR frame onto the surface.
-        let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
-            label: Some("Tone map to surface pass"),
-            color_attachments: &[Some(RenderPassColorAttachment {
-                view,
-                resolve_target: None,
-                ops: Operations {
-                    // Never visible: the triangle covers every pixel.
-                    load: LoadOp::Clear(CLEAR),
-                    store: StoreOp::Store,
-                },
-                depth_slice: None,
-            })],
-            ..RenderPassDescriptor::default()
-        });
-        pass.set_pipeline(&self.tone_pipeline);
-        pass.set_bind_group(
-            0,
-            self.tone_bind_group.as_ref().expect("bind group exists"),
-            &[],
-        );
-        pass.draw(0..3, 0..1);
+        self.opaque_pass(encoder, mode);
+        self.panel_pass(encoder, mode);
+        self.tone_pass(encoder, view);
     }
 
-    fn window_event(&mut self, window: &Window, event: &WindowEvent) {
+    fn window_event(&mut self,
+    window: &Window,
+    event: &WindowEvent) {
         match event {
             WindowEvent::KeyboardInput {
                 event: key_event, ..
@@ -714,11 +517,7 @@ impl Sample for FullFrame {
 
 impl FullFrame {
     /// Recreates the HDR attachment kit; the shadow map is fixed-size.
-    fn recreate_kit(&mut self, gpu: &Gpu, width: u32, height: u32) {
-        let size = Extent3d {
-            width,
-            height,
-            depth_or_array_layers: 1,
+    fn recreate_kit(&mut self, gpu: &Gpu, width: u32, height: u32) { let size = Extent3d { width, height, depth_or_array_layers: 1,
         };
         let resolve = gpu.device.create_texture(&TextureDescriptor {
             label: Some("Single-sample HDR frame"),
@@ -739,7 +538,7 @@ impl FullFrame {
             layout: &self.frame_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::TextureView(&resolve_view),
+                resource: BindingResource::TextureView(&resolve_view),
             }],
         });
         let msaa_color = gpu.device.create_texture(&TextureDescriptor {
@@ -794,12 +593,14 @@ impl FullFrame {
     }
 
     /// The verification crate drives this directly.
-    pub fn set_msaa(&mut self, enabled: bool) {
+    pub fn set_msaa(&mut self,
+    enabled: bool) {
         self.msaa_enabled = enabled;
     }
 
     /// The verification crate drives this directly.
-    pub fn set_shadows(&mut self, enabled: bool) {
+    pub fn set_shadows(&mut self,
+    enabled: bool) {
         self.shadows_enabled = enabled;
     }
 
@@ -807,176 +608,4 @@ impl FullFrame {
     pub fn modes(&self) -> (bool, bool) {
         (self.msaa_enabled, self.shadows_enabled)
     }
-}
-
-fn create_shadow_pipeline(
-    gpu: &Gpu,
-    layout: &PipelineLayout,
-    shader: &ShaderModule,
-) -> RenderPipeline {
-    gpu.device
-        .create_render_pipeline(&RenderPipelineDescriptor {
-            label: Some("Shadow depth pipeline"),
-            layout: Some(layout),
-            vertex: VertexState {
-                module: shader,
-                entry_point: Some("vs_shadow"),
-                buffers: &[Some(Vertex::LAYOUT)],
-                compilation_options: PipelineCompilationOptions::default(),
-            },
-            // No fragment stage: depth only.
-            fragment: None,
-            primitive: PrimitiveState {
-                topology: PrimitiveTopology::TriangleList,
-                front_face: FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                ..PrimitiveState::default()
-            },
-            depth_stencil: Some(DepthStencilState {
-                format: TextureFormat::Depth32Float,
-                depth_write_enabled: Some(true),
-                depth_compare: Some(CompareFunction::Less),
-                stencil: Default::default(),
-                bias: Default::default(),
-            }),
-            multisample: wgpu::MultisampleState::default(),
-            cache: None,
-            multiview_mask: None,
-        })
-}
-
-fn create_lit_pipeline(
-    gpu: &Gpu,
-    layout: &PipelineLayout,
-    shader: &ShaderModule,
-    sample_count: u32,
-) -> RenderPipeline {
-    gpu.device
-        .create_render_pipeline(&RenderPipelineDescriptor {
-            label: Some("Lit HDR pipeline"),
-            layout: Some(layout),
-            vertex: VertexState {
-                module: shader,
-                entry_point: Some("vs_main"),
-                buffers: &[Some(Vertex::LAYOUT)],
-                compilation_options: PipelineCompilationOptions::default(),
-            },
-            fragment: Some(FragmentState {
-                module: shader,
-                entry_point: Some("fs_main"),
-                targets: &[Some(ColorTargetState {
-                    format: TextureFormat::Rgba16Float,
-                    blend: None,
-                    write_mask: ColorWrites::ALL,
-                })],
-                compilation_options: PipelineCompilationOptions::default(),
-            }),
-            primitive: PrimitiveState {
-                topology: PrimitiveTopology::TriangleList,
-                front_face: FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                ..PrimitiveState::default()
-            },
-            depth_stencil: Some(DepthStencilState {
-                format: TextureFormat::Depth32Float,
-                depth_write_enabled: Some(true),
-                depth_compare: Some(CompareFunction::Less),
-                stencil: Default::default(),
-                bias: Default::default(),
-            }),
-            multisample: wgpu::MultisampleState {
-                count: sample_count,
-                ..Default::default()
-            },
-            cache: None,
-            multiview_mask: None,
-        })
-}
-
-fn create_panel_pipeline(
-    gpu: &Gpu,
-    layout: &PipelineLayout,
-    shader: &ShaderModule,
-    sample_count: u32,
-) -> RenderPipeline {
-    gpu.device
-        .create_render_pipeline(&RenderPipelineDescriptor {
-            label: Some("Panel pipeline"),
-            layout: Some(layout),
-            vertex: VertexState {
-                module: shader,
-                entry_point: Some("vs_main"),
-                buffers: &[Some(PanelVertex::LAYOUT)],
-                compilation_options: PipelineCompilationOptions::default(),
-            },
-            fragment: Some(FragmentState {
-                module: shader,
-                entry_point: Some("fs_main"),
-                // The blend runs in linear light, before tone mapping.
-                targets: &[Some(ColorTargetState {
-                    format: TextureFormat::Rgba16Float,
-                    blend: Some(STRAIGHT),
-                    write_mask: ColorWrites::ALL,
-                })],
-                compilation_options: PipelineCompilationOptions::default(),
-            }),
-            primitive: PrimitiveState {
-                topology: PrimitiveTopology::TriangleList,
-                front_face: FrontFace::Ccw,
-                cull_mode: None,
-                ..PrimitiveState::default()
-            },
-            // Depth test on, writes off: the panel never occludes anything.
-            depth_stencil: Some(DepthStencilState {
-                format: TextureFormat::Depth32Float,
-                depth_write_enabled: Some(false),
-                depth_compare: Some(CompareFunction::Less),
-                stencil: Default::default(),
-                bias: Default::default(),
-            }),
-            multisample: wgpu::MultisampleState {
-                count: sample_count,
-                ..Default::default()
-            },
-            cache: None,
-            multiview_mask: None,
-        })
-}
-
-fn create_tone_pipeline(
-    gpu: &Gpu,
-    layout: &PipelineLayout,
-    shader: &ShaderModule,
-) -> RenderPipeline {
-    gpu.device
-        .create_render_pipeline(&RenderPipelineDescriptor {
-            label: Some("Tone map pipeline"),
-            layout: Some(layout),
-            vertex: VertexState {
-                module: shader,
-                entry_point: Some("vs_full"),
-                buffers: &[],
-                compilation_options: PipelineCompilationOptions::default(),
-            },
-            fragment: Some(FragmentState {
-                module: shader,
-                entry_point: Some("fs_full"),
-                targets: &[Some(ColorTargetState {
-                    format: gpu.format,
-                    blend: None,
-                    write_mask: ColorWrites::ALL,
-                })],
-                compilation_options: PipelineCompilationOptions::default(),
-            }),
-            primitive: PrimitiveState {
-                topology: PrimitiveTopology::TriangleList,
-                front_face: FrontFace::Ccw,
-                cull_mode: None,
-                ..PrimitiveState::default()
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
-            cache: None,
-            multiview_mask: None,
-        })
 }

@@ -1,13 +1,16 @@
 use std::error::Error;
 
+use framework::{Settings, run};
 use look_at::sample::LookAt;
+use tracing::Level;
+use tracing_subscriber::fmt;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+    fmt()
+        .with_max_level(Level::INFO)
         .init();
-    framework::run::<LookAt>(framework::Settings {
-        title: "wgpu | Look-at".into(),
-        ..framework::Settings::default()
+    run::<LookAt>(Settings {
+        title: "wgpu | Look at".into(),
+        ..Settings::default()
     })
 }

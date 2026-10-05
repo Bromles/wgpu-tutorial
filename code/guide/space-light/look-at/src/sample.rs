@@ -1,4 +1,5 @@
 use encase::UniformBuffer;
+use glam::{Mat4, Vec3};
 use framework::{Gpu, Sample};
 use std::error::Error;
 use wgpu::{
@@ -9,12 +10,18 @@ use wgpu::{
     PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
     RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, TextureView, VertexAttribute,
     VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
-};
+ MultisampleState, BindingResource,};
 
 use crate::camera::manual_view;
 
+
+use bytemuck::Pod;
+use bytemuck::Zeroable;
+use tracing::info;
+use std::f32::consts::FRAC_PI_2;
+use bytemuck::cast_slice;
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     position: [f32; 4],
     color: [f32; 4],
@@ -64,9 +71,9 @@ pub struct LookAt {
 
 impl Sample for LookAt {
     fn init(gpu: &Gpu) -> Result<Self, Box<dyn Error>> {
-        let eye = glam::Vec3::new(0.0, 0.0, 5.0);
-        let view = manual_view(eye, glam::Vec3::ZERO, glam::Vec3::Y)?;
-        tracing::info!(?view, "Chapter view matrix");
+        let eye = Vec3::new(0.0, 0.0, 5.0);
+        let view = manual_view(eye, Vec3::ZERO, Vec3::Y)?;
+        info!(?view, "Chapter view matrix");
         let shader = gpu
             .device
             .create_shader_module(include_wgsl!("shader.wgsl"));
@@ -120,7 +127,7 @@ impl Sample for LookAt {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -130,8 +137,8 @@ impl Sample for LookAt {
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let transform = glam::Mat4::from_translation(glam::Vec3::new(0.25, 0.0, 0.0))
-            * glam::Mat4::from_rotation_z(std::f32::consts::FRAC_PI_2);
+        let transform = Mat4::from_translation(Vec3::new(0.25, 0.0, 0.0))
+            * Mat4::from_rotation_z(FRAC_PI_2);
         let mut bytes = UniformBuffer::new(Vec::<u8>::new());
         bytes.write(&transform).expect("fits the uniform contract");
         gpu.queue
@@ -141,7 +148,7 @@ impl Sample for LookAt {
             layout: &layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &transform_buffer,
                     offset: 0,
                     size: None,
@@ -155,7 +162,7 @@ impl Sample for LookAt {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         Ok(Self {
             pipeline,
             bind_group,
@@ -163,7 +170,10 @@ impl Sample for LookAt {
         })
     }
 
-    fn draw(&mut self, _gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
+    fn draw(&mut self,
+    _gpu: &Gpu,
+    encoder: &mut CommandEncoder,
+    view: &TextureView) {
         let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
             label: Some("Look-at control pass"),
             color_attachments: &[Some(RenderPassColorAttachment {

@@ -1,7 +1,7 @@
 use encase::ShaderType;
 use glam::{Mat4, Vec3};
 
-/// Attenuation floor: the denominator never drops below R_MIN^2, staying finite up close.
+///  Attenuation floor: the denominator never drops below R_MIN^2, staying finite up close.
 pub const R_MIN: f32 = 0.1;
 
 /// One positional source: a point light until the cone is switched on.
@@ -38,7 +38,9 @@ impl Params {
     }
 
     /// Direct contribution at one surface point: the shader formula mirrored on the CPU.
-    pub fn contribution(&self, p: Vec3, n: Vec3) -> f32 {
+    pub fn contribution(&self,
+    p: Vec3,
+    n: Vec3) -> f32 {
         // L points from the surface toward the source; r is that distance.
         let to_light = self.light_pos - p;
         let r = to_light.length();

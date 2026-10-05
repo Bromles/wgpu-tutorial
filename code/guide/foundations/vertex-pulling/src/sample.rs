@@ -4,68 +4,25 @@ use std::error::Error;
 use std::time::Instant;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferBinding, BufferBindingType,
+    BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType,
     BufferDescriptor, BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites,
     CommandEncoder, FragmentState, FrontFace, LoadOp, Operations, PipelineCompilationOptions,
     PipelineLayoutDescriptor, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
     RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp,
-    TextureView, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    TextureView, VertexState,
     include_wgsl,
-};
+ MultisampleState, BindingResource, IndexFormat,};
 use winit::event::{ElementState, WindowEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::window::Window;
+use bytemuck::cast_slice;
 
+use crate::mesh::{INDICES,VERTICES,Vertex};
 use crate::params::Params;
 
 /// Gain growth speed, per second; gain = min(SPEED * elapsed, 1).
 const SPEED: f32 = 0.25;
 
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    position: [f32; 4],
-    color: [f32; 4],
-}
-
-const VERTICES: [Vertex; 4] = [
-    Vertex {
-        position: [-0.75, 0.75, 0.5, 1.0],
-        color: [1.0, 0.0, 0.0, 1.0],
-    },
-    Vertex {
-        position: [0.75, 0.75, 0.5, 1.0],
-        color: [0.0, 1.0, 0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.75, -0.75, 0.5, 1.0],
-        color: [0.0, 0.0, 1.0, 1.0],
-    },
-    Vertex {
-        position: [0.75, -0.75, 0.5, 1.0],
-        color: [1.0, 1.0, 1.0, 1.0],
-    },
-];
-
-const INDICES: [u16; 6] = [0, 1, 2, 2, 1, 3];
-
-impl Vertex {
-    const LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-        array_stride: size_of::<Vertex>() as BufferAddress,
-        step_mode: VertexStepMode::Vertex,
-        attributes: &[
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 0,
-                shader_location: 0,
-            },
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 16,
-                shader_location: 1,
-            },
-        ],
-    };
-}
 
 /// Which pipeline the frame uses.
 #[derive(Clone, Copy, PartialEq)]
@@ -172,7 +129,7 @@ impl Sample for VertexPulling {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -204,7 +161,7 @@ impl Sample for VertexPulling {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -217,13 +174,13 @@ impl Sample for VertexPulling {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let storage_bind_group = gpu.device.create_bind_group(&BindGroupDescriptor {
             label: Some("Vertex storage bind group"),
             layout: &storage_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &vertex_buffer,
                     offset: 0,
                     size: None,
@@ -249,7 +206,7 @@ impl Sample for VertexPulling {
                 layout: &params_layout,
                 entries: &[BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer,
                         offset: 0,
                         size: None,
@@ -265,7 +222,7 @@ impl Sample for VertexPulling {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipelines: [fetch_pipeline, pulling_pipeline],
             uniform_buffers,
@@ -280,7 +237,10 @@ impl Sample for VertexPulling {
         })
     }
 
-    fn draw(&mut self, gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
+    fn draw(&mut self,
+    gpu: &Gpu,
+    encoder: &mut CommandEncoder,
+    view: &TextureView) {
         let now = Instant::now();
         if let Some(last) = self.last_instant
             && !self.paused
@@ -323,14 +283,16 @@ impl Sample for VertexPulling {
         } else {
             pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         }
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         pass.set_bind_group(0, &self.params_bind_groups[0], &[]);
         pass.draw_indexed(0..3, 0, 0..1);
         pass.set_bind_group(0, &self.params_bind_groups[1], &[]);
         pass.draw_indexed(3..6, 0, 0..1);
     }
 
-    fn window_event(&mut self, window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self,
+    window: &Window,
+    event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event
@@ -357,11 +319,13 @@ impl Sample for VertexPulling {
 }
 
 impl VertexPulling {
-    pub fn set_mode(&mut self, mode: Mode) {
+    pub fn set_mode(&mut self,
+    mode: Mode) {
         self.mode = mode;
     }
 
-    pub fn set_elapsed(&mut self, seconds: f32) {
+    pub fn set_elapsed(&mut self,
+    seconds: f32) {
         self.elapsed = seconds;
         self.last_instant = None;
     }

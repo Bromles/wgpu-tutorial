@@ -1,3 +1,4 @@
+use crate::scene::light_dir;
 use encase::ShaderType;
 use glam::Vec3;
 
@@ -19,7 +20,7 @@ pub struct SceneParams {
 impl SceneParams {
     pub fn chapter() -> Self {
         Self {
-            light_dir: crate::scene::light_dir(),
+            light_dir: light_dir(),
             albedo: Vec3::splat(0.5),
             ambient: 0.1,
             intensity: 0.6,
@@ -28,7 +29,9 @@ impl SceneParams {
     }
 
     /// Mirrors the shader formula for the verification checks.
-    pub fn shade(&self, normal: Vec3, visibility: f32) -> Vec3 {
+    pub fn shade(&self,
+    normal: Vec3,
+    visibility: f32) -> Vec3 {
         let d = normal.normalize().dot(self.light_dir).max(0.0);
         self.albedo * (self.ambient + self.intensity * d * visibility)
     }

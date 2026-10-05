@@ -1,3 +1,4 @@
 pub mod camera;
-pub mod sample;
 pub mod scene;
+mod mesh;
+pub mod sample;

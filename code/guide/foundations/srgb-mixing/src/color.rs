@@ -27,11 +27,13 @@ pub fn quantize_u8(encoded: f32) -> u8 {
 }
 
 /// Mean of linear light; `mean_of_codes` averages stored codes instead.
-pub fn mean_linear(a: f32, b: f32) -> f32 {
+pub fn mean_linear(a: f32,
+b: f32) -> f32 {
     (a + b) / 2.0
 }
 
-pub fn mean_of_codes(a_code: u8, b_code: u8) -> u8 {
+pub fn mean_of_codes(a_code: u8,
+b_code: u8) -> u8 {
     ((u16::from(a_code) + u16::from(b_code)) / 2) as u8
 }
 

@@ -164,7 +164,7 @@ if self.mode == Mode::Pulling {
 
 ```sh
 cargo run -p vertex-pulling
-cargo test -p verify
+cargo test -p vertex-pulling
 ```
 
 ## Сравнение: что изменилось

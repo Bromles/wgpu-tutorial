@@ -1,17 +1,22 @@
 use framework::{Gpu, Sample};
 use std::error::Error;
-use wgpu::{
-    BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferDescriptor, BufferUsages,
-    Color, ColorTargetState, ColorWrites, CommandEncoder, FragmentState, FrontFace, LoadOp,
-    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PrimitiveState,
-    PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline,
-    RenderPipelineDescriptor, StoreOp, TextureSampleType, TextureView, TextureViewDimension,
-    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
-};
+use wgpu::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferAddress,
+    BufferDescriptor, BufferUsages, Color, ColorTargetState, ColorWrites, CommandEncoder,
+    FragmentState, FrontFace, IndexFormat, LoadOp, MultisampleState, Operations,
+    PipelineCompilationOptions, PipelineLayoutDescriptor, PrimitiveState, PrimitiveTopology,
+    RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
+    ShaderStages, StoreOp, TextureSampleType, TextureView, TextureViewDimension,
+    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
+    include_wgsl,};
+
+use crate::texture::create;
+use bytemuck::Pod;
+use bytemuck::Zeroable;
+use bytemuck::cast_slice;
 
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     position: [f32; 4],
     /// White: colors come from the texture now.
@@ -91,7 +96,7 @@ impl Sample for TextureLoad {
                 label: Some("Texture bind group layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    visibility: ShaderStages::FRAGMENT,
                     ty: BindingType::Texture {
                         sample_type: TextureSampleType::Float { filterable: false },
                         view_dimension: TextureViewDimension::D2,
@@ -135,17 +140,17 @@ impl Sample for TextureLoad {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
-        let (_texture, view) = crate::texture::create(gpu);
+        let (_texture, view) = create(gpu);
         let bind_group = gpu.device.create_bind_group(&BindGroupDescriptor {
             label: Some("Texture bind group"),
             layout: &texture_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::TextureView(&view),
+                resource: BindingResource::TextureView(&view),
             }],
         });
         let vertex_buffer = gpu.device.create_buffer(&BufferDescriptor {
@@ -155,15 +160,14 @@ impl Sample for TextureLoad {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let uv_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Quad UVs"),
             size: size_of_val(&UVS) as u64,
             usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        gpu.queue
-            .write_buffer(&uv_buffer, 0, bytemuck::cast_slice(&UVS));
+        gpu.queue.write_buffer(&uv_buffer, 0, cast_slice(&UVS));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Quad indices"),
             size: size_of_val(&INDICES) as u64,
@@ -171,7 +175,7 @@ impl Sample for TextureLoad {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             bind_group,
@@ -204,7 +208,7 @@ impl Sample for TextureLoad {
         pass.set_bind_group(0, &self.bind_group, &[]);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         pass.set_vertex_buffer(1, self.uv_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         pass.draw_indexed(0..6, 0, 0..1);
     }
 }

@@ -6,6 +6,7 @@ use wgpu::{
 };
 
 /// Side of the square checkerboard texture: 8x8 texels, mip chain 8, 4, 2, 1.
+use wgpu::Origin3d;
 pub const SIZE: u32 = 8;
 // The chain 8, 4, 2, 1 has exactly ilog2(SIZE) + 1 levels.
 pub const MIP_LEVELS: u32 = SIZE.ilog2() + 1;
@@ -26,35 +27,15 @@ fn srgb_decode(code: f32) -> f32 {
     }
 }
 
-/// The level 0 checkerboard: one black or white texel per cell.
-fn checkerboard() -> Vec<u8> {
-    let mut texels = vec![0u8; (SIZE * SIZE * 4) as usize];
-    for y in 0..SIZE {
-        for x in 0..SIZE {
-            let value = if (x + y) % 2 == 0 { 255 } else { 0 };
-            let offset = ((y * SIZE + x) * 4) as usize;
-            texels[offset..offset + 4].copy_from_slice(&[value, value, value, 255]);
+///  The level 0 checkerboard: one black or white texel per cell.
+fn checkerboard() -> Vec<u8> { let mut texels = vec![0u8; (SIZE * SIZE * 4) as usize]; for y in 0..SIZE { for x in 0..SIZE { let value = if (x + y) % 2 == 0 { 255 } else { 0 }; let offset = ((y * SIZE + x) * 4) as usize; texels[offset..offset + 4].copy_from_slice(&[value, value, value, 255]);
         }
     }
     texels
 }
 
 /// Each level averages 2x2 blocks of the previous one in linear light, then re-encodes.
-fn mip_chain() -> Vec<Vec<u8>> {
-    let mut levels = vec![checkerboard()];
-    while levels.last().unwrap().len() > 4 {
-        let source = levels.last().unwrap();
-        let source_side = ((source.len() / 4) as f64).sqrt() as u32;
-        let target_side = source_side / 2;
-        let mut target = vec![0u8; (target_side * target_side * 4) as usize];
-        for y in 0..target_side {
-            for x in 0..target_side {
-                let mut linear_sum = 0.0;
-                for (dy, dx) in [(0u32, 0u32), (0, 1), (1, 0), (1, 1)] {
-                    let sx = x * 2 + dx;
-                    let sy = y * 2 + dy;
-                    let offset = ((sy * source_side + sx) * 4) as usize;
-                    linear_sum += srgb_decode(f32::from(source[offset]) / 255.0);
+fn mip_chain() -> Vec<Vec<u8>> { let mut levels = vec![checkerboard()]; while levels.last().unwrap().len() > 4 { let source = levels.last().unwrap(); let source_side = ((source.len() / 4) as f64).sqrt() as u32; let target_side = source_side / 2; let mut target = vec![0u8; (target_side * target_side * 4) as usize]; for y in 0..target_side { for x in 0..target_side { let mut linear_sum = 0.0; for (dy, dx) in [(0u32, 0u32), (0, 1), (1, 0), (1, 1)] { let sx = x * 2 + dx; let sy = y * 2 + dy; let offset = ((sy * source_side + sx) * 4) as usize; linear_sum += srgb_decode(f32::from(source[offset]) / 255.0);
                 }
                 let encoded = (srgb_encode(linear_sum / 4.0) * 255.0).round() as u8;
                 let offset = ((y * target_side + x) * 4) as usize;
@@ -88,7 +69,7 @@ pub fn create(gpu: &Gpu) -> (Texture, TextureView) {
             TexelCopyTextureInfo {
                 texture: &texture,
                 mip_level: level as u32,
-                origin: wgpu::Origin3d::ZERO,
+                origin: Origin3d::ZERO,
                 aspect: TextureAspect::All,
             },
             &texels,

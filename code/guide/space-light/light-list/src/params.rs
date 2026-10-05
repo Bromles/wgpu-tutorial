@@ -41,7 +41,9 @@ pub struct Params {
 }
 
 /// Direct contribution of one light at one point: the shader formula mirrored on the CPU.
-pub fn contribution(light: Light, p: Vec3, n: Vec3) -> f32 {
+pub fn contribution(light: Light,
+p: Vec3,
+n: Vec3) -> f32 {
     let to_light = light.pos.truncate() - p;
     let r = to_light.length();
     let l = to_light / r;
@@ -56,7 +58,10 @@ pub fn contribution(light: Light, p: Vec3, n: Vec3) -> f32 {
 }
 
 /// Sum of the first `count` contributions plus ambient: the shader's per-pixel model.
-pub fn shade(p: Vec3, n: Vec3, count: u32, ambient: f32) -> f32 {
+pub fn shade(p: Vec3,
+n: Vec3,
+count: u32,
+ambient: f32) -> f32 {
     let mut sum = 0.0;
     for light in &LIGHTS[..(count as usize).min(MAX_LIGHTS)] {
         sum += contribution(*light, p, n);

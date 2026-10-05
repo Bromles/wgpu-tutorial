@@ -1,7 +1,7 @@
+/// The B key cycle: zero, 5 mm, 50 mm of world depth over the 10 m light
+use crate::scene::light_dir;
 use encase::ShaderType;
 use glam::Vec3;
-
-/// The B key cycle: zero, 5 mm, 50 mm of world depth over the 10 m light
 /// range - the last detaches the shadow from its caster (Peter Panning).
 pub const BIASES: [f32; 3] = [0.0, 0.0005, 0.005];
 
@@ -27,7 +27,7 @@ pub struct SceneParams {
 impl SceneParams {
     pub fn chapter() -> Self {
         Self {
-            light_dir: crate::scene::light_dir(),
+            light_dir: light_dir(),
             albedo: Vec3::splat(0.5),
             ambient: 0.1,
             intensity: 0.6,
@@ -47,6 +47,7 @@ impl SceneParams {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::scene::{FAR_L, NEAR_L};
 
     #[test]
     fn floor_lambert_and_shadow_floor_control_numbers() {
@@ -65,7 +66,7 @@ mod tests {
 
     #[test]
     fn bias_values_in_world_units() {
-        let range = crate::scene::FAR_L - crate::scene::NEAR_L;
+        let range = FAR_L - NEAR_L;
         assert_eq!(range, 10.0);
         // 0.0005 -> 5 mm: covers a texel while the 12 mm gap stays shadowed.
         assert!(BIASES[1] * range < 0.012);

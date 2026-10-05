@@ -1,21 +1,24 @@
 use encase::ShaderType;
 use glam::{Mat4, Vec3, Vec4};
+use std::f32::consts::FRAC_PI_3;
+use glam::camera::rh::view::look_at_mat4;
+use glam::camera::rh::proj::directx::perspective;
 
 /// Fixed pose: a simplified chapter 21 camera, above the plane, aimed at the origin.
 pub const EYE: Vec3 = Vec3::new(0.0, 0.6, 3.0);
 pub const TARGET: Vec3 = Vec3::ZERO;
-pub const FOV_Y: f32 = std::f32::consts::FRAC_PI_3;
+pub const FOV_Y: f32 = FRAC_PI_3;
 pub const NEAR: f32 = 0.1;
 pub const FAR: f32 = 50.0;
 
 /// View: the world expressed in camera coordinates (chapter 18).
 pub fn view() -> Mat4 {
-    glam::camera::rh::view::look_at_mat4(EYE, TARGET, Vec3::Y)
+    look_at_mat4(EYE, TARGET, Vec3::Y)
 }
 
 /// Aspect-dependent perspective of chapter 19a.
 pub fn projection(aspect: f32) -> Mat4 {
-    glam::camera::rh::proj::directx::perspective(FOV_Y, aspect, NEAR, FAR)
+    perspective(FOV_Y, aspect, NEAR, FAR)
 }
 
 /// Full chain P·V: a model matrix lands on the right, so a vertex travels M, V, then P.

@@ -52,7 +52,10 @@ pub const INTENSITIES: [f32; 2] = [0.6, 4.0];
 pub const EXPOSURES: [f32; 4] = [0.5, 1.0, 2.0, 4.0];
 
 impl Params {
-    pub fn new(view_proj: Mat4, eye: Vec3, light: Light, material: Material) -> Self {
+    pub fn new(view_proj: Mat4,
+    eye: Vec3,
+    light: Light,
+    material: Material) -> Self {
         Self {
             view_proj,
             eye,

@@ -1,8 +1,15 @@
 use std::error::Error;
 
+use bytemuck::Pod;
+use bytemuck::Zeroable;
+use bytemuck::cast_slice;
 use encase::UniformBuffer;
-use glam::{Mat4, Vec3};
 use framework::{Gpu, Sample};
+use glam::camera::rh::proj::directx::perspective;
+use glam::camera::rh::view::look_at_mat4;
+use glam::{Mat4, Vec3};
+use std::f32::consts::FRAC_1_SQRT_2;
+use std::f32::consts::FRAC_PI_3;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
@@ -13,17 +20,18 @@ use wgpu::{
     VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
 };
 use winit::event::{ElementState, WindowEvent};
-use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::window::Window;
 
 use crate::params::ModelParams;
+use wgpu::BindingResource;
+use wgpu::IndexFormat;
+use wgpu::MultisampleState;
+use winit::keyboard::KeyCode;
+use winit::keyboard::PhysicalKey;
 
 /// Fixed camera: seen along the face normal, at distance 5 on the 45-degree diagonal.
-const EYE: Vec3 = Vec3::new(
-    5.0 * std::f32::consts::FRAC_1_SQRT_2,
-    -5.0 * std::f32::consts::FRAC_1_SQRT_2,
-    0.0,
-);
-const FOV_Y: f32 = std::f32::consts::FRAC_PI_3;
+const EYE: Vec3 = Vec3::new(5.0 * FRAC_1_SQRT_2, -5.0 * FRAC_1_SQRT_2, 0.0);
+const FOV_Y: f32 = FRAC_PI_3;
 const NEAR: f32 = 0.1;
 const FAR: f32 = 50.0;
 
@@ -31,7 +39,7 @@ const FAR: f32 = 50.0;
 const FALLBACK_SIZE: (u32, u32) = (800, 600);
 
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     /// Position with w = 1: a point.
     position: [f32; 4],
@@ -161,7 +169,7 @@ impl Sample for NormalMatrix {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -183,7 +191,7 @@ impl Sample for NormalMatrix {
             entries: &[
                 BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer: &view_proj_buffer,
                         offset: 0,
                         size: None,
@@ -191,7 +199,7 @@ impl Sample for NormalMatrix {
                 },
                 BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer: &model_buffer,
                         offset: 0,
                         size: None,
@@ -206,7 +214,7 @@ impl Sample for NormalMatrix {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&vertices));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&vertices));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Face indices"),
             size: size_of_val(&INDICES) as u64,
@@ -214,7 +222,7 @@ impl Sample for NormalMatrix {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             bind_group,
@@ -223,7 +231,7 @@ impl Sample for NormalMatrix {
             vertex_buffer,
             index_buffer,
             scale_x: 1.0,
-            projection: glam::camera::rh::proj::directx::perspective(
+            projection: perspective(
                 FOV_Y,
                 FALLBACK_SIZE.0 as f32 / FALLBACK_SIZE.1 as f32,
                 NEAR,
@@ -235,18 +243,12 @@ impl Sample for NormalMatrix {
     /// Called once after init and on every resize; the offscreen harness calls it before its draw.
     fn resize(&mut self, width: u32, height: u32) {
         if width > 0 && height > 0 {
-            self.projection = glam::camera::rh::proj::directx::perspective(
-                FOV_Y,
-                width as f32 / height as f32,
-                NEAR,
-                FAR,
-            );
+            self.projection = perspective(FOV_Y, width as f32 / height as f32, NEAR, FAR);
         }
     }
 
     fn draw(&mut self, gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
-        let view_proj =
-            self.projection * glam::camera::rh::view::look_at_mat4(EYE, Vec3::ZERO, Vec3::Y);
+        let view_proj = self.projection * look_at_mat4(EYE, Vec3::ZERO, Vec3::Y);
         let mut matrix_bytes = UniformBuffer::new(Vec::<u8>::new());
         matrix_bytes
             .write(&view_proj)
@@ -283,11 +285,11 @@ impl Sample for NormalMatrix {
         pass.set_pipeline(&self.pipeline);
         pass.set_bind_group(0, &self.bind_group, &[]);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         pass.draw_indexed(0..INDICES.len() as u32, 0, 0..1);
     }
 
-    fn window_event(&mut self, window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self, window: &Window, event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event

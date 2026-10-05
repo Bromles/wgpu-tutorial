@@ -136,7 +136,7 @@ let wrong_linear = srgb_decode(f32::from(wrong_code) / 255.0);
 
 ```sh
 cargo run -p srgb-mixing
-cargo test -p srgb-mixing -p verify
+cargo test -p srgb-mixing
 ```
 
 ## Что кодируется, а что нет

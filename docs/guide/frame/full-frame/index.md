@@ -151,7 +151,7 @@ Resolve стоит у **последнего** сценического прох
 
 ```sh
 cargo run -p full-frame
-cargo test -p verify --test full_frame
+cargo test -p full-frame
 ```
 
 ![Итоговый кадр: тень, прозрачная панель и tone mapping.](/results/full-frame.png)

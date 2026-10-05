@@ -1,4 +1,5 @@
 use encase::ShaderType;
+use glam::Mat3;
 use glam::{Mat4, Vec3, Vec4};
 
 /// Reflection parameters of the surface, not of the light or viewer.
@@ -40,7 +41,7 @@ pub fn object_record(translation: Vec3) -> ObjectRecord {
     ObjectRecord {
         model,
         // Linear 3x3 part only (chapter 24): translation never applies to a direction.
-        normal_matrix: Mat4::from_mat3(glam::Mat3::from_mat4(model).inverse().transpose()),
+        normal_matrix: Mat4::from_mat3(Mat3::from_mat4(model).inverse().transpose()),
     }
 }
 

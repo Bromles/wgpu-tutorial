@@ -1,21 +1,20 @@
 use encase::UniformBuffer;
 use framework::{Gpu, Sample};
 use std::error::Error;
-use wgpu::{
-    BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferBinding, BufferBindingType,
-    BufferDescriptor, BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites,
-    CommandEncoder, FragmentState, FrontFace, LoadOp, Operations, PipelineCompilationOptions,
-    PipelineLayoutDescriptor, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
-    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp,
-    TextureView, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
-    include_wgsl,
-};
+use wgpu::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferAddress, BufferBinding,
+    BufferBindingType, BufferDescriptor, BufferSize, BufferUsages, Color, ColorTargetState,
+    ColorWrites, CommandEncoder, FragmentState, FrontFace, IndexFormat, LoadOp,
+    MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
+    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
+    RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, TextureView,
+    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,};
 
 use crate::params::Params;
+use bytemuck::{Pod, Zeroable, cast_slice};
 
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     position: [f32; 4],
     color: [f32; 4],
@@ -126,7 +125,7 @@ impl Sample for UniformParams {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -143,7 +142,7 @@ impl Sample for UniformParams {
             layout: &bind_group_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &uniform_buffer,
                     offset: 0,
                     size: None,
@@ -157,7 +156,7 @@ impl Sample for UniformParams {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Rectangle indices"),
             size: size_of_val(&INDICES) as u64,
@@ -165,7 +164,7 @@ impl Sample for UniformParams {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             bind_group,
@@ -175,7 +174,10 @@ impl Sample for UniformParams {
         })
     }
 
-    fn draw(&mut self, _gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
+    fn draw(&mut self,
+    _gpu: &Gpu,
+    encoder: &mut CommandEncoder,
+    view: &TextureView) {
         let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
             label: Some("Uniform params pass"),
             color_attachments: &[Some(RenderPassColorAttachment {
@@ -197,14 +199,16 @@ impl Sample for UniformParams {
         pass.set_pipeline(&self.pipeline);
         pass.set_bind_group(0, &self.bind_group, &[]);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         pass.draw_indexed(0..6, 0, 0..1);
     }
 }
 
 impl UniformParams {
     /// Replaces uniform contents; used by diagnostics and the verification crate.
-    pub fn set_params(&mut self, gpu: &Gpu, params: &Params) {
+    pub fn set_params(&mut self,
+    gpu: &Gpu,
+    params: &Params) {
         gpu.queue
             .write_buffer(&self.uniform_buffer, 0, &serialize(params));
     }

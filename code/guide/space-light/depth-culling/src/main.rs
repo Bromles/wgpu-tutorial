@@ -1,13 +1,16 @@
 use std::error::Error;
 
+use framework::{Settings, run};
+use tracing::Level;
+use tracing_subscriber::fmt;
 use depth_culling::sample::DepthCulling;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+    fmt()
+        .with_max_level(Level::INFO)
         .init();
-    framework::run::<DepthCulling>(framework::Settings {
+    run::<DepthCulling>(Settings {
         title: "wgpu | Depth culling".into(),
-        ..framework::Settings::default()
+        ..Settings::default()
     })
 }

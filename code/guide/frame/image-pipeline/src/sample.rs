@@ -1,127 +1,39 @@
-use std::error::Error;
-
 use framework::{Gpu, Sample};
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferDescriptor, BufferUsages, Color,
     ColorTargetState, ColorWrites, CommandEncoder, ComputePassDescriptor, ComputePipeline,
-    ComputePipelineDescriptor, Extent3d, FragmentState, FrontFace, LoadOp, Operations,
+    ComputePipelineDescriptor, FragmentState, FrontFace, LoadOp, Operations,
     PipelineCompilationOptions, PipelineLayoutDescriptor, PrimitiveState, PrimitiveTopology,
     RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
-    StorageTextureAccess, StoreOp, Texture, TextureDescriptor, TextureDimension, TextureFormat,
-    TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor, TextureViewDimension,
-    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
+    StorageTextureAccess, StoreOp, TextureFormat, TextureSampleType, TextureUsages, TextureView,
+    TextureViewDimension, VertexBufferLayout, VertexState, include_wgsl,
 };
-use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, WindowEvent};
-use winit::keyboard::{KeyCode, PhysicalKey};
-use winit::window::Window;
 
-/// Which fork's result the final pass shows; the P key switches.
+use crate::intermediate::{Intermediate, create_intermediate};
+use crate::quad::{INDICES, UV_LAYOUT, UVS, VERTICES, Vertex};
+
+use crate::texture::create;
+use bytemuck::cast_slice;
+use std::error::Error;
+use wgpu::BindingResource;
+use wgpu::Features;
+use wgpu::IndexFormat;
+use wgpu::MultisampleState;
+use wgpu::PipelineLayout;
+use wgpu::ShaderModule;
+use wgpu::ShaderStages;
+use winit::dpi::PhysicalSize;
+use winit::keyboard::KeyCode;
+use winit::keyboard::PhysicalKey;
+use winit::window::Window;
 #[derive(Clone, Copy, PartialEq)]
 pub enum OutputMode {
     Fragment,
     Compute,
 }
 
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    position: [f32; 4],
-}
-
-const VERTICES: [Vertex; 4] = [
-    Vertex {
-        position: [-0.75, 0.75, 0.5, 1.0],
-    },
-    Vertex {
-        position: [0.75, 0.75, 0.5, 1.0],
-    },
-    Vertex {
-        position: [-0.75, -0.75, 0.5, 1.0],
-    },
-    Vertex {
-        position: [0.75, -0.75, 0.5, 1.0],
-    },
-];
-
-/// v grows downward on screen, matching the top-to-bottom upload order.
-const UVS: [[f32; 2]; 4] = [[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]];
-
-const INDICES: [u16; 6] = [0, 1, 2, 2, 1, 3];
-
-impl Vertex {
-    const LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-        array_stride: 16,
-        step_mode: VertexStepMode::Vertex,
-        attributes: &[VertexAttribute {
-            format: VertexFormat::Float32x4,
-            offset: 0,
-            shader_location: 0,
-        }],
-    };
-}
-
-const UV_LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-    array_stride: 8,
-    step_mode: VertexStepMode::Vertex,
-    attributes: &[VertexAttribute {
-        format: VertexFormat::Float32x2,
-        offset: 0,
-        shader_location: 2,
-    }],
-};
-
-/// A sized RGBA8Unorm image with its view and bind group.
-struct Intermediate {
-    _texture: Texture,
-    view: TextureView,
-    bind_group: BindGroup,
-}
-
-fn create_intermediate(
-    gpu: &Gpu,
-    layout: &BindGroupLayout,
-    label: &str,
-    width: u32,
-    height: u32,
-    usage: TextureUsages,
-) -> Intermediate {
-    let texture = gpu.device.create_texture(&TextureDescriptor {
-        label: Some(label),
-        size: Extent3d {
-            width,
-            height,
-            depth_or_array_layers: 1,
-        },
-        mip_level_count: 1,
-        sample_count: 1,
-        dimension: TextureDimension::D2,
-        format: TextureFormat::Rgba8Unorm,
-        usage,
-        view_formats: &[],
-    });
-    let view = texture.create_view(&TextureViewDescriptor {
-        label: Some(label),
-        ..TextureViewDescriptor::default()
-    });
-    let bind_group = gpu.device.create_bind_group(&BindGroupDescriptor {
-        label: Some(label),
-        layout,
-        entries: &[BindGroupEntry {
-            binding: 0,
-            resource: wgpu::BindingResource::TextureView(&view),
-        }],
-    });
-    Intermediate {
-        _texture: texture,
-        view,
-        bind_group,
-    }
-}
-
-/// Two forks do the same halving of linear RGB: a fragment pipeline and a
-/// compute pipeline writing a storage texture; P switches which is shown.
 pub struct ImagePipeline {
     quad_pipeline: RenderPipeline,
     halve_pipeline: RenderPipeline,
@@ -148,7 +60,7 @@ impl Sample for ImagePipeline {
     fn init(gpu: &Gpu) -> Result<Self, Box<dyn Error>> {
         // Make the storage-texture contract explicit instead of failing in validation.
         let storage_usages = TextureFormat::Rgba8Unorm
-            .guaranteed_format_features(wgpu::Features::empty())
+            .guaranteed_format_features(Features::empty())
             .allowed_usages;
         if !storage_usages.contains(TextureUsages::STORAGE_BINDING) {
             return Err("This example requires RGBA8Unorm storage textures".into());
@@ -166,7 +78,7 @@ impl Sample for ImagePipeline {
                 label: Some("Frame bind group layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    visibility: ShaderStages::FRAGMENT,
                     ty: BindingType::Texture {
                         sample_type: TextureSampleType::Float { filterable: false },
                         view_dimension: TextureViewDimension::D2,
@@ -182,7 +94,7 @@ impl Sample for ImagePipeline {
                 entries: &[
                     BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::COMPUTE,
+                        visibility: ShaderStages::COMPUTE,
                         ty: BindingType::Texture {
                             sample_type: TextureSampleType::Float { filterable: false },
                             view_dimension: TextureViewDimension::D2,
@@ -192,7 +104,7 @@ impl Sample for ImagePipeline {
                     },
                     BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::COMPUTE,
+                        visibility: ShaderStages::COMPUTE,
                         ty: BindingType::StorageTexture {
                             access: StorageTextureAccess::WriteOnly,
                             format: TextureFormat::Rgba8Unorm,
@@ -232,8 +144,8 @@ impl Sample for ImagePipeline {
                 });
 
         let describe_render_pipeline = |label: &str,
-                                        layout: &wgpu::PipelineLayout,
-                                        shader: &wgpu::ShaderModule,
+                                        layout: &PipelineLayout,
+                                        shader: &ShaderModule,
                                         vertex_entry: &str,
                                         fragment_entry: &str,
                                         target: TextureFormat,
@@ -266,7 +178,7 @@ impl Sample for ImagePipeline {
                         ..PrimitiveState::default()
                     },
                     depth_stencil: None,
-                    multisample: wgpu::MultisampleState::default(),
+                    multisample: MultisampleState::default(),
                     cache: None,
                     multiview_mask: None,
                 })
@@ -309,13 +221,13 @@ impl Sample for ImagePipeline {
                 cache: None,
             });
 
-        let (_texture, view) = crate::texture::create(gpu);
+        let (_texture, view) = create(gpu);
         let source_bind_group = gpu.device.create_bind_group(&BindGroupDescriptor {
             label: Some("Quad texture bind group"),
             layout: &frame_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::TextureView(&view),
+                resource: BindingResource::TextureView(&view),
             }],
         });
         let vertex_buffer = gpu.device.create_buffer(&BufferDescriptor {
@@ -325,15 +237,14 @@ impl Sample for ImagePipeline {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let uv_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Quad UVs"),
             size: size_of_val(&UVS) as u64,
             usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        gpu.queue
-            .write_buffer(&uv_buffer, 0, bytemuck::cast_slice(&UVS));
+        gpu.queue.write_buffer(&uv_buffer, 0, cast_slice(&UVS));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Quad indices"),
             size: size_of_val(&INDICES) as u64,
@@ -341,7 +252,7 @@ impl Sample for ImagePipeline {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             quad_pipeline,
             halve_pipeline,
@@ -411,7 +322,7 @@ impl Sample for ImagePipeline {
             pass.set_bind_group(0, &self.source_bind_group, &[]);
             pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             pass.set_vertex_buffer(1, self.uv_buffer.slice(..));
-            pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
             pass.draw_indexed(0..6, 0, 0..1);
         }
 
@@ -537,13 +448,13 @@ impl ImagePipeline {
             entries: &[
                 BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(
+                    resource: BindingResource::TextureView(
                         &self.input.as_ref().expect("input just created").view,
                     ),
                 },
                 BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::TextureView(
+                    resource: BindingResource::TextureView(
                         &self
                             .compute_result
                             .as_ref()

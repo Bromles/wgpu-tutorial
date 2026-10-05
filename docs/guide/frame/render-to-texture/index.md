@@ -129,7 +129,7 @@ fn fs_full(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
 
 ```sh
 cargo run -p render-to-texture
-cargo test -p verify
+cargo test -p render-to-texture
 ```
 
 Кадр совпадает с эталоном [главы о текселях](/results/texture-load.png) — тот же прямоугольник, те же четыре квадранта:

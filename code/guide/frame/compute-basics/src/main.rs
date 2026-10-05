@@ -1,13 +1,16 @@
 use std::error::Error;
 
+use framework::{Settings, run};
+use tracing::Level;
+use tracing_subscriber::fmt;
 use compute_basics::sample::ComputeBasics;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+    fmt()
+        .with_max_level(Level::INFO)
         .init();
-    framework::run::<ComputeBasics>(framework::Settings {
+    run::<ComputeBasics>(Settings {
         title: "wgpu | Compute basics".into(),
-        ..framework::Settings::default()
+        ..Settings::default()
     })
 }

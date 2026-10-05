@@ -155,7 +155,7 @@ struct LinearOutput {
 
 ```sh
 cargo run -p clip-viewport
-cargo test -p verify --test clip_viewport
+cargo test -p clip-viewport
 ```
 
 ## Проверьте модель

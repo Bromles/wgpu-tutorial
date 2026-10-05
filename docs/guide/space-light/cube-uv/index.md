@@ -188,7 +188,7 @@ if let Some(index) = picked {
 
 ```sh
 cargo run -p cube-uv
-cargo test -p verify
+cargo test -p cube-uv
 ```
 
 ## Швы независимы

@@ -7,6 +7,7 @@ use wgpu::{
 
 /// 4x4 sRGB array: quadrants carry the UV corner colors (red/green/blue/yellow).
 /// Texel (0, 0) is black, marking the UV origin on every face.
+use wgpu::Origin3d;
 pub const WIDTH: u32 = 4;
 pub const HEIGHT: u32 = 4;
 pub const TEXELS: [u8; WIDTH as usize * HEIGHT as usize * 4] = [
@@ -37,7 +38,7 @@ pub fn create(gpu: &Gpu) -> (Texture, TextureView) {
         TexelCopyTextureInfo {
             texture: &texture,
             mip_level: 0,
-            origin: wgpu::Origin3d::ZERO,
+            origin: Origin3d::ZERO,
             aspect: TextureAspect::All,
         },
         &TEXELS,

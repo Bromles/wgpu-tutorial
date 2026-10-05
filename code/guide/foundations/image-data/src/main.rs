@@ -8,12 +8,16 @@ const IMAGE: [u8; WIDTH * HEIGHT * CHANNELS] = [
     0, 0, 255, 255, 255, 255, 255, 255, // y = 1: blue, white
 ];
 
-fn pixel_offset(x: usize, y: usize) -> usize {
+fn pixel_offset(x: usize,
+y: usize) -> usize {
     assert!(x < WIDTH && y < HEIGHT, "pixel coordinates out of bounds");
     CHANNELS * (y * WIDTH + x)
 }
 
-fn set_red(image: &mut [u8; WIDTH * HEIGHT * CHANNELS], x: usize, y: usize, red: u8) {
+fn set_red(image: &mut [u8; WIDTH * HEIGHT * CHANNELS],
+x: usize,
+y: usize,
+red: u8) {
     image[pixel_offset(x, y)] = red;
 }
 
@@ -23,7 +27,8 @@ fn quantize_channel(value: f32) -> u8 {
     (value.clamp(0.0, 1.0) * 255.0).round() as u8
 }
 
-fn print_image(label: &str, image: &[u8; WIDTH * HEIGHT * CHANNELS]) {
+fn print_image(label: &str,
+image: &[u8; WIDTH * HEIGHT * CHANNELS]) {
     println!("{label}");
     for y in 0..HEIGHT {
         for x in 0..WIDTH {

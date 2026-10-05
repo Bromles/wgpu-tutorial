@@ -21,7 +21,7 @@ impl Default for Params {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use encase::UniformBuffer;
+use encase::UniformBuffer;
 
     #[test]
     fn params_layout_matches_wgsl_uniform_contract() {

@@ -1,3 +1,6 @@
+use bytemuck::Pod;
+use bytemuck::Zeroable;
+use bytemuck::cast_slice;
 use encase::UniformBuffer;
 use framework::{Gpu, Sample};
 use std::error::Error;
@@ -12,10 +15,14 @@ use wgpu::{
     VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
 };
 use winit::event::{ElementState, WindowEvent};
-use winit::keyboard::{KeyCode, PhysicalKey};
 
 use crate::params::Params;
 use glam::Vec2;
+use wgpu::BindingResource;
+use wgpu::MultisampleState;
+use winit::keyboard::KeyCode;
+use winit::keyboard::PhysicalKey;
+use winit::window::Window;
 
 /// Horizontal speed of the point, clip units per second.
 const SPEED: f32 = 0.2;
@@ -32,7 +39,7 @@ pub fn ping_pong_x(elapsed: f32) -> f32 {
 }
 
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     position: [f32; 4],
     color: [f32; 4],
@@ -141,7 +148,7 @@ impl Sample for TriangleMotion {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -156,7 +163,7 @@ impl Sample for TriangleMotion {
             layout: &layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &params_buffer,
                     offset: 0,
                     size: None,
@@ -170,7 +177,7 @@ impl Sample for TriangleMotion {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         Ok(Self {
             pipeline,
             bind_group,
@@ -227,7 +234,7 @@ impl Sample for TriangleMotion {
         pass.draw(0..3, 0..1);
     }
 
-    fn window_event(&mut self, window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self, window: &Window, event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event

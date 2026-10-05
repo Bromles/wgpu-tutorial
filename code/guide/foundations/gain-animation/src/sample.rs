@@ -4,9 +4,10 @@ use std::error::Error;
 use std::time::Instant;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferBinding, BufferBindingType,
+    BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferAddress, BufferBinding,
+    BufferBindingType, MultisampleState,
     BufferDescriptor, BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites,
-    CommandEncoder, FragmentState, FrontFace, LoadOp, Operations, PipelineCompilationOptions,
+    CommandEncoder, FragmentState, FrontFace, IndexFormat, LoadOp, Operations, PipelineCompilationOptions,
     PipelineLayoutDescriptor, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
     RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp,
     TextureView, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
@@ -14,6 +15,10 @@ use wgpu::{
 };
 use winit::event::{ElementState, WindowEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::window::Window;
+use bytemuck::Pod;
+use bytemuck::Zeroable;
+use bytemuck::cast_slice;
 
 use crate::params::Params;
 
@@ -21,7 +26,7 @@ use crate::params::Params;
 const SPEED: f32 = 0.25;
 
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     position: [f32; 4],
     color: [f32; 4],
@@ -135,7 +140,7 @@ impl Sample for GainAnimation {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -157,7 +162,7 @@ impl Sample for GainAnimation {
                 layout: &bind_group_layout,
                 entries: &[BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer,
                         offset: 0,
                         size: None,
@@ -172,7 +177,7 @@ impl Sample for GainAnimation {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Rectangle indices"),
             size: size_of_val(&INDICES) as u64,
@@ -180,7 +185,7 @@ impl Sample for GainAnimation {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             uniform_buffers,
@@ -193,7 +198,10 @@ impl Sample for GainAnimation {
         })
     }
 
-    fn draw(&mut self, gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
+    fn draw(&mut self,
+    gpu: &Gpu,
+    encoder: &mut CommandEncoder,
+    view: &TextureView) {
         // Redraw-driven clock: time advances between frames, freezes when paused.
         let now = Instant::now();
         if let Some(last) = self.last_instant
@@ -232,7 +240,7 @@ impl Sample for GainAnimation {
         });
         pass.set_pipeline(&self.pipeline);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         // First triangle: indices 0..3 with params 0.
         pass.set_bind_group(0, &self.bind_groups[0], &[]);
         pass.draw_indexed(0..3, 0, 0..1);
@@ -241,7 +249,9 @@ impl Sample for GainAnimation {
         pass.draw_indexed(3..6, 0, 0..1);
     }
 
-    fn window_event(&mut self, window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self,
+    window: &Window,
+    event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event
@@ -266,7 +276,8 @@ impl Sample for GainAnimation {
 
 impl GainAnimation {
     /// Places the clock at an exact moment; used by the verification crate.
-    pub fn set_elapsed(&mut self, seconds: f32) {
+    pub fn set_elapsed(&mut self,
+    seconds: f32) {
         self.elapsed = seconds;
         self.last_instant = None;
     }

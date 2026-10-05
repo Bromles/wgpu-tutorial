@@ -149,7 +149,7 @@ struct ModelParams {
 ```sh
 cargo run -p normal-matrix
 cargo test -p normal-matrix
-cargo test -p verify
+cargo test -p normal-matrix
 ```
 
 ## Проверьте модель

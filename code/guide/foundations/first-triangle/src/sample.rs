@@ -2,7 +2,7 @@ use wgpu::{
     Color, ColorTargetState, ColorWrites, CommandEncoder, Device, FragmentState, FrontFace, LoadOp,
     Operations, PipelineCompilationOptions, PrimitiveState, PrimitiveTopology,
     RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
-    StoreOp, TextureFormat, TextureView, VertexState, include_wgsl,
+    MultisampleState, StoreOp, TextureFormat, TextureView, VertexState, include_wgsl,
 };
 
 /// Drawing logic of the chapter: one pipeline, one triangle, no bound
@@ -44,7 +44,7 @@ impl Sample {
             },
             // No depth/stencil attachment and no depth testing.
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: MultisampleState::default(),
             cache: None,
             multiview_mask: None,
         });

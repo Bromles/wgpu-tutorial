@@ -188,7 +188,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 ```sh
 cargo run -p lambert
 cargo test -p lambert
-cargo test -p verify
+cargo test -p lambert
 ```
 
 ## Проверьте модель

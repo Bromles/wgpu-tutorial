@@ -1,8 +1,12 @@
 use std::error::Error;
 
+use bytemuck::cast_slice;
 use encase::UniformBuffer;
-use glam::{Mat4, Vec3};
 use framework::{Gpu, Sample};
+use glam::camera::rh::proj::directx::perspective;
+use glam::camera::rh::view::look_at_mat4;
+use glam::{Mat4, Vec3};
+use std::f32::consts::FRAC_PI_3;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
@@ -12,143 +16,28 @@ use wgpu::{
     RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
     RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, Texture, TextureDescriptor,
     TextureDimension, TextureFormat, TextureUsages, TextureView, TextureViewDescriptor,
-    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
+    VertexState, include_wgsl,
 };
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, WindowEvent};
-use winit::keyboard::{KeyCode, PhysicalKey};
 
+use crate::mesh::{INDICES, VERTICES, Vertex};
 use crate::params::LightParams;
+use wgpu::BindingResource;
+use wgpu::IndexFormat;
+use wgpu::MultisampleState;
+use winit::keyboard::KeyCode;
+use winit::keyboard::PhysicalKey;
+use winit::window::Window;
 
 /// Fixed camera: five meters in front of the scene, looking at the origin.
 const EYE: Vec3 = Vec3::new(0.0, 0.0, 5.0);
-const FOV_Y: f32 = std::f32::consts::FRAC_PI_3;
+const FOV_Y: f32 = FRAC_PI_3;
 const NEAR: f32 = 0.1;
 const FAR: f32 = 50.0;
 
 /// Matches the default window size until the first `Resized` event.
 const FALLBACK_SIZE: (u32, u32) = (800, 600);
-
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    /// Position with w = 1: a point.
-    position: [f32; 4],
-    /// Normal with w = 0 (a direction), padded to four components for 16-byte alignment.
-    normal: [f32; 4],
-}
-
-impl Vertex {
-    const LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-        array_stride: 32,
-        step_mode: VertexStepMode::Vertex,
-        attributes: &[
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 0,
-                shader_location: 0,
-            },
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 16,
-                shader_location: 1,
-            },
-        ],
-    };
-}
-
-/// Slanted quads: a 1.2x1.2 XY square rotated +30/-30 degrees around X.
-/// Tilt by theta: (x, y*cos, y*sin) + center, normal (0, -sin, cos).
-const QUAD_A_NORMAL: [f32; 4] = [0.0, -0.5, 0.8660254, 0.0];
-const QUAD_B_NORMAL: [f32; 4] = [0.0, 0.5, 0.8660254, 0.0];
-/// Split face: coplanar halves sharing the seam x = 0; the crease is the normal attribute alone.
-const SPLIT_LEFT_NORMAL: [f32; 4] = [
-    0.0,
-    -std::f32::consts::FRAC_1_SQRT_2,
-    std::f32::consts::FRAC_1_SQRT_2,
-    0.0,
-];
-const SPLIT_RIGHT_NORMAL: [f32; 4] = [0.0, 0.0, 1.0, 0.0];
-
-const VERTICES: [Vertex; 16] = [
-    // Quad A: tilt +30 degrees, center (-0.95, 0.55, 0).
-    Vertex {
-        position: [-1.55, 1.0696, 0.3, 1.0],
-        normal: QUAD_A_NORMAL,
-    },
-    Vertex {
-        position: [-0.35, 1.0696, 0.3, 1.0],
-        normal: QUAD_A_NORMAL,
-    },
-    Vertex {
-        position: [-1.55, 0.0304, -0.3, 1.0],
-        normal: QUAD_A_NORMAL,
-    },
-    Vertex {
-        position: [-0.35, 0.0304, -0.3, 1.0],
-        normal: QUAD_A_NORMAL,
-    },
-    // Quad B: tilt -30 degrees, center (0.95, 0.55, 0).
-    Vertex {
-        position: [0.35, 1.0696, -0.3, 1.0],
-        normal: QUAD_B_NORMAL,
-    },
-    Vertex {
-        position: [1.55, 1.0696, -0.3, 1.0],
-        normal: QUAD_B_NORMAL,
-    },
-    Vertex {
-        position: [0.35, 0.0304, 0.3, 1.0],
-        normal: QUAD_B_NORMAL,
-    },
-    Vertex {
-        position: [1.55, 0.0304, 0.3, 1.0],
-        normal: QUAD_B_NORMAL,
-    },
-    // Split face, left half: x in [-1, 0], normal tilted -45 degrees.
-    Vertex {
-        position: [-1.0, -0.3, 0.0, 1.0],
-        normal: SPLIT_LEFT_NORMAL,
-    },
-    Vertex {
-        position: [0.0, -0.3, 0.0, 1.0],
-        normal: SPLIT_LEFT_NORMAL,
-    },
-    Vertex {
-        position: [-1.0, -1.3, 0.0, 1.0],
-        normal: SPLIT_LEFT_NORMAL,
-    },
-    Vertex {
-        position: [0.0, -1.3, 0.0, 1.0],
-        normal: SPLIT_LEFT_NORMAL,
-    },
-    // Split face, right half: x in [0, 1], normal facing the camera.
-    Vertex {
-        position: [0.0, -0.3, 0.0, 1.0],
-        normal: SPLIT_RIGHT_NORMAL,
-    },
-    Vertex {
-        position: [1.0, -0.3, 0.0, 1.0],
-        normal: SPLIT_RIGHT_NORMAL,
-    },
-    Vertex {
-        position: [0.0, -1.3, 0.0, 1.0],
-        normal: SPLIT_RIGHT_NORMAL,
-    },
-    Vertex {
-        position: [1.0, -1.3, 0.0, 1.0],
-        normal: SPLIT_RIGHT_NORMAL,
-    },
-];
-
-// Two triangles per quad; the shared diagonal keeps each quad flat.
-const INDICES: [u16; 24] = [
-    0, 1, 2, 2, 1, 3, // quad A
-    4, 5, 6, 6, 5, 7, // quad B
-    8, 9, 10, 10, 9, 11, // split, left half
-    12, 13, 14, 14, 13, 15, // split, right half
-];
-
 /// Chapter 23: flat faces with explicit normals; N switches normal-as-color and Lambert.
 pub struct Lambert {
     pipeline: RenderPipeline,
@@ -239,7 +128,7 @@ impl Sample for Lambert {
                     stencil: Default::default(),
                     bias: Default::default(),
                 }),
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -261,7 +150,7 @@ impl Sample for Lambert {
             entries: &[
                 BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer: &view_proj_buffer,
                         offset: 0,
                         size: None,
@@ -269,7 +158,7 @@ impl Sample for Lambert {
                 },
                 BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer: &params_buffer,
                         offset: 0,
                         size: None,
@@ -284,7 +173,7 @@ impl Sample for Lambert {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Face indices"),
             size: size_of_val(&INDICES) as u64,
@@ -292,7 +181,7 @@ impl Sample for Lambert {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             bind_group,
@@ -301,7 +190,7 @@ impl Sample for Lambert {
             vertex_buffer,
             index_buffer,
             params: LightParams::chapter(),
-            projection: glam::camera::rh::proj::directx::perspective(
+            projection: perspective(
                 FOV_Y,
                 FALLBACK_SIZE.0 as f32 / FALLBACK_SIZE.1 as f32,
                 NEAR,
@@ -329,8 +218,7 @@ impl Sample for Lambert {
         }
 
         // Model is the identity: view*projection is the whole chain.
-        let view_proj =
-            self.projection * glam::camera::rh::view::look_at_mat4(EYE, Vec3::ZERO, Vec3::Y);
+        let view_proj = self.projection * look_at_mat4(EYE, Vec3::ZERO, Vec3::Y);
         let mut matrix_bytes = UniformBuffer::new(Vec::<u8>::new());
         matrix_bytes
             .write(&view_proj)
@@ -376,11 +264,11 @@ impl Sample for Lambert {
         pass.set_pipeline(&self.pipeline);
         pass.set_bind_group(0, &self.bind_group, &[]);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         pass.draw_indexed(0..INDICES.len() as u32, 0, 0..1);
     }
 
-    fn window_event(&mut self, window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self, window: &Window, event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event
@@ -416,8 +304,7 @@ impl Lambert {
         self.depth_view = Some(view);
         self.depth_size = (width, height);
         let aspect = width as f32 / height as f32;
-        self.projection =
-            glam::camera::rh::proj::directx::perspective(FOV_Y, aspect, NEAR, FAR);
+        self.projection = perspective(FOV_Y, aspect, NEAR, FAR);
     }
 
     /// Selects the display mode; the verification crate drives this directly.

@@ -1,5 +1,6 @@
 use encase::ShaderType;
 use glam::Mat4;
+use glam::camera::rh::proj::directx::orthographic;
 
 /// Ortho design frame half extents; 4:3 matches the window and the offscreen harness.
 pub const HALF_X: f32 = 2.4;
@@ -12,7 +13,7 @@ pub const FAR: f32 = 2.0;
 
 /// Fixed ortho camera, eye at the origin looking along -Z (chapter 19a).
 pub fn ortho() -> Mat4 {
-    glam::camera::rh::proj::directx::orthographic(-HALF_X, HALF_X, -HALF_Y, HALF_Y, NEAR, FAR)
+    orthographic(-HALF_X, HALF_X, -HALF_Y, HALF_Y, NEAR, FAR)
 }
 
 /// The only uniform of the snapshot; static, so it is uploaded once.

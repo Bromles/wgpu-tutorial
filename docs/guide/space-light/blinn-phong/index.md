@@ -128,7 +128,7 @@ struct Params {
 ```sh
 cargo run -p blinn-phong
 cargo test -p blinn-phong
-cargo test -p verify
+cargo test -p blinn-phong
 ```
 
 ## Проверьте модель

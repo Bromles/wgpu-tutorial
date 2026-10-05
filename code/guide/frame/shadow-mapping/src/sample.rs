@@ -1,10 +1,10 @@
 use std::error::Error;
 
 use encase::UniformBuffer;
-use glam::Mat4;
 use framework::{Gpu, Sample};
+use glam::Mat4;
 use wgpu::{
-    BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
+    BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
     BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites, CommandEncoder,
     CompareFunction, DepthStencilState, Extent3d, FragmentState, FrontFace, LoadOp, Operations,
@@ -12,185 +12,26 @@ use wgpu::{
     RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
     RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, Texture, TextureDescriptor,
     TextureDimension, TextureFormat, TextureSampleType, TextureUsages, TextureView,
-    TextureViewDescriptor, TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat,
-    VertexState, VertexStepMode, include_wgsl,
+    TextureViewDescriptor, TextureViewDimension, VertexState, include_wgsl,
 };
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, WindowEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
 
+use crate::buffers::{MainBuffers, create_main_bind_group, create_uniform};
+use crate::mesh::{CUBE_INDICES, FLOOR_INDICES, INDICES, VERTICES, Vertex};
 use crate::params::SceneParams;
 use crate::scene;
+use bytemuck::cast_slice;
+use wgpu::BindingResource;
+use wgpu::IndexFormat;
+use wgpu::MultisampleState;
+use winit::window::Window;
 
 /// 1024x1024 over the 6x6 m box gives ~5.9 mm per texel.
 const SHADOW_SIZE: u32 = 1024;
 /// The M key cycle for the cube X offset: rest, +1, -1.
 const CUBE_OFFSETS: [f32; 3] = [0.0, 1.0, -1.0];
-
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    /// Position with w = 1: a point.
-    position: [f32; 4],
-    /// Normal with w = 0; padded to four components for alignment.
-    normal: [f32; 4],
-}
-
-impl Vertex {
-    const LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-        array_stride: 32,
-        step_mode: VertexStepMode::Vertex,
-        attributes: &[
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 0,
-                shader_location: 0,
-            },
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 16,
-                shader_location: 1,
-            },
-        ],
-    };
-}
-
-/// The +Y normal of the floor quad, repeated per corner.
-const FLOOR_NORMAL: [f32; 4] = [0.0, 1.0, 0.0, 0.0];
-
-/// Floor receiver and cube caster in one indexed mesh; the cube center
-/// sits at (0, 0.51, 0) so the shadow keeps a contact region.
-const VERTICES: [Vertex; 28] = [
-    // Floor: 4x4 m quad at y = 0, as seen from above.
-    Vertex {
-        position: [-2.0, 0.0, -2.0, 1.0],
-        normal: FLOOR_NORMAL,
-    },
-    Vertex {
-        position: [2.0, 0.0, -2.0, 1.0],
-        normal: FLOOR_NORMAL,
-    },
-    Vertex {
-        position: [-2.0, 0.0, 2.0, 1.0],
-        normal: FLOOR_NORMAL,
-    },
-    Vertex {
-        position: [2.0, 0.0, 2.0, 1.0],
-        normal: FLOOR_NORMAL,
-    },
-    // Cube +Z face.
-    Vertex {
-        position: [-0.5, 1.01, 0.5, 1.0],
-        normal: [0.0, 0.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 1.01, 0.5, 1.0],
-        normal: [0.0, 0.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.01, 0.5, 1.0],
-        normal: [0.0, 0.0, 1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.01, 0.5, 1.0],
-        normal: [0.0, 0.0, 1.0, 0.0],
-    },
-    // Cube -Z face.
-    Vertex {
-        position: [0.5, 1.01, -0.5, 1.0],
-        normal: [0.0, 0.0, -1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 1.01, -0.5, 1.0],
-        normal: [0.0, 0.0, -1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.01, -0.5, 1.0],
-        normal: [0.0, 0.0, -1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.01, -0.5, 1.0],
-        normal: [0.0, 0.0, -1.0, 0.0],
-    },
-    // Cube +X face.
-    Vertex {
-        position: [0.5, 1.01, 0.5, 1.0],
-        normal: [1.0, 0.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 1.01, -0.5, 1.0],
-        normal: [1.0, 0.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.01, 0.5, 1.0],
-        normal: [1.0, 0.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.01, -0.5, 1.0],
-        normal: [1.0, 0.0, 0.0, 0.0],
-    },
-    // Cube -X face.
-    Vertex {
-        position: [-0.5, 1.01, -0.5, 1.0],
-        normal: [-1.0, 0.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 1.01, 0.5, 1.0],
-        normal: [-1.0, 0.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.01, -0.5, 1.0],
-        normal: [-1.0, 0.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.01, 0.5, 1.0],
-        normal: [-1.0, 0.0, 0.0, 0.0],
-    },
-    // Cube +Y face (top).
-    Vertex {
-        position: [0.5, 1.01, 0.5, 1.0],
-        normal: [0.0, 1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 1.01, 0.5, 1.0],
-        normal: [0.0, 1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 1.01, -0.5, 1.0],
-        normal: [0.0, 1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 1.01, -0.5, 1.0],
-        normal: [0.0, 1.0, 0.0, 0.0],
-    },
-    // Cube -Y face (bottom).
-    Vertex {
-        position: [-0.5, 0.01, 0.5, 1.0],
-        normal: [0.0, -1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.01, 0.5, 1.0],
-        normal: [0.0, -1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.01, -0.5, 1.0],
-        normal: [0.0, -1.0, 0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.01, -0.5, 1.0],
-        normal: [0.0, -1.0, 0.0, 0.0],
-    },
-];
-
-/// Two triangles per quad, the shared-diagonal pattern of the guide.
-const INDICES: [u16; 42] = [
-    0, 1, 2, 2, 1, 3, 4, 5, 6, 6, 5, 7, 8, 9, 10, 10, 9, 11, 12, 13, 14, 14, 13, 15, 16, 17, 18,
-    18, 17, 19, 20, 21, 22, 22, 21, 23, 24, 25, 26, 26, 25, 27,
-];
-
-/// Draw ranges inside INDICES: one mesh, the passes pick their parts.
-const FLOOR_INDICES: std::ops::Range<u32> = 0..6;
-const CUBE_INDICES: std::ops::Range<u32> = 6..42;
 
 /// A depth pass renders the cube into a light-space depth map; the main
 /// pass scales the direct term by the per-fragment lookup.
@@ -353,7 +194,7 @@ impl Sample for ShadowMapping {
                     stencil: Default::default(),
                     bias: Default::default(),
                 }),
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -392,7 +233,7 @@ impl Sample for ShadowMapping {
                     stencil: Default::default(),
                     bias: Default::default(),
                 }),
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -435,7 +276,7 @@ impl Sample for ShadowMapping {
             entries: &[
                 BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer: &cube_model_buffer,
                         offset: 0,
                         size: None,
@@ -443,7 +284,7 @@ impl Sample for ShadowMapping {
                 },
                 BindGroupEntry {
                     binding: 2,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer: &light_buffer,
                         offset: 0,
                         size: None,
@@ -473,7 +314,7 @@ impl Sample for ShadowMapping {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Floor and cube indices"),
             size: size_of_val(&INDICES) as u64,
@@ -481,7 +322,7 @@ impl Sample for ShadowMapping {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
 
         Ok(Self {
             depth_pipeline,
@@ -571,7 +412,7 @@ impl Sample for ShadowMapping {
             pass.set_pipeline(&self.depth_pipeline);
             pass.set_bind_group(0, &self.cube_shadow_bind_group, &[]);
             pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
             // Only the cube casts shadows.
             pass.draw_indexed(CUBE_INDICES, 0, 0..1);
         }
@@ -608,14 +449,14 @@ impl Sample for ShadowMapping {
         });
         pass.set_pipeline(&self.main_pipeline);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         pass.set_bind_group(0, &self.floor_bind_group, &[]);
         pass.draw_indexed(FLOOR_INDICES, 0, 0..1);
         pass.set_bind_group(0, &self.cube_main_bind_group, &[]);
         pass.draw_indexed(CUBE_INDICES, 0, 0..1);
     }
 
-    fn window_event(&mut self, window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self, window: &Window, event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event
@@ -675,74 +516,4 @@ impl ShadowMapping {
             self.cube_offset = index;
         }
     }
-}
-
-/// Creates a uniform buffer; 64 bytes per mat4x4, 48 for the params.
-fn create_uniform(gpu: &Gpu, label: &str, size: u64) -> Buffer {
-    gpu.device.create_buffer(&BufferDescriptor {
-        label: Some(label),
-        size,
-        usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-        mapped_at_creation: false,
-    })
-}
-
-/// Shared inputs of every main-pass bind group.
-struct MainBuffers<'a> {
-    layout: &'a BindGroupLayout,
-    camera: &'a Buffer,
-    light: &'a Buffer,
-    params: &'a Buffer,
-}
-
-/// Five entries; only the model buffer differs between floor and cube.
-fn create_main_bind_group(
-    gpu: &Gpu,
-    label: &str,
-    model: &Buffer,
-    shared: &MainBuffers,
-    shadow: &TextureView,
-) -> BindGroup {
-    gpu.device.create_bind_group(&BindGroupDescriptor {
-        label: Some(label),
-        layout: shared.layout,
-        entries: &[
-            BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
-                    buffer: model,
-                    offset: 0,
-                    size: None,
-                }),
-            },
-            BindGroupEntry {
-                binding: 1,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
-                    buffer: shared.camera,
-                    offset: 0,
-                    size: None,
-                }),
-            },
-            BindGroupEntry {
-                binding: 2,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
-                    buffer: shared.light,
-                    offset: 0,
-                    size: None,
-                }),
-            },
-            BindGroupEntry {
-                binding: 3,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
-                    buffer: shared.params,
-                    offset: 0,
-                    size: None,
-                }),
-            },
-            BindGroupEntry {
-                binding: 4,
-                resource: wgpu::BindingResource::TextureView(shadow),
-            },
-        ],
-    })
 }

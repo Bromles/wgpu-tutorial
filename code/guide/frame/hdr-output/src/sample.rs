@@ -1,8 +1,8 @@
 use std::error::Error;
 
 use encase::UniformBuffer;
-use glam::{Mat4, Vec3};
 use framework::{Gpu, Sample};
+use glam::{Mat4, Vec3};
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
@@ -11,17 +11,24 @@ use wgpu::{
     PipelineLayoutDescriptor, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
     RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, Texture,
     TextureDescriptor, TextureDimension, TextureFormat, TextureSampleType, TextureUsages,
-    TextureView, TextureViewDescriptor, TextureViewDimension, VertexAttribute, VertexBufferLayout,
-    VertexFormat, VertexState, VertexStepMode, include_wgsl,
+    TextureView, TextureViewDescriptor, TextureViewDimension, VertexState, include_wgsl,
 };
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, WindowEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::Window;
 
+use crate::mesh::{INDICES, Vertex, plane_vertices};
 use crate::params::{EXPOSURES, INTENSITIES, Light, Material, Params, ToneParams};
+use bytemuck::cast_slice;
+use glam::camera::rh::proj::directx::perspective;
+use glam::camera::rh::view::look_at_mat4;
+use std::f32::consts::FRAC_PI_3;
+use wgpu::BindingResource;
+use wgpu::IndexFormat;
+use wgpu::MultisampleState;
 
-const FOV_Y: f32 = std::f32::consts::FRAC_PI_3;
+const FOV_Y: f32 = FRAC_PI_3;
 const NEAR: f32 = 0.1;
 const FAR: f32 = 50.0;
 
@@ -34,63 +41,6 @@ const EYE: Vec3 = Vec3::new(0.0, 0.0, 3.0);
 /// Chapter start indices: exposure 1.0, the chapter light intensity.
 const EXPOSURE_START: usize = 1;
 const INTENSITY_START: usize = 0;
-
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    /// Position with w = 1: a point of the z = 0 plane.
-    position: [f32; 4],
-    /// Normal with w = 0: the plane normal +Z for every corner.
-    normal: [f32; 4],
-}
-
-impl Vertex {
-    const LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-        array_stride: 32,
-        step_mode: VertexStepMode::Vertex,
-        attributes: &[
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 0,
-                shader_location: 0,
-            },
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 16,
-                shader_location: 1,
-            },
-        ],
-    };
-}
-
-/// Plane half extents; the background stays visible at the edges.
-const HALF_X: f32 = 2.0;
-const HALF_Y: f32 = 1.5;
-
-fn plane_vertices() -> [Vertex; 4] {
-    let normal = [0.0, 0.0, 1.0, 0.0];
-    [
-        Vertex {
-            position: [-HALF_X, -HALF_Y, 0.0, 1.0],
-            normal,
-        },
-        Vertex {
-            position: [HALF_X, -HALF_Y, 0.0, 1.0],
-            normal,
-        },
-        Vertex {
-            position: [-HALF_X, HALF_Y, 0.0, 1.0],
-            normal,
-        },
-        Vertex {
-            position: [HALF_X, HALF_Y, 0.0, 1.0],
-            normal,
-        },
-    ]
-}
-
-// Two triangles over the four corners; the shared diagonal keeps the plane flat.
-const INDICES: [u16; 6] = [0, 1, 2, 2, 1, 3];
 
 /// The Blinn-Phong plane rendered into RGBA16Float, then shown through
 /// a fullscreen tone mapper: exposure, Reinhard, one sRGB encoding.
@@ -154,7 +104,7 @@ impl Sample for HdrOutput {
                     },
                     BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        visibility: ShaderStages::FRAGMENT,
                         ty: BindingType::Texture {
                             sample_type: TextureSampleType::Float { filterable: false },
                             view_dimension: TextureViewDimension::D2,
@@ -207,7 +157,7 @@ impl Sample for HdrOutput {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -239,7 +189,7 @@ impl Sample for HdrOutput {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -255,7 +205,7 @@ impl Sample for HdrOutput {
             layout: &scene_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &params_buffer,
                     offset: 0,
                     size: None,
@@ -276,7 +226,7 @@ impl Sample for HdrOutput {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&vertices));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&vertices));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Plane indices"),
             size: size_of_val(&INDICES) as u64,
@@ -284,7 +234,7 @@ impl Sample for HdrOutput {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             scene_pipeline,
             tone_pipeline,
@@ -302,7 +252,7 @@ impl Sample for HdrOutput {
             exposure_index: EXPOSURE_START,
             intensity_index: INTENSITY_START,
             clipping: false,
-            projection: glam::camera::rh::proj::directx::perspective(
+            projection: perspective(
                 FOV_Y,
                 FALLBACK_SIZE.0 as f32 / FALLBACK_SIZE.1 as f32,
                 NEAR,
@@ -311,16 +261,11 @@ impl Sample for HdrOutput {
         })
     }
 
-    /// Framework contract: called right after `init` and on every resize.
+    ///  Framework contract: called right after `init` and on every resize.
     fn resize(&mut self, width: u32, height: u32) {
         if width > 0 && height > 0 {
             self.pending_size = Some(PhysicalSize::new(width, height));
-            self.projection = glam::camera::rh::proj::directx::perspective(
-                FOV_Y,
-                width as f32 / height as f32,
-                NEAR,
-                FAR,
-            );
+            self.projection = perspective(FOV_Y, width as f32 / height as f32, NEAR, FAR);
         }
     }
 
@@ -338,7 +283,7 @@ impl Sample for HdrOutput {
 
         // Scene uniforms; only the intensity can leave the SDR range.
         let params = Params::new(
-            self.projection * glam::camera::rh::view::look_at_mat4(EYE, Vec3::ZERO, Vec3::Y),
+            self.projection * look_at_mat4(EYE, Vec3::ZERO, Vec3::Y),
             EYE,
             Light {
                 light_dir: Vec3::Z,
@@ -374,7 +319,7 @@ impl Sample for HdrOutput {
             pass.set_pipeline(&self.scene_pipeline);
             pass.set_bind_group(0, &self.scene_bind_group, &[]);
             pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
             pass.draw_indexed(0..INDICES.len() as u32, 0, 0..1);
         }
 
@@ -481,7 +426,7 @@ impl HdrOutput {
             entries: &[
                 BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer: &self.tone_buffer,
                         offset: 0,
                         size: None,
@@ -489,7 +434,7 @@ impl HdrOutput {
                 },
                 BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&view),
+                    resource: BindingResource::TextureView(&view),
                 },
             ],
         });

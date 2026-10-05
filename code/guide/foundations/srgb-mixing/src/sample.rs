@@ -1,21 +1,25 @@
 use encase::UniformBuffer;
 use framework::{Gpu, Sample};
 use std::error::Error;
-use wgpu::{
-    BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
-    BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites, CommandEncoder, FragmentState,
-    FrontFace, LoadOp, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
+use wgpu::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferBinding,
+    BufferBindingType, BufferDescriptor, BufferSize, BufferUsages, Color, ColorTargetState,
+    ColorWrites, CommandEncoder, FragmentState, FrontFace, IndexFormat, LoadOp,
+    MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
     PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
-    RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, TextureView, VertexAttribute,
-    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
-};
+    RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, TextureView,
+    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,};
 
-use crate::color::{mean_linear, mean_of_codes, quantize_u8, srgb_decode, srgb_encode};
+use crate::color::{mean_linear,mean_of_codes,quantize_u8,srgb_decode,srgb_encode};
+use bytemuck::Pod;
+use bytemuck::Zeroable;
+use bytemuck::cast_slice;
+use encase::ShaderType;
+use tracing::info;
 use glam::Vec4;
 
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     position: [f32; 4],
     color: [f32; 4],
@@ -81,7 +85,7 @@ impl Vertex {
 }
 
 /// Per-side tone, computed on the CPU with the real transfer function.
-#[derive(encase::ShaderType, Debug, Clone, Copy)]
+#[derive(ShaderType, Debug, Clone, Copy)]
 struct Tone {
     color: Vec4,
 }
@@ -149,7 +153,7 @@ impl Sample for SrgbMixing {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -159,7 +163,7 @@ impl Sample for SrgbMixing {
         let wrong_code =
             mean_of_codes(quantize_u8(srgb_encode(0.0)), quantize_u8(srgb_encode(1.0)));
         let wrong_linear = srgb_decode(f32::from(wrong_code) / 255.0);
-        tracing::info!(
+        info!(
             correct_code = quantize_u8(srgb_encode(correct_linear)),
             wrong_code,
             wrong_linear,
@@ -192,7 +196,7 @@ impl Sample for SrgbMixing {
                 layout: &tone_layout,
                 entries: &[BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer,
                         offset: 0,
                         size: None,
@@ -208,7 +212,7 @@ impl Sample for SrgbMixing {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Quad indices"),
             size: size_of_val(&INDICES) as u64,
@@ -216,7 +220,7 @@ impl Sample for SrgbMixing {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             bind_groups,
@@ -225,7 +229,10 @@ impl Sample for SrgbMixing {
         })
     }
 
-    fn draw(&mut self, _gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
+    fn draw(&mut self,
+    _gpu: &Gpu,
+    encoder: &mut CommandEncoder,
+    view: &TextureView) {
         let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
             label: Some("sRGB mixing pass"),
             color_attachments: &[Some(RenderPassColorAttachment {
@@ -246,7 +253,7 @@ impl Sample for SrgbMixing {
         });
         pass.set_pipeline(&self.pipeline);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         // Left quad: the correct mix of light.
         pass.set_bind_group(0, &self.bind_groups[0], &[]);
         pass.draw_indexed(0..6, 0, 0..1);

@@ -30,7 +30,7 @@ Compile-time константа в шейдере переключает гра�
 
 ```sh
 cargo run -p vertex-colors
-cargo test -p verify
+cargo test -p vertex-colors
 ```
 
 ## Веса на отрезке
@@ -160,7 +160,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 Автоматическая проверка `verify` для трёх внутренних пикселей вычисляет ожидание по модели площадей (веса → линейный цвет → код sRGB) и сверяет с кадром с точностью до квантования; затем весь кадр сравнивается с эталоном.
 
 ```sh
-cargo test -p verify
+cargo test -p vertex-colors
 ```
 
 ## Проверьте модель

@@ -1,13 +1,16 @@
 use std::error::Error;
 
+use framework::{Settings, run};
 use ortho_perspective::sample::OrthoPerspective;
+use tracing::Level;
+use tracing_subscriber::fmt;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+    fmt()
+        .with_max_level(Level::INFO)
         .init();
-    framework::run::<OrthoPerspective>(framework::Settings {
-        title: "wgpu | Ortho perspective".into(),
-        ..framework::Settings::default()
+    run::<OrthoPerspective>(Settings {
+        title: "wgpu | Ortho vs perspective".into(),
+        ..Settings::default()
     })
 }

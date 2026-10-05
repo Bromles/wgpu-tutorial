@@ -1,3 +1,7 @@
+use crate::texture::create;
+use bytemuck::Pod;
+use bytemuck::Zeroable;
+use bytemuck::cast_slice;
 use framework::{Gpu, Sample};
 use std::error::Error;
 use wgpu::{
@@ -9,12 +13,13 @@ use wgpu::{
     RenderPipelineDescriptor, Sampler, SamplerBindingType, SamplerDescriptor, StoreOp,
     TextureSampleType, TextureView, TextureViewDimension, VertexAttribute, VertexBufferLayout,
     VertexFormat, VertexState, VertexStepMode, include_wgsl,
-};
+ ShaderStages, MultisampleState, MipmapFilterMode, BindingResource, IndexFormat,};
 use winit::event::{ElementState, WindowEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::window::Window;
 
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     position: [f32; 4],
     color: [f32; 4],
@@ -118,7 +123,7 @@ impl Sample for TextureSampling {
                 entries: &[
                     BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        visibility: ShaderStages::FRAGMENT,
                         ty: BindingType::Texture {
                             sample_type: TextureSampleType::Float { filterable: true },
                             view_dimension: TextureViewDimension::D2,
@@ -128,7 +133,7 @@ impl Sample for TextureSampling {
                     },
                     BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        visibility: ShaderStages::FRAGMENT,
                         ty: BindingType::Sampler(SamplerBindingType::Filtering),
                         count: None,
                     },
@@ -169,11 +174,11 @@ impl Sample for TextureSampling {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
-        let (_texture, view) = crate::texture::create(gpu);
+        let (_texture, view) = create(gpu);
         let samplers: [[Sampler; 2]; 2] = [Filter::Nearest, Filter::Linear].map(|filter| {
             [Address::Clamp, Address::Repeat].map(|address| {
                 let label = format!(
@@ -194,7 +199,7 @@ impl Sample for TextureSampling {
                     address_mode_w: address_mode(address),
                     mag_filter: filter_mode(filter),
                     min_filter: filter_mode(filter),
-                    mipmap_filter: wgpu::MipmapFilterMode::Nearest,
+                    mipmap_filter: MipmapFilterMode::Nearest,
                     ..SamplerDescriptor::default()
                 })
             })
@@ -207,11 +212,11 @@ impl Sample for TextureSampling {
                     entries: &[
                         BindGroupEntry {
                             binding: 0,
-                            resource: wgpu::BindingResource::TextureView(&view),
+                            resource: BindingResource::TextureView(&view),
                         },
                         BindGroupEntry {
                             binding: 1,
-                            resource: wgpu::BindingResource::Sampler(sampler),
+                            resource: BindingResource::Sampler(sampler),
                         },
                     ],
                 })
@@ -224,15 +229,14 @@ impl Sample for TextureSampling {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let uv_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Quad UVs"),
             size: size_of_val(&UVS) as u64,
             usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        gpu.queue
-            .write_buffer(&uv_buffer, 0, bytemuck::cast_slice(&UVS));
+        gpu.queue.write_buffer(&uv_buffer, 0, cast_slice(&UVS));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Quad indices"),
             size: size_of_val(&INDICES) as u64,
@@ -240,7 +244,7 @@ impl Sample for TextureSampling {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             bind_groups,
@@ -278,11 +282,11 @@ impl Sample for TextureSampling {
         pass.set_bind_group(0, bind_group, &[]);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         pass.set_vertex_buffer(1, self.uv_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         pass.draw_indexed(0..6, 0, 0..1);
     }
 
-    fn window_event(&mut self, _window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self, _window: &Window, event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event

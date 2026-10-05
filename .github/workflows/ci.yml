@@ -19,6 +19,8 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Check Rust workspace
         run: cargo check --workspace --all-targets --locked
+      - name: Lint Rust workspace
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
       - name: Run non-GPU unit tests
         run: cargo test --workspace --locked --lib --bins
       - name: Setup Node

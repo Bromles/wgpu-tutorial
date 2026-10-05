@@ -8,6 +8,7 @@ use wgpu::{
 };
 
 /// Chapter 04 triangle, unchanged, now behind the framework boundary.
+use wgpu::MultisampleState;
 pub struct Triangle {
     pipeline: RenderPipeline,
 }
@@ -45,14 +46,17 @@ impl Sample for Triangle {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
         Ok(Self { pipeline })
     }
 
-    fn draw(&mut self, _gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
+    fn draw(&mut self,
+    _gpu: &Gpu,
+    encoder: &mut CommandEncoder,
+    view: &TextureView) {
         let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
             label: Some("Framework triangle pass"),
             color_attachments: &[Some(RenderPassColorAttachment {

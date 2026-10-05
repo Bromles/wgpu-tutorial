@@ -1,3 +1,4 @@
+
 use encase::ShaderType;
 use glam::Vec2;
 
@@ -19,13 +20,12 @@ impl Params {
 
 #[cfg(test)]
 mod tests {
+    use std::f32::consts::FRAC_PI_2;
+
     /// The rotation formulas of the chapter, checked by hand first.
     #[test]
     fn rotation_and_translation_match_the_model() {
-        let (sin, cos) = (
-            std::f32::consts::FRAC_PI_2.sin(),
-            std::f32::consts::FRAC_PI_2.cos(),
-        );
+        let (sin, cos) = (FRAC_PI_2.sin(), FRAC_PI_2.cos());
         // Rotate the direction (0.25, 0) by pi/2: the result is (0, 0.25).
         let x = 0.25_f32;
         let rotated = (x * cos, x * sin);

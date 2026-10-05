@@ -22,7 +22,8 @@ cargo test --workspace --locked
 Перегенерация изображений для статей:
 
 ```bash
-cargo run -p verify --bin snapshots
+VERIFY_SNAPSHOTS=1 cargo test -p <chapter-package> --test snapshot
+# например: VERIFY_SNAPSHOTS=1 cargo test -p shadow-pcf --test snapshot
 ```
 
 Сборка сайта с руководством:

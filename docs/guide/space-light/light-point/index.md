@@ -124,7 +124,7 @@ struct Params {
 ```sh
 cargo run -p light-point
 cargo test -p light-point
-cargo test -p verify
+cargo test -p light-point
 ```
 
 ## Проверьте модель

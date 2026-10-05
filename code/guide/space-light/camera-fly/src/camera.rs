@@ -1,6 +1,8 @@
 use std::collections::HashSet;
+use std::f32::consts::FRAC_PI_2;
 
 use glam::{Mat4, Vec3};
+use glam::camera::rh::view::look_at_mat4;
 use winit::keyboard::KeyCode;
 
 /// Flight speed, meters per second.
@@ -8,7 +10,7 @@ pub const SPEED: f32 = 2.0;
 /// Radians of rotation per unit of mouse delta; not scaled by `dt` (a delta already covers a frame).
 pub const SENSITIVITY: f32 = 0.0025;
 /// Stops just short of vertical, where `forward` becomes parallel to the world up.
-pub const PITCH_LIMIT: f32 = std::f32::consts::FRAC_PI_2 - 0.01;
+pub const PITCH_LIMIT: f32 = FRAC_PI_2 - 0.01;
 
 /// The pose the `R` key returns to.
 pub const START_POSITION: Vec3 = Vec3::new(0.0, 1.5, 4.0);
@@ -54,7 +56,7 @@ impl Camera {
 
     /// View matrix: the world in the camera basis (chapter 18).
     pub fn view_matrix(&self) -> Mat4 {
-        glam::camera::rh::view::look_at_mat4(self.position, self.position + self.forward(), Vec3::Y)
+        look_at_mat4(self.position, self.position + self.forward(), Vec3::Y)
     }
 
     /// Accumulates raw mouse delta; consumed by the next `update`.
@@ -63,7 +65,7 @@ impl Camera {
         self.pending_delta.1 += dy;
     }
 
-    /// One step per frame: mouse delta without `dt`, movement with `dt` at `SPEED`.
+    ///  One step per frame: mouse delta without `dt`, movement with `dt` at `SPEED`.
     /// The pressed-direction sum is normalized so diagonals are not faster.
     pub fn update(&mut self, dt: f32, keys: &HashSet<KeyCode>) {
         self.yaw += self.pending_delta.0 * SENSITIVITY;
@@ -114,6 +116,7 @@ impl Camera {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::f32::consts::FRAC_1_SQRT_2;
 
     fn no_keys() -> HashSet<KeyCode> {
         HashSet::new()
@@ -168,7 +171,7 @@ mod tests {
                 .forward()
                 .abs_diff_eq(Vec3::new(0.0, 0.0, -1.0), 1e-6)
         );
-        let turned = Camera::new(Vec3::ZERO, std::f32::consts::FRAC_PI_2, 0.0);
+        let turned = Camera::new(Vec3::ZERO, FRAC_PI_2, 0.0);
         assert!(turned.forward().abs_diff_eq(Vec3::new(1.0, 0.0, 0.0), 1e-6));
     }
 
@@ -189,11 +192,7 @@ mod tests {
         camera.update(0.5, &diagonal);
         // Half a second at 2 m/s: exactly 1 m, not sqrt(2) times more.
         assert!((camera.position.length() - 1.0).abs() < 1e-5);
-        let expected = Vec3::new(
-            std::f32::consts::FRAC_1_SQRT_2,
-            0.0,
-            -std::f32::consts::FRAC_1_SQRT_2,
-        );
+        let expected = Vec3::new(FRAC_1_SQRT_2, 0.0, -FRAC_1_SQRT_2);
         assert!(camera.position.normalize().abs_diff_eq(expected, 1e-5));
     }
 

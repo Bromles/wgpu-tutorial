@@ -1,9 +1,13 @@
+use std::f32::consts::FRAC_PI_3;
+
 use encase::ShaderType;
-use glam::{Mat4, Vec3, Vec4};
+use glam::{Mat3, Mat4, Vec3, Vec4};
+use glam::camera::rh::proj::directx::orthographic;
+use glam::camera::rh::view::look_at_mat4;
 
 pub const EYE: Vec3 = Vec3::new(2.6, 3.0, 3.0);
 pub const TARGET: Vec3 = Vec3::new(0.0, 0.3, 0.0);
-pub const FOV_Y: f32 = std::f32::consts::FRAC_PI_3;
+pub const FOV_Y: f32 = FRAC_PI_3;
 pub const NEAR: f32 = 0.1;
 pub const FAR: f32 = 50.0;
 
@@ -58,7 +62,7 @@ pub fn object_record(translation: Vec3) -> ObjectRecord {
     ObjectRecord {
         model,
         // Linear 3x3 only: translation never applies to a direction.
-        normal_matrix: Mat4::from_mat3(glam::Mat3::from_mat4(model).inverse().transpose()),
+        normal_matrix: Mat4::from_mat3(Mat3::from_mat4(model).inverse().transpose()),
     }
 }
 
@@ -69,12 +73,14 @@ pub fn objects() -> [ObjectRecord; OBJECT_COUNT] {
 
 /// The light as an orthographic camera; the light's up maps to world +Z.
 pub fn light_view_proj() -> Mat4 {
-    glam::camera::rh::proj::directx::orthographic(-2.3, 2.3, -2.3, 2.3, 0.1, 12.0)
-        * glam::camera::rh::view::look_at_mat4(LIGHT_DIR * 6.0, Vec3::ZERO, Vec3::Z)
+    orthographic(-2.3, 2.3, -2.3, 2.3, 0.1, 12.0)
+        * look_at_mat4(LIGHT_DIR * 6.0, Vec3::ZERO, Vec3::Z)
 }
 
 /// Mirrors the shader's per-pixel Lambert for the verification crate.
-pub fn lambert_linear(albedo: Vec3, diffuse: f32, visible: f32) -> Vec3 {
+pub fn lambert_linear(albedo: Vec3,
+diffuse: f32,
+visible: f32) -> Vec3 {
     albedo * (AMBIENT + INTENSITY * diffuse * visible)
 }
 

@@ -1,8 +1,17 @@
-use std::error::Error;
-
+use bytemuck::Pod;
+use bytemuck::Zeroable;
+use bytemuck::cast_slice;
+use crate::params::Params;
 use encase::UniformBuffer;
-use glam::{Mat4, Vec3};
 use framework::{Gpu, Sample};
+use glam::camera::rh::proj::directx::perspective;
+use glam::camera::rh::view::look_at_mat4;
+use glam::{Mat4, Vec3};
+use std::error::Error;
+use std::f32::consts::FRAC_PI_3;
+use wgpu::BindingResource;
+use wgpu::IndexFormat;
+use wgpu::MultisampleState;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
@@ -13,13 +22,13 @@ use wgpu::{
     VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
 };
 use winit::event::{ElementState, WindowEvent};
-use winit::keyboard::{KeyCode, PhysicalKey};
-
-use crate::params::Params;
+use winit::keyboard::KeyCode;
+use winit::keyboard::PhysicalKey;
+use winit::window::Window;
 
 /// Fixed camera from chapter 25: three metres in front, looking at the origin.
 const EYE: Vec3 = Vec3::new(0.0, 0.0, 3.0);
-const FOV_Y: f32 = std::f32::consts::FRAC_PI_3;
+const FOV_Y: f32 = FRAC_PI_3;
 const NEAR: f32 = 0.1;
 const FAR: f32 = 50.0;
 
@@ -33,7 +42,7 @@ const MIN_HEIGHT: f32 = 0.25;
 const MAX_HEIGHT: f32 = 4.0;
 
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     /// Position with w = 1: a point of the z = 0 plane.
     position: [f32; 4],
@@ -157,7 +166,7 @@ impl Sample for LightPoint {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -172,7 +181,7 @@ impl Sample for LightPoint {
             layout: &layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &params_buffer,
                     offset: 0,
                     size: None,
@@ -186,7 +195,7 @@ impl Sample for LightPoint {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&vertices));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&vertices));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Plane indices"),
             size: size_of_val(&INDICES) as u64,
@@ -194,7 +203,7 @@ impl Sample for LightPoint {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             bind_group,
@@ -203,7 +212,7 @@ impl Sample for LightPoint {
             index_buffer,
             light_pos: Vec3::new(0.0, 0.0, 2.0),
             spot_on: false,
-            projection: glam::camera::rh::proj::directx::perspective(
+            projection: perspective(
                 FOV_Y,
                 FALLBACK_SIZE.0 as f32 / FALLBACK_SIZE.1 as f32,
                 NEAR,
@@ -215,18 +224,12 @@ impl Sample for LightPoint {
     /// Called once after init and on every resize; the offscreen harness calls it before its draw.
     fn resize(&mut self, width: u32, height: u32) {
         if width > 0 && height > 0 {
-            self.projection = glam::camera::rh::proj::directx::perspective(
-                FOV_Y,
-                width as f32 / height as f32,
-                NEAR,
-                FAR,
-            );
+            self.projection = perspective(FOV_Y, width as f32 / height as f32, NEAR, FAR);
         }
     }
 
     fn draw(&mut self, gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
-        let view_proj =
-            self.projection * glam::camera::rh::view::look_at_mat4(EYE, Vec3::ZERO, Vec3::Y);
+        let view_proj = self.projection * look_at_mat4(EYE, Vec3::ZERO, Vec3::Y);
         let mut params = Params::new(view_proj);
         params.light_pos = self.light_pos;
         params.spot_on = u32::from(self.spot_on);
@@ -256,11 +259,11 @@ impl Sample for LightPoint {
         pass.set_pipeline(&self.pipeline);
         pass.set_bind_group(0, &self.bind_group, &[]);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         pass.draw_indexed(0..INDICES.len() as u32, 0, 0..1);
     }
 
-    fn window_event(&mut self, window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self, window: &Window, event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event

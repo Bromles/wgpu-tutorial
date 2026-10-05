@@ -160,7 +160,7 @@ pass.draw_indexed(0..6, 0, 0..1);
 
 ```sh
 cargo run -p uniform-tint
-cargo test -p verify
+cargo test -p uniform-tint
 ```
 
 ## Проверьте модель

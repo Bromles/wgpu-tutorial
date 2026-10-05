@@ -1,5 +1,5 @@
-use encase::ShaderType;
 use glam::{Mat4, Vec3};
+use encase::ShaderType;
 
 /// Surface reflection parameters: albedo tints diffuse, specular is the highlight color, shininess narrows it.
 #[derive(ShaderType, Debug, Clone, Copy, PartialEq)]
@@ -21,7 +21,7 @@ pub struct Params {
 }
 
 impl Material {
-    /// The chapter material: matte grey base with a strong highlight.
+    ///  The chapter material: matte grey base with a strong highlight.
     pub const CHAPTER: Material = Material {
         albedo: Vec3::splat(0.5),
         specular: Vec3::splat(0.7),
@@ -30,7 +30,10 @@ impl Material {
 }
 
 impl Params {
-    pub fn new(view_proj: Mat4, eye: Vec3, light_dir: Vec3, material: Material) -> Self {
+    pub fn new(view_proj: Mat4,
+    eye: Vec3,
+    light_dir: Vec3,
+    material: Material) -> Self {
         Self {
             view_proj,
             eye,

@@ -1,13 +1,14 @@
 use std::error::Error;
 
+use framework::{Settings, run};
 use normal_matrix::sample::NormalMatrix;
+use tracing::Level;
+use tracing_subscriber::fmt;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .init();
-    framework::run::<NormalMatrix>(framework::Settings {
+    fmt().with_max_level(Level::INFO).init();
+    run::<NormalMatrix>(Settings {
         title: "wgpu | Normal matrix".into(),
-        ..framework::Settings::default()
+        ..Settings::default()
     })
 }

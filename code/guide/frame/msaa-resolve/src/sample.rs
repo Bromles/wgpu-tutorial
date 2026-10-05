@@ -1,98 +1,46 @@
 use std::error::Error;
 
 use encase::UniformBuffer;
-use glam::{Mat4, Vec3};
 use framework::{Gpu, Sample};
+use glam::{Mat4, Vec3};
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayout, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
-    BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites, CommandEncoder,
-    CompareFunction, DepthStencilState, Extent3d, FragmentState, FrontFace, LoadOp, Operations,
-    PipelineCompilationOptions, PipelineLayout, PipelineLayoutDescriptor, PrimitiveState,
-    PrimitiveTopology, RenderPassColorAttachment, RenderPassDepthStencilAttachment,
-    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderModule, ShaderStages,
-    StoreOp, Texture, TextureDescriptor, TextureDimension, TextureFormat, TextureSampleType,
-    TextureUsages, TextureView, TextureViewDescriptor, TextureViewDimension, VertexAttribute,
-    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
+    BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites, CommandEncoder, Extent3d,
+    FragmentState, FrontFace, LoadOp, Operations, PipelineCompilationOptions,
+    PipelineLayoutDescriptor, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
+    RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline,
+    RenderPipelineDescriptor, ShaderStages, StoreOp, Texture, TextureDescriptor, TextureDimension,
+    TextureFormat, TextureSampleType, TextureUsages, TextureView, TextureViewDescriptor,
+    TextureViewDimension, VertexState, include_wgsl,
 };
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, WindowEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::Window;
 
+use crate::mesh::{INDICES, VERTICES};
 use crate::params::Params;
+use crate::pipelines::create_scene_pipeline;
+use bytemuck::cast_slice;
+use glam::camera::rh::proj::directx::perspective;
+use glam::camera::rh::view::look_at_mat4;
+use std::f32::consts::FRAC_PI_3;
+use wgpu::BindingResource;
+use wgpu::IndexFormat;
+use wgpu::MultisampleState;
 
 /// Camera pose from chapter 20: eye five meters in front of the origin.
 const EYE: Vec3 = Vec3::new(0.0, 0.0, 5.0);
 /// The projection of chapter 19a: 60 degrees vertical, 4:3 fallback frame.
-const FOV_Y: f32 = std::f32::consts::FRAC_PI_3;
+const FOV_Y: f32 = FRAC_PI_3;
 const NEAR: f32 = 1.0;
 const FAR: f32 = 9.0;
 /// Fallback target size until the first resize; matches the default window.
 const FALLBACK_SIZE: (u32, u32) = (800, 600);
 
-const RED: [f32; 4] = [0.85, 0.25, 0.25, 1.0];
-const BLUE: [f32; 4] = [0.25, 0.4, 0.85, 1.0];
-
 /// The two sample counts; 4x is guaranteed by the WebGPU baseline.
 const SAMPLE_COUNTS: [u32; 2] = [1, 4];
-
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    position: [f32; 4],
-    color: [f32; 4],
-}
-
-impl Vertex {
-    const LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-        array_stride: 32,
-        step_mode: VertexStepMode::Vertex,
-        attributes: &[
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 0,
-                shader_location: 0,
-            },
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 16,
-                shader_location: 1,
-            },
-        ],
-    };
-}
-
-/// Two triangles crossing along x = 0 (A in the z = 0 plane, B tilted
-/// around Y); the depth attachment decides the crossing line.
-const VERTICES: [Vertex; 6] = [
-    Vertex {
-        position: [-1.7, 0.1, 0.0, 1.0],
-        color: RED,
-    },
-    Vertex {
-        position: [1.7, 0.1, 0.0, 1.0],
-        color: RED,
-    },
-    Vertex {
-        position: [0.0, 2.6, 0.0, 1.0],
-        color: RED,
-    },
-    Vertex {
-        position: [-0.6, 0.4, -1.7, 1.0],
-        color: BLUE,
-    },
-    Vertex {
-        position: [0.6, 0.4, 1.7, 1.0],
-        color: BLUE,
-    },
-    Vertex {
-        position: [0.0, 2.8, 0.0, 1.0],
-        color: BLUE,
-    },
-];
-
-const INDICES: [u16; 6] = [0, 1, 2, 3, 4, 5];
 
 /// Linear clear: the intermediate frame is a linear RGBA8Unorm target.
 const CLEAR: Color = Color {
@@ -164,7 +112,7 @@ impl Sample for MsaaResolve {
                 label: Some("Frame bind group layout"),
                 entries: &[BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    visibility: ShaderStages::FRAGMENT,
                     ty: BindingType::Texture {
                         sample_type: TextureSampleType::Float { filterable: false },
                         view_dimension: TextureViewDimension::D2,
@@ -212,7 +160,7 @@ impl Sample for MsaaResolve {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -228,7 +176,7 @@ impl Sample for MsaaResolve {
             layout: &layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &params_buffer,
                     offset: 0,
                     size: None,
@@ -242,7 +190,7 @@ impl Sample for MsaaResolve {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Triangle indices"),
             size: size_of_val(&INDICES) as u64,
@@ -250,7 +198,7 @@ impl Sample for MsaaResolve {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             scene_pipelines,
             fullscreen_pipeline,
@@ -268,7 +216,7 @@ impl Sample for MsaaResolve {
             msaa_depth_view: None,
             target_size: (0, 0),
             pending_size: None,
-            projection: glam::camera::rh::proj::directx::perspective(
+            projection: perspective(
                 FOV_Y,
                 FALLBACK_SIZE.0 as f32 / FALLBACK_SIZE.1 as f32,
                 NEAR,
@@ -281,12 +229,7 @@ impl Sample for MsaaResolve {
     fn resize(&mut self, width: u32, height: u32) {
         if width > 0 && height > 0 {
             self.pending_size = Some(PhysicalSize::new(width, height));
-            self.projection = glam::camera::rh::proj::directx::perspective(
-                FOV_Y,
-                width as f32 / height as f32,
-                NEAR,
-                FAR,
-            );
+            self.projection = perspective(FOV_Y, width as f32 / height as f32, NEAR, FAR);
         }
     }
 
@@ -299,7 +242,7 @@ impl Sample for MsaaResolve {
         }
 
         let params = Params {
-            view: glam::camera::rh::view::look_at_mat4(EYE, Vec3::ZERO, Vec3::Y),
+            view: look_at_mat4(EYE, Vec3::ZERO, Vec3::Y),
             proj: self.projection,
         };
         let mut bytes = UniformBuffer::new(Vec::<u8>::new());
@@ -366,7 +309,7 @@ impl Sample for MsaaResolve {
             pass.set_pipeline(&self.scene_pipelines[mode]);
             pass.set_bind_group(0, &self.bind_group, &[]);
             pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
             pass.draw_indexed(0..6, 0, 0..1);
         }
 
@@ -440,7 +383,7 @@ impl MsaaResolve {
             layout: &self.frame_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::TextureView(&frame_view),
+                resource: BindingResource::TextureView(&frame_view),
             }],
         });
         let msaa_color = gpu.device.create_texture(&TextureDescriptor {
@@ -504,54 +447,4 @@ impl MsaaResolve {
     pub fn msaa_enabled(&self) -> bool {
         self.msaa_enabled
     }
-}
-
-fn create_scene_pipeline(
-    gpu: &Gpu,
-    layout: &PipelineLayout,
-    shader: &ShaderModule,
-    sample_count: u32,
-) -> RenderPipeline {
-    gpu.device
-        .create_render_pipeline(&RenderPipelineDescriptor {
-            label: Some("MSAA scene pipeline"),
-            layout: Some(layout),
-            vertex: VertexState {
-                module: shader,
-                entry_point: Some("vs_main"),
-                buffers: &[Some(Vertex::LAYOUT)],
-                compilation_options: PipelineCompilationOptions::default(),
-            },
-            fragment: Some(FragmentState {
-                module: shader,
-                entry_point: Some("fs_main"),
-                // Linear target; sRGB encoding happens only in the fullscreen pass.
-                targets: &[Some(ColorTargetState {
-                    format: TextureFormat::Rgba8Unorm,
-                    blend: None,
-                    write_mask: ColorWrites::ALL,
-                })],
-                compilation_options: PipelineCompilationOptions::default(),
-            }),
-            primitive: PrimitiveState {
-                topology: PrimitiveTopology::TriangleList,
-                front_face: FrontFace::Ccw,
-                cull_mode: None,
-                ..PrimitiveState::default()
-            },
-            depth_stencil: Some(DepthStencilState {
-                format: TextureFormat::Depth32Float,
-                depth_write_enabled: Some(true),
-                depth_compare: Some(CompareFunction::Less),
-                stencil: Default::default(),
-                bias: Default::default(),
-            }),
-            // The pipeline declares the pass's sample count; all else is identical.
-            multisample: wgpu::MultisampleState {
-                count: sample_count,
-                ..Default::default()
-            },
-            cache: None,
-            multiview_mask: None,
-        })
 }

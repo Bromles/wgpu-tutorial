@@ -1,13 +1,16 @@
 use std::error::Error;
 
 use camera_fly::sample::CameraFly;
+use framework::{Settings, run};
+use tracing::Level;
+use tracing_subscriber::fmt;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+    fmt()
+        .with_max_level(Level::INFO)
         .init();
-    framework::run::<CameraFly>(framework::Settings {
+    run::<CameraFly>(Settings {
         title: "wgpu | Camera fly".into(),
-        ..framework::Settings::default()
+        ..Settings::default()
     })
 }

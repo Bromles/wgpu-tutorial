@@ -89,7 +89,7 @@ fn fs_main(input: VertexOutput) -> @location(0) vec4<f32> {
 
 ```sh
 cargo run -p texture-sampling
-cargo test -p verify
+cargo test -p texture-sampling
 ```
 
 ## Проверьте модель

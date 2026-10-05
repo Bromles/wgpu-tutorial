@@ -6,6 +6,7 @@ use wgpu::{
 };
 
 /// Chapter 01 image: 2x2 sRGB codes, row-major from the top-left (red/green, blue/white).
+use wgpu::Origin3d;
 pub const WIDTH: u32 = 2;
 pub const HEIGHT: u32 = 2;
 pub const TEXELS: [u8; WIDTH as usize * HEIGHT as usize * 4] = [
@@ -33,7 +34,7 @@ pub fn create(gpu: &Gpu) -> (Texture, TextureView) {
         TexelCopyTextureInfo {
             texture: &texture,
             mip_level: 0,
-            origin: wgpu::Origin3d::ZERO,
+            origin: Origin3d::ZERO,
             aspect: TextureAspect::All,
         },
         &TEXELS,

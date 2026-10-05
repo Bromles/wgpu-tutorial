@@ -1,13 +1,16 @@
 use std::error::Error;
 
+use framework::{Settings, run};
+use tracing::Level;
+use tracing_subscriber::fmt;
 use uniform_tint::sample::UniformTint;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+    fmt()
+        .with_max_level(Level::INFO)
         .init();
-    framework::run::<UniformTint>(framework::Settings {
+    run::<UniformTint>(Settings {
         title: "wgpu | Uniform tint".into(),
-        ..framework::Settings::default()
+        ..Settings::default()
     })
 }

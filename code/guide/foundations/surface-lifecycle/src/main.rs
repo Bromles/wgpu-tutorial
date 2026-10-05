@@ -12,42 +12,73 @@ use winit::{
     window::{Window, WindowId},
 };
 
+use wgpu::Surface;
+use wgpu::Device;
+use wgpu::Queue;
+use wgpu::SurfaceConfiguration;
+use wgpu::Instance;
+use wgpu::InstanceDescriptor;
+use wgpu::Backends;
+use pollster::block_on;
+use wgpu::RequestAdapterOptions;
+use wgpu::DeviceDescriptor;
+use wgpu::Features;
+use wgpu::Limits;
+use tracing::error;
+use std::process::exit;
+use wgpu::TextureFormat;
+use wgpu::PresentMode;
+use tracing::info;
+use wgpu::TextureUsages;
+use wgpu::SurfaceColorSpace;
+use wgpu::SurfaceTexture;
+use wgpu::TextureViewDescriptor;
+use wgpu::CommandEncoderDescriptor;
+use wgpu::RenderPassDescriptor;
+use wgpu::RenderPassColorAttachment;
+use wgpu::Operations;
+use wgpu::LoadOp;
+use wgpu::Color;
+use wgpu::StoreOp;
+use wgpu::CurrentSurfaceTexture;
+use tracing_subscriber::fmt;
+use tracing::Level;
 struct Context {
-    surface: wgpu::Surface<'static>,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
+    surface: Surface<'static>,
+    device: Device,
+    queue: Queue,
+    config: SurfaceConfiguration,
     needs_configure: bool,
 }
 
 impl Context {
     fn new(window: Arc<Window>) -> Result<Self, Box<dyn Error>> {
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::PRIMARY,
-            ..wgpu::InstanceDescriptor::new_without_display_handle()
+        let instance = Instance::new(InstanceDescriptor {
+            backends: Backends::PRIMARY,
+            ..InstanceDescriptor::new_without_display_handle()
         });
         let surface = instance.create_surface(window)?;
-        let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+        let adapter = block_on(instance.request_adapter(&RequestAdapterOptions {
             compatible_surface: Some(&surface),
             ..Default::default()
         }))?;
         let (device, queue) =
-            pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
+            block_on(adapter.request_device(&DeviceDescriptor {
                 label: Some("Surface lifecycle device"),
-                required_features: wgpu::Features::empty(),
-                required_limits: wgpu::Limits::default(),
+                required_features: Features::empty(),
+                required_limits: Limits::default(),
                 ..Default::default()
             }))?;
         device.on_uncaptured_error(Arc::new(|error| {
-            tracing::error!(%error, "Unrecoverable GPU error");
-            std::process::exit(1);
+            error!(%error, "Unrecoverable GPU error");
+            exit(1);
         }));
         let capabilities = surface.get_capabilities(&adapter);
         let format = capabilities
             .formats
             .iter()
             .copied()
-            .find(wgpu::TextureFormat::is_srgb)
+            .find(TextureFormat::is_srgb)
             .ok_or("This example requires an sRGB surface format")?;
         let alpha_mode = capabilities
             .alpha_modes
@@ -56,22 +87,22 @@ impl Context {
             .ok_or("Surface has no supported alpha mode")?;
         if !capabilities
             .present_modes
-            .contains(&wgpu::PresentMode::Fifo)
+            .contains(&PresentMode::Fifo)
         {
             return Err("Surface does not support FIFO presentation".into());
         }
         let info = adapter.get_info();
-        tracing::info!(adapter = %info.name, backend = ?info.backend, ?format, "Selected GPU");
-        let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        info!(adapter = %info.name, backend = ?info.backend, ?format, "Selected GPU");
+        let config = SurfaceConfiguration {
+            usage: TextureUsages::RENDER_ATTACHMENT,
             format,
             width: 0,
             height: 0,
-            present_mode: wgpu::PresentMode::Fifo,
+            present_mode: PresentMode::Fifo,
             desired_maximum_frame_latency: 2,
             alpha_mode,
             view_formats: vec![],
-            color_space: wgpu::SurfaceColorSpace::Auto,
+            color_space: SurfaceColorSpace::Auto,
         };
         Ok(Self {
             surface,
@@ -82,7 +113,8 @@ impl Context {
         })
     }
 
-    fn resize(&mut self, size: PhysicalSize<u32>) -> Result<(), Box<dyn Error>> {
+    fn resize(&mut self,
+    size: PhysicalSize<u32>) -> Result<(), Box<dyn Error>> {
         if size.width == 0 || size.height == 0 {
             return Ok(());
         }
@@ -97,7 +129,7 @@ impl Context {
             self.config.height = size.height;
             self.surface.configure(&self.device, &self.config);
             self.needs_configure = false;
-            tracing::info!(
+            info!(
                 width = size.width,
                 height = size.height,
                 "Configured surface"
@@ -106,30 +138,32 @@ impl Context {
         Ok(())
     }
 
-    fn render(&self, window: &Window, frame: wgpu::SurfaceTexture) {
-        let view = frame.texture.create_view(&wgpu::TextureViewDescriptor {
+    fn render(&self,
+    window: &Window,
+    frame: SurfaceTexture) {
+        let view = frame.texture.create_view(&TextureViewDescriptor {
             label: Some("Surface lifecycle surface view"),
             ..Default::default()
         });
         let mut encoder = self
             .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            .create_command_encoder(&CommandEncoderDescriptor {
                 label: Some("Surface lifecycle clear encoder"),
             });
         {
-            let _pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let _pass = encoder.begin_render_pass(&RenderPassDescriptor {
                 label: Some("Surface lifecycle clear pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(RenderPassColorAttachment {
                     view: &view,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                    ops: Operations {
+                        load: LoadOp::Clear(Color {
                             r: 0.5,
                             g: 0.5,
                             b: 0.5,
                             a: 1.0,
                         }),
-                        store: wgpu::StoreOp::Store,
+                        store: StoreOp::Store,
                     },
                     depth_slice: None,
                 })],
@@ -139,7 +173,7 @@ impl Context {
         self.queue.submit([encoder.finish()]);
         window.pre_present_notify();
         self.queue.present(frame);
-        tracing::info!(
+        info!(
             width = self.config.width,
             height = self.config.height,
             "Rendered clear"
@@ -178,28 +212,28 @@ impl App {
         let context = self.context.as_mut().unwrap();
         context.resize(self.size)?;
         match context.surface.get_current_texture() {
-            wgpu::CurrentSurfaceTexture::Success(frame) => context.render(window, frame),
-            wgpu::CurrentSurfaceTexture::Suboptimal(frame) => {
+            CurrentSurfaceTexture::Success(frame) => context.render(window, frame),
+            CurrentSurfaceTexture::Suboptimal(frame) => {
                 context.render(window, frame);
                 // Present consumes the frame before any later configure.
                 context.needs_configure = true;
             }
-            wgpu::CurrentSurfaceTexture::Outdated => {
+            CurrentSurfaceTexture::Outdated => {
                 context.needs_configure = true;
                 self.retry_at = Some(Instant::now() + Duration::from_millis(100));
             }
-            wgpu::CurrentSurfaceTexture::Lost => {
+            CurrentSurfaceTexture::Lost => {
                 // wgpu 30: full context rebuild on the next redraw.
                 self.context = None;
                 self.retry_at = Some(Instant::now() + Duration::from_millis(100));
             }
-            wgpu::CurrentSurfaceTexture::Timeout => {
+            CurrentSurfaceTexture::Timeout => {
                 self.retry_at = Some(Instant::now() + Duration::from_millis(100));
             }
-            wgpu::CurrentSurfaceTexture::Occluded => {
+            CurrentSurfaceTexture::Occluded => {
                 // No timer; platforms without Occluded events recover via OS redraw.
             }
-            wgpu::CurrentSurfaceTexture::Validation => {
+            CurrentSurfaceTexture::Validation => {
                 return Err("Surface acquisition failed validation; see GPU diagnostics".into());
             }
         }
@@ -208,7 +242,8 @@ impl App {
 }
 
 impl ApplicationHandler for App {
-    fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+    fn resumed(&mut self,
+    event_loop: &ActiveEventLoop) {
         if self.active {
             return;
         }
@@ -220,7 +255,7 @@ impl ApplicationHandler for App {
             ) {
                 Ok(window) => self.window = Some(Arc::new(window)),
                 Err(error) => {
-                    tracing::error!(%error, "Window creation failed");
+                    error!(%error, "Window creation failed");
                     self.failure = Some(error.to_string());
                     event_loop.exit();
                     return;
@@ -235,14 +270,18 @@ impl ApplicationHandler for App {
         window.request_redraw();
     }
 
-    fn suspended(&mut self, event_loop: &ActiveEventLoop) {
+    fn suspended(&mut self,
+    event_loop: &ActiveEventLoop) {
         self.active = false;
         self.context = None;
         self.retry_at = None;
         event_loop.set_control_flow(ControlFlow::Wait);
     }
 
-    fn window_event(&mut self, event_loop: &ActiveEventLoop, id: WindowId, event: WindowEvent) {
+    fn window_event(&mut self,
+    event_loop: &ActiveEventLoop,
+    id: WindowId,
+    event: WindowEvent) {
         let Some(window) = &self.window else {
             return;
         };
@@ -280,7 +319,7 @@ impl ApplicationHandler for App {
                 }
                 self.size = window.inner_size();
                 if let Err(error) = self.redraw() {
-                    tracing::error!(%error, "Rendering stopped");
+                    error!(%error, "Rendering stopped");
                     self.failure = Some(error.to_string());
                     self.retry_at = None;
                     event_loop.exit();
@@ -290,7 +329,8 @@ impl ApplicationHandler for App {
         }
     }
 
-    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+    fn about_to_wait(&mut self,
+    event_loop: &ActiveEventLoop) {
         event_loop.set_control_flow(ControlFlow::Wait);
         if !self.active || self.occluded || self.size.width == 0 || self.size.height == 0 {
             self.retry_at = None;
@@ -310,8 +350,8 @@ impl ApplicationHandler for App {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+    fmt()
+        .with_max_level(Level::INFO)
         .init();
     let event_loop = EventLoop::new()?;
     let mut app = App::default();

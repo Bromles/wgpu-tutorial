@@ -4,18 +4,21 @@ use std::error::Error;
 use std::time::Instant;
 use wgpu::{
     AddressMode, BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferBinding, BufferBindingType,
+    BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType,
     BufferDescriptor, BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites,
     CommandEncoder, FilterMode, FragmentState, FrontFace, LoadOp, MipmapFilterMode, Operations,
     PipelineCompilationOptions, PipelineLayoutDescriptor, PrimitiveState, PrimitiveTopology,
     RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
     SamplerBindingType, SamplerDescriptor, ShaderStages, StoreOp, TextureSampleType, TextureView,
-    TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState,
-    VertexStepMode, include_wgsl,
-};
+    TextureViewDimension, VertexState, include_wgsl,
+ MultisampleState, BindingResource, IndexFormat,};
 use winit::event::{ElementState, WindowEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::window::Window;
+use crate::texture::create;
+use bytemuck::cast_slice;
 
+use crate::mesh::{INDICES,UV_LAYOUT,UVS,VERTICES,Vertex};
 use crate::params::Params;
 
 /// 144 repeats: two texels per pixel on the 576-pixel quad, LOD ~1.
@@ -23,65 +26,6 @@ const K: f32 = 144.0;
 /// phase = min(t, 2) / 8: a quarter-repeat slide over the first two seconds.
 const PHASE_SPEED: f32 = 1.0 / 8.0;
 const PHASE_DURATION: f32 = 2.0;
-
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    position: [f32; 4],
-    color: [f32; 4],
-}
-
-const VERTICES: [Vertex; 4] = [
-    Vertex {
-        position: [-0.75, 0.75, 0.5, 1.0],
-        color: [1.0, 1.0, 1.0, 1.0],
-    },
-    Vertex {
-        position: [0.75, 0.75, 0.5, 1.0],
-        color: [1.0, 1.0, 1.0, 1.0],
-    },
-    Vertex {
-        position: [-0.75, -0.75, 0.5, 1.0],
-        color: [1.0, 1.0, 1.0, 1.0],
-    },
-    Vertex {
-        position: [0.75, -0.75, 0.5, 1.0],
-        color: [1.0, 1.0, 1.0, 1.0],
-    },
-];
-
-const UVS: [[f32; 2]; 4] = [[0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]];
-
-const INDICES: [u16; 6] = [0, 1, 2, 2, 1, 3];
-
-impl Vertex {
-    const LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-        array_stride: size_of::<Vertex>() as BufferAddress,
-        step_mode: VertexStepMode::Vertex,
-        attributes: &[
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 0,
-                shader_location: 0,
-            },
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 16,
-                shader_location: 1,
-            },
-        ],
-    };
-}
-
-const UV_LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-    array_stride: 8,
-    step_mode: VertexStepMode::Vertex,
-    attributes: &[VertexAttribute {
-        format: VertexFormat::Float32x2,
-        offset: 0,
-        shader_location: 2,
-    }],
-};
 
 /// Which mip level the sampler is forced to.
 #[derive(Clone, Copy, PartialEq)]
@@ -177,11 +121,11 @@ impl Sample for MipmapMinification {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
-        let (_texture, view) = crate::texture::create(gpu);
+        let (_texture, view) = create(gpu);
         let params_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Minification params"),
             size: 16,
@@ -214,7 +158,7 @@ impl Sample for MipmapMinification {
                 entries: &[
                     BindGroupEntry {
                         binding: 0,
-                        resource: wgpu::BindingResource::Buffer(BufferBinding {
+                        resource: BindingResource::Buffer(BufferBinding {
                             buffer: &params_buffer,
                             offset: 0,
                             size: None,
@@ -222,11 +166,11 @@ impl Sample for MipmapMinification {
                     },
                     BindGroupEntry {
                         binding: 1,
-                        resource: wgpu::BindingResource::TextureView(&view),
+                        resource: BindingResource::TextureView(&view),
                     },
                     BindGroupEntry {
                         binding: 2,
-                        resource: wgpu::BindingResource::Sampler(sampler),
+                        resource: BindingResource::Sampler(sampler),
                     },
                 ],
             })
@@ -238,7 +182,7 @@ impl Sample for MipmapMinification {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let uv_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Quad UVs"),
             size: size_of_val(&UVS) as u64,
@@ -246,7 +190,7 @@ impl Sample for MipmapMinification {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&uv_buffer, 0, bytemuck::cast_slice(&UVS));
+            .write_buffer(&uv_buffer, 0, cast_slice(&UVS));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Quad indices"),
             size: size_of_val(&INDICES) as u64,
@@ -254,7 +198,7 @@ impl Sample for MipmapMinification {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             params_buffer,
@@ -269,7 +213,10 @@ impl Sample for MipmapMinification {
         })
     }
 
-    fn draw(&mut self, gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
+    fn draw(&mut self,
+    gpu: &Gpu,
+    encoder: &mut CommandEncoder,
+    view: &TextureView) {
         let now = Instant::now();
         if let Some(last) = self.last_instant
             && !self.paused
@@ -312,11 +259,13 @@ impl Sample for MipmapMinification {
         pass.set_bind_group(0, bind_group, &[]);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         pass.set_vertex_buffer(1, self.uv_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         pass.draw_indexed(0..6, 0, 0..1);
     }
 
-    fn window_event(&mut self, window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self,
+    window: &Window,
+    event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event
@@ -343,11 +292,13 @@ impl Sample for MipmapMinification {
 }
 
 impl MipmapMinification {
-    pub fn set_lod_clamp(&mut self, lod_clamp: LodClamp) {
+    pub fn set_lod_clamp(&mut self,
+    lod_clamp: LodClamp) {
         self.lod_clamp = lod_clamp;
     }
 
-    pub fn set_elapsed(&mut self, seconds: f32) {
+    pub fn set_elapsed(&mut self,
+    seconds: f32) {
         self.elapsed = seconds;
         self.last_instant = None;
     }

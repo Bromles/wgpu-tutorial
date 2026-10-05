@@ -1,8 +1,11 @@
 use wgpu::{VertexAttribute, VertexBufferLayout, VertexFormat, VertexStepMode};
+use bytemuck::Pod;
+use bytemuck::Zeroable;
+use std::ops::Range;
 
 /// position has w = 1 (a point), normal w = 0 (a direction).
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 pub struct Vertex {
     pub position: [f32; 4],
     pub normal: [f32; 4],
@@ -28,8 +31,8 @@ impl Vertex {
 }
 
 /// A mesh is a range of the shared index buffer; cube then floor.
-pub const CUBE_MESH: std::ops::Range<u32> = 0..36;
-pub const FLOOR_MESH: std::ops::Range<u32> = 36..42;
+pub const CUBE_MESH: Range<u32> = 0..36;
+pub const FLOOR_MESH: Range<u32> = 36..42;
 
 /// Cube corners, CCW from outside so back faces can be culled.
 pub fn cube_vertices() -> [Vertex; 24] {
@@ -154,7 +157,7 @@ pub fn indices() -> [u16; 42] {
 
 /// The panel vertex record: a flat color needs positions only.
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 pub struct PanelVertex {
     pub position: [f32; 4],
 }

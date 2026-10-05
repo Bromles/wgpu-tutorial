@@ -27,9 +27,21 @@ mod tests {
     fn gain_formula_matches_the_passport() {
         let speed = 0.25;
         // gain = min(v * t, 1): the exercise checkpoints of the chapter.
-        assert_eq!((speed * 2.0_f32).min(1.0), 0.5, "checkpoint t=2: gain is halfway");
-        assert_eq!((speed * 8.0_f32).min(1.0), 1.0, "checkpoint t=8: gain saturates at 1");
-        assert_eq!((speed * 0.0_f32).min(1.0), 0.0, "checkpoint t=0: gain starts at 0");
+        assert_eq!(
+            (speed * 2.0_f32).min(1.0),
+            0.5,
+            "checkpoint t=2: gain is halfway"
+        );
+        assert_eq!(
+            (speed * 8.0_f32).min(1.0),
+            1.0,
+            "checkpoint t=8: gain saturates at 1"
+        );
+        assert_eq!(
+            (speed * 0.0_f32).min(1.0),
+            0.0,
+            "checkpoint t=0: gain starts at 0"
+        );
     }
 
     #[test]

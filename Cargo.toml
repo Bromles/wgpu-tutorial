@@ -28,6 +28,7 @@ opt-level = 3
 [workspace.dependencies]
 # local
 framework = { path = "code/framework" }
+verify = { path = "code/verify" }
 first-triangle = { path = "code/guide/foundations/first-triangle" }
 framework-triangle = { path = "code/guide/foundations/framework-triangle" }
 vertex-colors = { path = "code/guide/foundations/vertex-colors" }

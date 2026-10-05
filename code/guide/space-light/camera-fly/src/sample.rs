@@ -2,8 +2,13 @@ use std::collections::HashSet;
 use std::error::Error;
 use std::time::Instant;
 
+use tracing::warn;
+
+use bytemuck::cast_slice;
 use encase::UniformBuffer;
 use framework::{Gpu, Sample};
+use glam::camera::rh::proj::directx::perspective;
+use std::f32::consts::FRAC_PI_3;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
@@ -13,109 +18,26 @@ use wgpu::{
     RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
     RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, Texture, TextureDescriptor,
     TextureDimension, TextureFormat, TextureUsages, TextureView, TextureViewDescriptor,
-    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
-};
+    VertexState, MultisampleState, BindingResource, include_wgsl,};
 use winit::dpi::PhysicalSize;
 use winit::event::{DeviceEvent, ElementState, MouseButton, WindowEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{CursorGrabMode, Window};
 
 use crate::camera::{Camera, START_PITCH, START_POSITION, START_YAW};
+use crate::mesh::{VERTICES, Vertex};
 use glam::Mat4;
 
 /// Frame delta cap; above it the process was paused and the time is dropped.
 const MAX_DT: f32 = 0.1;
 
 /// Vertical field of view, near and far planes of the perspective projection.
-const FOV_Y: f32 = std::f32::consts::FRAC_PI_3;
+const FOV_Y: f32 = FRAC_PI_3;
 const NEAR: f32 = 0.1;
 const FAR: f32 = 50.0;
 
 /// Matches the default window size until the first `Resized` event.
 const FALLBACK_SIZE: (u32, u32) = (800, 600);
-
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    position: [f32; 4],
-    color: [f32; 4],
-}
-
-const FLOOR_COLOR: [f32; 4] = [0.42, 0.45, 0.5, 1.0];
-const TRIANGLE_A_COLOR: [f32; 4] = [0.85, 0.25, 0.25, 1.0];
-const TRIANGLE_B_COLOR: [f32; 4] = [0.25, 0.4, 0.85, 1.0];
-
-const VERTICES: [Vertex; 12] = [
-    // Floor: two triangles covering y = 0 over a 12x12 meter square.
-    Vertex {
-        position: [-6.0, 0.0, -6.0, 1.0],
-        color: FLOOR_COLOR,
-    },
-    Vertex {
-        position: [6.0, 0.0, -6.0, 1.0],
-        color: FLOOR_COLOR,
-    },
-    Vertex {
-        position: [6.0, 0.0, 6.0, 1.0],
-        color: FLOOR_COLOR,
-    },
-    Vertex {
-        position: [-6.0, 0.0, -6.0, 1.0],
-        color: FLOOR_COLOR,
-    },
-    Vertex {
-        position: [6.0, 0.0, 6.0, 1.0],
-        color: FLOOR_COLOR,
-    },
-    Vertex {
-        position: [-6.0, 0.0, 6.0, 1.0],
-        color: FLOOR_COLOR,
-    },
-    // The crossing triangles of chapter 20; the depth buffer picks the nearest.
-    Vertex {
-        position: [-1.7, 0.1, 0.0, 1.0],
-        color: TRIANGLE_A_COLOR,
-    },
-    Vertex {
-        position: [1.7, 0.1, 0.0, 1.0],
-        color: TRIANGLE_A_COLOR,
-    },
-    Vertex {
-        position: [0.0, 2.6, 0.0, 1.0],
-        color: TRIANGLE_A_COLOR,
-    },
-    Vertex {
-        position: [0.0, 0.4, -1.7, 1.0],
-        color: TRIANGLE_B_COLOR,
-    },
-    Vertex {
-        position: [0.0, 0.4, 1.7, 1.0],
-        color: TRIANGLE_B_COLOR,
-    },
-    Vertex {
-        position: [0.0, 2.8, 0.0, 1.0],
-        color: TRIANGLE_B_COLOR,
-    },
-];
-
-impl Vertex {
-    const LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-        array_stride: 32,
-        step_mode: VertexStepMode::Vertex,
-        attributes: &[
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 0,
-                shader_location: 0,
-            },
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 16,
-                shader_location: 1,
-            },
-        ],
-    };
-}
 
 /// Chapter 21: chapter 20 scene plus a floor, steered by keyboard and mouse.
 pub struct CameraFly {
@@ -196,7 +118,7 @@ impl Sample for CameraFly {
                     stencil: Default::default(),
                     bias: Default::default(),
                 }),
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -211,7 +133,7 @@ impl Sample for CameraFly {
             layout: &layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &view_proj_buffer,
                     offset: 0,
                     size: None,
@@ -225,14 +147,14 @@ impl Sample for CameraFly {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         Ok(Self {
             pipeline,
             bind_group,
             view_proj_buffer,
             vertex_buffer,
             camera: Camera::new(START_POSITION, START_YAW, START_PITCH),
-            projection: glam::camera::rh::proj::directx::perspective(
+            projection: perspective(
                 FOV_Y,
                 FALLBACK_SIZE.0 as f32 / FALLBACK_SIZE.1 as f32,
                 NEAR,
@@ -394,8 +316,7 @@ impl CameraFly {
         self.depth_view = Some(view);
         self.depth_size = (width, height);
         let aspect = width as f32 / height as f32;
-        self.projection =
-            glam::camera::rh::proj::directx::perspective(FOV_Y, aspect, NEAR, FAR);
+        self.projection = perspective(FOV_Y, aspect, NEAR, FAR);
     }
 
     /// Locks the cursor on the first click; an unavailable lock is reported, not ignored.
@@ -406,7 +327,7 @@ impl CameraFly {
                 self.cursor_locked = true;
             }
             Err(error) => {
-                tracing::warn!(%error, "cursor lock unavailable; steering stays on the keyboard");
+                warn!(%error, "cursor lock unavailable; steering stays on the keyboard");
             }
         }
     }
@@ -414,7 +335,7 @@ impl CameraFly {
     /// Releases on Alt or focus loss; keys and pending delta die with the focus.
     fn release_cursor(&mut self, window: &Window) {
         if let Err(error) = window.set_cursor_grab(CursorGrabMode::None) {
-            tracing::warn!(%error, "releasing the cursor failed");
+            warn!(%error, "releasing the cursor failed");
         }
         window.set_cursor_visible(true);
         self.cursor_locked = false;

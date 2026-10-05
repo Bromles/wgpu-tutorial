@@ -1,13 +1,16 @@
 use std::error::Error;
 
 use basis3d::sample::Basis3d;
+use framework::{Settings, run};
+use tracing::Level;
+use tracing_subscriber::fmt;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+    fmt()
+        .with_max_level(Level::INFO)
         .init();
-    framework::run::<Basis3d>(framework::Settings {
-        title: "wgpu | Basis".into(),
-        ..framework::Settings::default()
+    run::<Basis3d>(Settings {
+        title: "wgpu | Basis 3D".into(),
+        ..Settings::default()
     })
 }

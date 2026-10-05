@@ -112,7 +112,7 @@ fn transform(order: Order) -> glam::Mat4 {
 
 ```sh
 cargo run -p matrix-compose
-cargo test -p verify
+cargo test -p matrix-compose
 ```
 
 ## Проверьте модель

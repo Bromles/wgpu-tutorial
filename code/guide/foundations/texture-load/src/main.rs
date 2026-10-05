@@ -1,13 +1,16 @@
 use std::error::Error;
 
+use framework::{Settings, run};
 use texture_load::sample::TextureLoad;
+use tracing::Level;
+use tracing_subscriber::fmt;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+    fmt()
+        .with_max_level(Level::INFO)
         .init();
-    framework::run::<TextureLoad>(framework::Settings {
+    run::<TextureLoad>(Settings {
         title: "wgpu | Texture load".into(),
-        ..framework::Settings::default()
+        ..Settings::default()
     })
 }

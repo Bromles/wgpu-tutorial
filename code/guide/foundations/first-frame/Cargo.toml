@@ -12,3 +12,6 @@ winit.workspace = true
 pollster.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+
+[dev-dependencies]
+verify.workspace = true

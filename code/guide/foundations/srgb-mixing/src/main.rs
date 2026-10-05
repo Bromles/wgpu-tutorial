@@ -1,13 +1,16 @@
 use std::error::Error;
 
+use framework::{Settings, run};
 use srgb_mixing::sample::SrgbMixing;
+use tracing::Level;
+use tracing_subscriber::fmt;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+    fmt()
+        .with_max_level(Level::INFO)
         .init();
-    framework::run::<SrgbMixing>(framework::Settings {
+    run::<SrgbMixing>(Settings {
         title: "wgpu | sRGB mixing".into(),
-        ..framework::Settings::default()
+        ..Settings::default()
     })
 }

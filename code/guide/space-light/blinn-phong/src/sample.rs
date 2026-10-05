@@ -1,8 +1,11 @@
-use std::error::Error;
-
-use encase::UniformBuffer;
-use glam::{Mat4, Vec3};
+use bytemuck::Pod;
+use bytemuck::Zeroable;
+use bytemuck::cast_slice;
 use framework::{Gpu, Sample};
+use glam::camera::rh::proj::directx::perspective;
+use glam::camera::rh::view::look_at_mat4;
+use glam::{Mat4, Vec3};
+use std::f32::consts::FRAC_PI_3;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
@@ -13,11 +16,18 @@ use wgpu::{
     VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
 };
 use winit::event::{ElementState, WindowEvent};
-use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::window::Window;
 
 use crate::params::{Material, Params};
+use encase::UniformBuffer;
+use std::error::Error;
+use wgpu::BindingResource;
+use wgpu::IndexFormat;
+use wgpu::MultisampleState;
+use winit::keyboard::KeyCode;
+use winit::keyboard::PhysicalKey;
 
-const FOV_Y: f32 = std::f32::consts::FRAC_PI_3;
+const FOV_Y: f32 = FRAC_PI_3;
 const NEAR: f32 = 0.1;
 const FAR: f32 = 50.0;
 
@@ -37,7 +47,7 @@ const SHININESS_PRESETS: [f32; 8] = [1.0, 2.0, 4.0, 8.0, 16.0, 32.0, 64.0, 128.0
 const SHININESS_START: usize = 5;
 
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     /// Position with w = 1: a point of the z = 0 plane.
     position: [f32; 4],
@@ -64,7 +74,7 @@ impl Vertex {
     };
 }
 
-/// Plane half extents: cover the centre, leave the background visible.
+///  Plane half extents: cover the centre, leave the background visible.
 const HALF_X: f32 = 2.0;
 const HALF_Y: f32 = 1.5;
 
@@ -162,7 +172,7 @@ impl Sample for BlinnPhong {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -177,7 +187,7 @@ impl Sample for BlinnPhong {
             layout: &layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &params_buffer,
                     offset: 0,
                     size: None,
@@ -191,7 +201,7 @@ impl Sample for BlinnPhong {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&vertices));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&vertices));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Plane indices"),
             size: size_of_val(&INDICES) as u64,
@@ -199,7 +209,7 @@ impl Sample for BlinnPhong {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             bind_group,
@@ -209,7 +219,7 @@ impl Sample for BlinnPhong {
             camera_index: 0,
             shininess_index: SHININESS_START,
             material_override: None,
-            projection: glam::camera::rh::proj::directx::perspective(
+            projection: perspective(
                 FOV_Y,
                 FALLBACK_SIZE.0 as f32 / FALLBACK_SIZE.1 as f32,
                 NEAR,
@@ -221,20 +231,14 @@ impl Sample for BlinnPhong {
     /// Called once after init and on every resize; the offscreen harness calls it before its draw.
     fn resize(&mut self, width: u32, height: u32) {
         if width > 0 && height > 0 {
-            self.projection = glam::camera::rh::proj::directx::perspective(
-                FOV_Y,
-                width as f32 / height as f32,
-                NEAR,
-                FAR,
-            );
+            self.projection = perspective(FOV_Y, width as f32 / height as f32, NEAR, FAR);
         }
     }
 
     fn draw(&mut self, gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
         let eye = CAMERA_PRESETS[self.camera_index];
         // Model stays the identity: plane positions are world positions.
-        let view_proj =
-            self.projection * glam::camera::rh::view::look_at_mat4(eye, Vec3::ZERO, Vec3::Y);
+        let view_proj = self.projection * look_at_mat4(eye, Vec3::ZERO, Vec3::Y);
         // The override (if any) replaces the base; the preset exponent
         // always applies on top, so [ and ] keep working.
         let mut material = match self.material_override {
@@ -269,11 +273,11 @@ impl Sample for BlinnPhong {
         pass.set_pipeline(&self.pipeline);
         pass.set_bind_group(0, &self.bind_group, &[]);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         pass.draw_indexed(0..INDICES.len() as u32, 0, 0..1);
     }
 
-    fn window_event(&mut self, window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self, window: &Window, event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event

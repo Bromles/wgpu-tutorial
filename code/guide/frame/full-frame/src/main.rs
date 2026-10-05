@@ -1,22 +1,26 @@
 use std::error::Error;
 
 use full_frame::sample::FullFrame;
+use framework::{Settings, run};
+use tracing::Level;
+use tracing_subscriber::fmt;
+use wgpu::{DeviceDescriptor, Features, Limits};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+    fmt()
+        .with_max_level(Level::INFO)
         .init();
-    framework::run::<FullFrame>(framework::Settings {
+    run::<FullFrame>(Settings {
         title: "wgpu | Full frame".into(),
-        device_descriptor: wgpu::DeviceDescriptor {
+        device_descriptor: DeviceDescriptor {
             label: Some("Full frame device"),
-            required_features: wgpu::Features::IMMEDIATES,
-            required_limits: wgpu::Limits {
+            required_features: Features::IMMEDIATES,
+            required_limits: Limits {
                 max_immediate_size: 4,
-                ..wgpu::Limits::default()
+                ..Limits::default()
             },
             ..Default::default()
         },
-        ..framework::Settings::default()
+        ..Settings::default()
     })
 }

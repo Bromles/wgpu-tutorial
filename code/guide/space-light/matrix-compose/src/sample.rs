@@ -1,6 +1,14 @@
+use bytemuck::Pod;
+use bytemuck::Zeroable;
+use bytemuck::cast_slice;
 use encase::UniformBuffer;
 use framework::{Gpu, Sample};
+use glam::Mat4;
+use glam::Vec3;
 use std::error::Error;
+use std::f32::consts::FRAC_PI_2;
+use wgpu::BindingResource;
+use wgpu::MultisampleState;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
@@ -11,10 +19,12 @@ use wgpu::{
     VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
 };
 use winit::event::{ElementState, WindowEvent};
-use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::keyboard::KeyCode;
+use winit::keyboard::PhysicalKey;
+use winit::window::Window;
 
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     position: [f32; 4],
     color: [f32; 4],
@@ -71,13 +81,13 @@ pub struct MatrixCompose {
     vertex_buffer: Buffer,
     order: Order,
     /// When set, draw uses this matrix instead of the composed one.
-    manual: Option<glam::Mat4>,
+    manual: Option<Mat4>,
 }
 
 impl MatrixCompose {
-    fn transform(order: Order) -> glam::Mat4 {
-        let translate = glam::Mat4::from_translation(glam::Vec3::new(0.25, 0.0, 0.0));
-        let rotate = glam::Mat4::from_rotation_z(std::f32::consts::FRAC_PI_2);
+    fn transform(order: Order) -> Mat4 {
+        let translate = Mat4::from_translation(Vec3::new(0.25, 0.0, 0.0));
+        let rotate = Mat4::from_rotation_z(FRAC_PI_2);
         match order {
             Order::TranslateRotate => translate * rotate,
             Order::RotateTranslate => rotate * translate,
@@ -140,7 +150,7 @@ impl Sample for MatrixCompose {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -155,7 +165,7 @@ impl Sample for MatrixCompose {
             layout: &layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &transform_buffer,
                     offset: 0,
                     size: None,
@@ -169,7 +179,7 @@ impl Sample for MatrixCompose {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         Ok(Self {
             pipeline,
             bind_group,
@@ -211,7 +221,7 @@ impl Sample for MatrixCompose {
         pass.draw(0..3, 0..1);
     }
 
-    fn window_event(&mut self, window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self, window: &Window, event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event
@@ -230,7 +240,7 @@ impl Sample for MatrixCompose {
 
 impl MatrixCompose {
     /// Explicit transform for the verification crate.
-    pub fn set_transform(&mut self, transform: glam::Mat4) {
+    pub fn set_transform(&mut self, transform: Mat4) {
         self.manual = Some(transform);
     }
 }

@@ -186,7 +186,7 @@ struct SceneParams {
 
 ```sh
 cargo run -p shadow-pcf
-cargo test -p verify
+cargo test -p shadow-pcf
 ```
 
 ![Кадр главы: тень куба при bias 0.0005 без PCF.](/results/shadow-pcf.png)

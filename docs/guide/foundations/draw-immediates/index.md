@@ -136,7 +136,7 @@ flowchart TD
 
 ```sh
 cargo run -p draw-immediates
-cargo test -p verify
+cargo test -p draw-immediates
 ```
 
 ## Выбор механизма

@@ -1,20 +1,25 @@
+use bytemuck::{Pod, Zeroable, cast_slice};
 use encase::UniformBuffer;
 use framework::{Gpu, Sample};
+use glam::{Mat4, Vec3};
 use std::error::Error;
+use std::f32::consts::FRAC_PI_2;
+use tracing::info;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
-    BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites, CommandEncoder, FragmentState,
-    FrontFace, LoadOp, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
-    RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, TextureView, VertexAttribute,
-    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
+    BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferBinding, BufferBindingType,
+    BufferDescriptor, BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites,
+    CommandEncoder, FragmentState, FrontFace, LoadOp, MultisampleState, Operations,
+    PipelineCompilationOptions, PipelineLayoutDescriptor, PrimitiveState, PrimitiveTopology,
+    RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor,
+    ShaderStages, StoreOp, TextureView, VertexAttribute, VertexBufferLayout, VertexFormat,
+    VertexState, VertexStepMode, include_wgsl,
 };
 
 use crate::basis::orthonormal_basis;
 
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     position: [f32; 4],
     color: [f32; 4],
@@ -64,9 +69,8 @@ pub struct Basis3d {
 
 impl Sample for Basis3d {
     fn init(gpu: &Gpu) -> Result<Self, Box<dyn Error>> {
-        let (right, up, backward) =
-            orthonormal_basis(glam::Vec3::new(0.0, 0.0, -1.0), glam::Vec3::Y)?;
-        tracing::info!(?right, ?up, ?backward, "Chapter basis");
+        let (right, up, backward) = orthonormal_basis(Vec3::new(0.0, 0.0, -1.0), Vec3::Y)?;
+        info!(?right, ?up, ?backward, "Chapter basis");
         let shader = gpu
             .device
             .create_shader_module(include_wgsl!("shader.wgsl"));
@@ -120,7 +124,7 @@ impl Sample for Basis3d {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -130,8 +134,8 @@ impl Sample for Basis3d {
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let transform = glam::Mat4::from_translation(glam::Vec3::new(0.25, 0.0, 0.0))
-            * glam::Mat4::from_rotation_z(std::f32::consts::FRAC_PI_2);
+        let transform =
+            Mat4::from_translation(Vec3::new(0.25, 0.0, 0.0)) * Mat4::from_rotation_z(FRAC_PI_2);
         let mut bytes = UniformBuffer::new(Vec::<u8>::new());
         bytes.write(&transform).expect("fits the uniform contract");
         gpu.queue
@@ -141,7 +145,7 @@ impl Sample for Basis3d {
             layout: &layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &transform_buffer,
                     offset: 0,
                     size: None,
@@ -155,7 +159,7 @@ impl Sample for Basis3d {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         Ok(Self {
             pipeline,
             bind_group,

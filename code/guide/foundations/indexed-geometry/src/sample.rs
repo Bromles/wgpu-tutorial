@@ -1,8 +1,9 @@
+use bytemuck::{Pod, Zeroable, cast_slice};
 use framework::{Gpu, Sample};
 use std::error::Error;
 use wgpu::{
     Buffer, BufferAddress, BufferDescriptor, BufferUsages, Color, ColorTargetState, ColorWrites,
-    CommandEncoder, FragmentState, FrontFace, IndexFormat, LoadOp, Operations,
+    CommandEncoder, FragmentState, FrontFace, IndexFormat, LoadOp, MultisampleState, Operations,
     PipelineCompilationOptions, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
     RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, StoreOp, TextureView,
     VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
@@ -10,7 +11,7 @@ use wgpu::{
 
 /// Same 32-byte record as in chapter 07a.
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     position: [f32; 4],
     color: [f32; 4],
@@ -98,7 +99,7 @@ impl Sample for IndexedGeometry {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -109,7 +110,7 @@ impl Sample for IndexedGeometry {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Rectangle indices"),
             size: size_of_val(&INDICES) as u64,
@@ -117,7 +118,7 @@ impl Sample for IndexedGeometry {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             vertex_buffer,
@@ -125,7 +126,10 @@ impl Sample for IndexedGeometry {
         })
     }
 
-    fn draw(&mut self, _gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
+    fn draw(&mut self,
+    _gpu: &Gpu,
+    encoder: &mut CommandEncoder,
+    view: &TextureView) {
         let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
             label: Some("Indexed geometry pass"),
             color_attachments: &[Some(RenderPassColorAttachment {

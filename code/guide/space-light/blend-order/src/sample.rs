@@ -1,6 +1,4 @@
-use std::error::Error;
-
-use encase::UniformBuffer;
+use crate::params::{Params, ortho};
 use framework::{Gpu, Sample};
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
@@ -12,153 +10,24 @@ use wgpu::{
     RenderPassDepthStencilAttachment, RenderPassDescriptor, RenderPipeline,
     RenderPipelineDescriptor, ShaderModule, ShaderStages, StoreOp, Texture, TextureDescriptor,
     TextureDimension, TextureFormat, TextureUsages, TextureView, TextureViewDescriptor,
-    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
+    VertexState, include_wgsl,
 };
-use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, WindowEvent};
-use winit::keyboard::{KeyCode, PhysicalKey};
-use winit::window::Window;
 
-use crate::params::{
-    BLACK, CUT_ABOVE, CUT_BELOW, GREEN, HALF_X, HALF_Y, Params, RED, Z_BACKGROUND, Z_SOURCES,
+use crate::mesh::{
+    BACKGROUND, BLEND_GREEN, BLEND_RED, CUT_GREEN_LOWER, CUT_GREEN_UPPER, CUT_RED_LOWER,
+    CUT_RED_UPPER, Vertex, background_vertices, blend_vertices, cutout_vertices, indices,
 };
-
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    /// Position with w = 1: a point of the design plane at its layer's z.
-    position: [f32; 4],
-    /// Linear RGBA; the cutout halves carry 0.49 / 0.51 instead of 0.5.
-    color: [f32; 4],
-}
-
-impl Vertex {
-    const LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-        array_stride: 32,
-        step_mode: VertexStepMode::Vertex,
-        attributes: &[
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 0,
-                shader_location: 0,
-            },
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 16,
-                shader_location: 1,
-            },
-        ],
-    };
-}
-
-/// One axis-aligned rectangle from its bounds, depth and constant color.
-fn quad(x0: f32, y0: f32, x1: f32, y1: f32, z: f32, color: [f32; 4]) -> [Vertex; 4] {
-    [
-        Vertex {
-            position: [x0, y0, z, 1.0],
-            color,
-        },
-        Vertex {
-            position: [x1, y0, z, 1.0],
-            color,
-        },
-        Vertex {
-            position: [x0, y1, z, 1.0],
-            color,
-        },
-        Vertex {
-            position: [x1, y1, z, 1.0],
-            color,
-        },
-    ]
-}
-
-/// Preset B of 27a: the whole frame is the opaque black background.
-fn background_vertices() -> [Vertex; 4] {
-    quad(-HALF_X, -HALF_Y, HALF_X, HALF_Y, Z_BACKGROUND, BLACK)
-}
-
-fn blend_vertices() -> [Vertex; 8] {
-    let red = quad(-1.5, -0.9, -0.3, 0.9, Z_SOURCES, RED);
-    let green = quad(-0.9, -0.9, 0.3, 0.9, Z_SOURCES, GREEN);
-    let mut vertices = [Vertex {
-        position: [0.0; 4],
-        color: [0.0; 4],
-    }; 8];
-    for (part, chunk) in [red, green]
-        .iter()
-        .zip(vertices.as_chunks_mut::<4>().0.iter_mut())
-    {
-        chunk.copy_from_slice(part);
-    }
-    vertices
-}
-
-/// Each source splits into halves with alpha just below/above the threshold.
-fn cutout_vertices() -> [Vertex; 16] {
-    let quads = [
-        quad(
-            -1.5,
-            0.0,
-            -0.3,
-            0.9,
-            Z_SOURCES,
-            [RED[0], RED[1], RED[2], CUT_BELOW],
-        ),
-        quad(
-            -1.5,
-            -0.9,
-            -0.3,
-            0.0,
-            Z_SOURCES,
-            [RED[0], RED[1], RED[2], CUT_ABOVE],
-        ),
-        quad(
-            -0.9,
-            0.0,
-            0.3,
-            0.9,
-            Z_SOURCES,
-            [GREEN[0], GREEN[1], GREEN[2], CUT_BELOW],
-        ),
-        quad(
-            -0.9,
-            -0.9,
-            0.3,
-            0.0,
-            Z_SOURCES,
-            [GREEN[0], GREEN[1], GREEN[2], CUT_ABOVE],
-        ),
-    ];
-    let mut vertices = [Vertex {
-        position: [0.0; 4],
-        color: [0.0; 4],
-    }; 16];
-    for (part, chunk) in quads.iter().zip(vertices.as_chunks_mut::<4>().0.iter_mut()) {
-        chunk.copy_from_slice(part);
-    }
-    vertices
-}
-
-/// Six indices per quad; bases restart from zero per vertex buffer.
-fn indices() -> [u16; 42] {
-    const BASES: [u16; 7] = [0, 0, 4, 0, 4, 8, 12];
-    let mut indices = [0u16; 42];
-    for (q, block) in indices.as_chunks_mut::<6>().0.iter_mut().enumerate() {
-        let base = BASES[q];
-        block.copy_from_slice(&[base, base + 1, base + 2, base + 2, base + 1, base + 3]);
-    }
-    indices
-}
-
-/// Index blocks of the three vertex buffers, in buffer order.
-const BACKGROUND: std::ops::Range<u32> = 0..6;
-const BLEND_RED: std::ops::Range<u32> = 6..12;
-const BLEND_GREEN: std::ops::Range<u32> = 12..18;
-const CUT_RED_UPPER: std::ops::Range<u32> = 18..24;
-const CUT_RED_LOWER: std::ops::Range<u32> = 24..30;
-const CUT_GREEN_UPPER: std::ops::Range<u32> = 30..36;
-const CUT_GREEN_LOWER: std::ops::Range<u32> = 36..42;
+use bytemuck::cast_slice;
+use encase::UniformBuffer;
+use std::error::Error;
+use wgpu::BindingResource;
+use wgpu::IndexFormat;
+use wgpu::MultisampleState;
+use winit::dpi::PhysicalSize;
+use winit::keyboard::KeyCode;
+use winit::keyboard::PhysicalKey;
+use winit::window::Window;
 
 /// Over for straight sources, as in chapter 27a.
 const STRAIGHT: BlendState = BlendState {
@@ -290,9 +159,7 @@ impl Sample for BlendOrder {
         // The camera never moves: the uniform is written once, not per frame.
         let mut bytes = UniformBuffer::new(Vec::<u8>::new());
         bytes
-            .write(&Params {
-                view_proj: crate::params::ortho(),
-            })
+            .write(&Params { view_proj: ortho() })
             .expect("fits the uniform contract");
         gpu.queue
             .write_buffer(&params_buffer, 0, &bytes.into_inner());
@@ -301,7 +168,7 @@ impl Sample for BlendOrder {
             layout: &layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &params_buffer,
                     offset: 0,
                     size: None,
@@ -318,7 +185,7 @@ impl Sample for BlendOrder {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&indices));
+            .write_buffer(&index_buffer, 0, cast_slice(&indices));
         Ok(Self {
             opaque_pipeline,
             straight_pipeline,
@@ -384,7 +251,7 @@ impl Sample for BlendOrder {
             ..RenderPassDescriptor::default()
         });
         pass.set_bind_group(0, &self.bind_group, &[]);
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
 
         // Opaque first: the background writes color and depth (0.75).
         pass.set_pipeline(&self.opaque_pipeline);
@@ -509,8 +376,7 @@ fn create_vertex_buffer(gpu: &Gpu, label: &str, vertices: &[Vertex]) -> Buffer {
         usage: BufferUsages::VERTEX | BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
-    gpu.queue
-        .write_buffer(&buffer, 0, bytemuck::cast_slice(vertices));
+    gpu.queue.write_buffer(&buffer, 0, cast_slice(vertices));
     buffer
 }
 
@@ -557,7 +423,7 @@ fn create_pipeline(
                 stencil: Default::default(),
                 bias: Default::default(),
             }),
-            multisample: wgpu::MultisampleState::default(),
+            multisample: MultisampleState::default(),
             cache: None,
             multiview_mask: None,
         })

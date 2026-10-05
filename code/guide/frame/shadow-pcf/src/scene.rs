@@ -1,4 +1,8 @@
 use glam::{Mat4, Vec3};
+use std::f32::consts::FRAC_PI_3;
+use glam::camera::rh::proj::directx::perspective;
+use glam::camera::rh::view::look_at_mat4;
+use glam::camera::rh::proj::directx::orthographic;
 
 /// Enough +Y to come from above; the equal +X/+Z lean keeps checks simple.
 const LIGHT_RAW: Vec3 = Vec3::new(0.5, 1.0, 0.5);
@@ -11,7 +15,7 @@ pub fn light_dir() -> Vec3 {
 /// Fixed viewer camera of the chapter: above and in front of the scene.
 pub const EYE: Vec3 = Vec3::new(2.5, 2.0, 4.0);
 pub const TARGET: Vec3 = Vec3::new(0.0, 0.3, 0.0);
-pub const FOV_Y: f32 = std::f32::consts::FRAC_PI_3;
+pub const FOV_Y: f32 = FRAC_PI_3;
 /// Fixed 4:3 aspect keeps the projection independent of the window.
 pub const ASPECT: f32 = 4.0 / 3.0;
 pub const NEAR: f32 = 0.1;
@@ -36,20 +40,20 @@ pub fn light_eye() -> Vec3 {
 }
 
 pub fn camera_view_proj() -> Mat4 {
-    glam::camera::rh::proj::directx::perspective(FOV_Y, ASPECT, NEAR, FAR)
-        * glam::camera::rh::view::look_at_mat4(EYE, TARGET, Vec3::Y)
+    perspective(FOV_Y, ASPECT, NEAR, FAR)
+        * look_at_mat4(EYE, TARGET, Vec3::Y)
 }
 
 /// Orthographic box for parallel rays; applied as P·V from the right.
 pub fn light_view_proj() -> Mat4 {
-    glam::camera::rh::proj::directx::orthographic(
+    orthographic(
         -LIGHT_HALF_WIDTH,
         LIGHT_HALF_WIDTH,
         -LIGHT_HALF_WIDTH,
         LIGHT_HALF_WIDTH,
         NEAR_L,
         FAR_L,
-    ) * glam::camera::rh::view::look_at_mat4(light_eye(), LIGHT_TARGET, Vec3::Y)
+    ) * look_at_mat4(light_eye(), LIGHT_TARGET, Vec3::Y)
 }
 
 /// Pure translation along X, so the attribute is the world normal.

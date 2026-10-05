@@ -1,8 +1,7 @@
-use std::error::Error;
-
-use encase::UniformBuffer;
-use glam::Vec3;
+use bytemuck::cast_slice;
 use framework::{Gpu, Sample};
+use glam::camera::rh::view::look_at_mat4;
+use std::f32::consts::FRAC_PI_3;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
@@ -12,85 +11,31 @@ use wgpu::{
     PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDepthStencilAttachment,
     RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderModule, ShaderStages,
     StoreOp, Texture, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
-    TextureView, TextureViewDescriptor, VertexAttribute, VertexBufferLayout, VertexFormat,
-    VertexState, VertexStepMode, include_wgsl,
+    TextureView, TextureViewDescriptor, VertexState, include_wgsl,
 };
-use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, WindowEvent};
-use winit::keyboard::{KeyCode, PhysicalKey};
-use winit::window::Window;
 
+use crate::mesh::{FLIPPED_INDICES, INDICES, VERTICES, Vertex};
 use crate::params::Params;
+use encase::UniformBuffer;
+use glam::Vec3;
+use glam::camera::rh::proj::directx::perspective;
+use std::error::Error;
+use wgpu::BindingResource;
+use wgpu::IndexFormat;
+use wgpu::MultisampleState;
+use winit::dpi::PhysicalSize;
+use winit::keyboard::KeyCode;
+use winit::keyboard::PhysicalKey;
+use winit::window::Window;
 
 /// Camera pose from chapter 18: eye five meters in front of the origin.
 const EYE: Vec3 = Vec3::new(0.0, 0.0, 5.0);
 /// The projection of chapter 19a: 60 degrees vertical, 4:3 frame.
-const FOV_Y: f32 = std::f32::consts::FRAC_PI_3;
+const FOV_Y: f32 = FRAC_PI_3;
 const ASPECT: f32 = 800.0 / 600.0;
 const NEAR: f32 = 1.0;
 const FAR: f32 = 9.0;
-
-const RED: [f32; 4] = [0.85, 0.25, 0.25, 1.0];
-const BLUE: [f32; 4] = [0.25, 0.4, 0.85, 1.0];
-
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    position: [f32; 4],
-    color: [f32; 4],
-}
-
-impl Vertex {
-    const LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-        array_stride: 32,
-        step_mode: VertexStepMode::Vertex,
-        attributes: &[
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 0,
-                shader_location: 0,
-            },
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 16,
-                shader_location: 1,
-            },
-        ],
-    };
-}
-
-/// Two triangles crossing along x = 0, z = 0, y in 0.4..2.6, both CCW from the eye.
-/// B is tilted around Y (z = 2.8333*x) so it does not project onto a line.
-const VERTICES: [Vertex; 6] = [
-    Vertex {
-        position: [-1.7, 0.1, 0.0, 1.0],
-        color: RED,
-    },
-    Vertex {
-        position: [1.7, 0.1, 0.0, 1.0],
-        color: RED,
-    },
-    Vertex {
-        position: [0.0, 2.6, 0.0, 1.0],
-        color: RED,
-    },
-    Vertex {
-        position: [-0.6, 0.4, -1.7, 1.0],
-        color: BLUE,
-    },
-    Vertex {
-        position: [0.6, 0.4, 1.7, 1.0],
-        color: BLUE,
-    },
-    Vertex {
-        position: [0.0, 2.8, 0.0, 1.0],
-        color: BLUE,
-    },
-];
-
-/// Swapping the outer blue indices reverses its winding, visible only once culling is on.
-const INDICES: [u16; 6] = [0, 1, 2, 3, 4, 5];
-const FLIPPED_INDICES: [u16; 6] = [0, 1, 2, 5, 4, 3];
 
 /// Culling cycle: the C key walks Off -> Front -> Back -> Off.
 #[derive(Clone, Copy, PartialEq)]
@@ -170,7 +115,7 @@ impl Sample for DepthCulling {
             layout: &layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &params_buffer,
                     offset: 0,
                     size: None,
@@ -184,7 +129,7 @@ impl Sample for DepthCulling {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let index_buffers = [INDICES, FLIPPED_INDICES].map(|indices| {
             let buffer = gpu.device.create_buffer(&BufferDescriptor {
                 label: Some("Triangle indices"),
@@ -192,8 +137,7 @@ impl Sample for DepthCulling {
                 usage: BufferUsages::INDEX | BufferUsages::COPY_DST,
                 mapped_at_creation: false,
             });
-            gpu.queue
-                .write_buffer(&buffer, 0, bytemuck::cast_slice(&indices));
+            gpu.queue.write_buffer(&buffer, 0, cast_slice(&indices));
             buffer
         });
         Ok(Self {
@@ -229,8 +173,8 @@ impl Sample for DepthCulling {
         }
 
         let params = Params {
-            view: glam::camera::rh::view::look_at_mat4(EYE, Vec3::ZERO, Vec3::Y),
-            proj: glam::camera::rh::proj::directx::perspective(FOV_Y, self.aspect, NEAR, FAR),
+            view: look_at_mat4(EYE, Vec3::ZERO, Vec3::Y),
+            proj: perspective(FOV_Y, self.aspect, NEAR, FAR),
         };
         let mut bytes = UniformBuffer::new(Vec::<u8>::new());
         bytes.write(&params).expect("fits the uniform contract");
@@ -277,7 +221,7 @@ impl Sample for DepthCulling {
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
         pass.set_index_buffer(
             self.index_buffers[usize::from(self.flipped_winding)].slice(..),
-            wgpu::IndexFormat::Uint16,
+            IndexFormat::Uint16,
         );
         // With depth on, both orders give the same frame; without it, last draw wins.
         let (red, blue) = (0..3u32, 3..6);
@@ -424,7 +368,7 @@ fn create_pipeline(
                 stencil: Default::default(),
                 bias: Default::default(),
             }),
-            multisample: wgpu::MultisampleState::default(),
+            multisample: MultisampleState::default(),
             cache: None,
             multiview_mask: None,
         })

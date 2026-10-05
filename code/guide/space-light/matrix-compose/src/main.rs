@@ -1,13 +1,16 @@
 use std::error::Error;
 
+use framework::{Settings, run};
+use tracing::Level;
+use tracing_subscriber::fmt;
 use matrix_compose::sample::MatrixCompose;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+    fmt()
+        .with_max_level(Level::INFO)
         .init();
-    framework::run::<MatrixCompose>(framework::Settings {
+    run::<MatrixCompose>(Settings {
         title: "wgpu | Matrix compose".into(),
-        ..framework::Settings::default()
+        ..Settings::default()
     })
 }

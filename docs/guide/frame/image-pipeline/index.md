@@ -136,7 +136,7 @@ fn halve(@builtin(global_invocation_id) id: vec3<u32>) {
 
 ```sh
 cargo run -p image-pipeline
-cargo test -p verify
+cargo test -p image-pipeline
 ```
 
 Клавиша `P` переключает показ: кадры неотличимы.

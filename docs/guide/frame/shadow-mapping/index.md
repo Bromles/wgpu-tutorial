@@ -269,7 +269,7 @@ Ambient не зависит от видимости — тень не чёрна
 
 ```sh
 cargo run -p shadow-mapping
-cargo test -p verify
+cargo test -p shadow-mapping
 ```
 
 ![Кадр карты теней: куб над полом и его тень.](/results/shadow-mapping.png)

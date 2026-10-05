@@ -2,7 +2,8 @@ use glam::Vec3;
 
 /// Builds an orthonormal basis from `forward` and an `up` hint.
 /// Returns (right, up, backward); rejects degenerate inputs.
-pub fn orthonormal_basis(forward: Vec3, up_hint: Vec3) -> Result<(Vec3, Vec3, Vec3), String> {
+pub fn orthonormal_basis(forward: Vec3,
+up_hint: Vec3) -> Result<(Vec3, Vec3, Vec3), String> {
     if forward.length_squared() == 0.0 {
         return Err("forward direction must be nonzero".into());
     }
@@ -20,7 +21,6 @@ pub fn orthonormal_basis(forward: Vec3, up_hint: Vec3) -> Result<(Vec3, Vec3, Ve
 #[cfg(test)]
 mod tests {
     use super::*;
-    use glam::Vec3;
 
     #[test]
     fn length_and_normalization_follow_pythagoras() {

@@ -1,5 +1,6 @@
 use encase::ShaderType;
 use glam::Mat4;
+use glam::camera::rh::proj::directx::orthographic;
 
 /// Ortho design frame half extents; preset B of chapter 27a fills the frame.
 pub const HALF_X: f32 = 2.4;
@@ -15,7 +16,7 @@ pub const FAR: f32 = 2.0;
 
 /// Fixed ortho camera, eye at the origin looking along -Z (chapter 19a).
 pub fn ortho() -> Mat4 {
-    glam::camera::rh::proj::directx::orthographic(-HALF_X, HALF_X, -HALF_Y, HALF_Y, NEAR, FAR)
+    orthographic(-HALF_X, HALF_X, -HALF_Y, HALF_Y, NEAR, FAR)
 }
 
 /// NDC depth of a world z under the fixed ortho volume.

@@ -1,82 +1,28 @@
 use std::error::Error;
 
+use bytemuck::bytes_of;
+use bytemuck::cast_slice;
 use encase::{StorageBuffer, UniformBuffer};
 use framework::{Gpu, Sample};
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
-    BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites, CommandEncoder, FragmentState,
-    FrontFace, LoadOp, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
-    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
-    RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, TextureView, VertexAttribute,
-    VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
+    BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferBinding, BufferBindingType,
+    BufferDescriptor, BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites,
+    CommandEncoder, Features, FragmentState, FrontFace, IndexFormat, LoadOp, MultisampleState,
+    Operations, PipelineCompilationOptions, PipelineLayoutDescriptor, PrimitiveState,
+    PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor, RenderPipeline,
+    RenderPipelineDescriptor, ShaderStages, StoreOp, TextureView, VertexState, include_wgsl,
 };
 use winit::event::{ElementState, WindowEvent};
 use winit::keyboard::{KeyCode, PhysicalKey};
+use winit::window::Window;
 
 use crate::camera::{self, CameraParams};
+use crate::mesh::{INDICES, Vertex, plane_vertices};
 use crate::scene::{self, COOL, OBJECT_COUNT, ObjectRecord, WARM};
 
 /// Matches the default window size until the first `Resized` event.
 const FALLBACK_SIZE: (u32, u32) = (800, 600);
-
-/// The single mesh: a plane authored around the left position, so object 0 needs no model.
-const CENTER_X: f32 = -0.9;
-const HALF_X: f32 = 0.8;
-const HALF_Y: f32 = 0.6;
-
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-struct Vertex {
-    /// Position with w = 1: a point of the z = 0 plane, around CENTER_X.
-    position: [f32; 4],
-    /// Normal with w = 0: the plane normal +Z for every corner.
-    normal: [f32; 4],
-}
-
-impl Vertex {
-    const LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-        array_stride: 32,
-        step_mode: VertexStepMode::Vertex,
-        attributes: &[
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 0,
-                shader_location: 0,
-            },
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 16,
-                shader_location: 1,
-            },
-        ],
-    };
-}
-
-fn plane_vertices() -> [Vertex; 4] {
-    let normal = [0.0, 0.0, 1.0, 0.0];
-    [
-        Vertex {
-            position: [CENTER_X - HALF_X, -HALF_Y, 0.0, 1.0],
-            normal,
-        },
-        Vertex {
-            position: [CENTER_X + HALF_X, -HALF_Y, 0.0, 1.0],
-            normal,
-        },
-        Vertex {
-            position: [CENTER_X - HALF_X, HALF_Y, 0.0, 1.0],
-            normal,
-        },
-        Vertex {
-            position: [CENTER_X + HALF_X, HALF_Y, 0.0, 1.0],
-            normal,
-        },
-    ]
-}
-
-// Two triangles over the four corners; both draws read exactly these six indices.
-const INDICES: [u16; 6] = [0, 1, 2, 2, 1, 3];
 
 /// Chapter 28: mesh, material and object as separate roles - one mesh, two materials, two records.
 /// Draws pick their object by immediate index; M binds one material, X moves object 1.
@@ -101,7 +47,7 @@ pub struct SceneObjects {
 impl Sample for SceneObjects {
     fn init(gpu: &Gpu) -> Result<Self, Box<dyn Error>> {
         // The immediates path needs its feature and budget checked before the first pipeline.
-        if !gpu.device.features().contains(wgpu::Features::IMMEDIATES) {
+        if !gpu.device.features().contains(Features::IMMEDIATES) {
             return Err("This example requires Features::IMMEDIATES (adapter support varies): the object index travels in the command state".into());
         }
         if gpu.device.limits().max_immediate_size < 4 {
@@ -200,7 +146,7 @@ impl Sample for SceneObjects {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -215,7 +161,7 @@ impl Sample for SceneObjects {
             layout: &camera_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &camera_buffer,
                     offset: 0,
                     size: None,
@@ -246,7 +192,7 @@ impl Sample for SceneObjects {
                 layout: &material_layout,
                 entries: &[BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer: &buffer,
                         offset: 0,
                         size: None,
@@ -271,7 +217,7 @@ impl Sample for SceneObjects {
             layout: &objects_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &objects_buffer,
                     offset: 0,
                     size: None,
@@ -286,7 +232,7 @@ impl Sample for SceneObjects {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&vertices));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&vertices));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Plane indices"),
             size: size_of_val(&INDICES) as u64,
@@ -294,7 +240,7 @@ impl Sample for SceneObjects {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             camera_bind_group,
@@ -356,18 +302,18 @@ impl Sample for SceneObjects {
         pass.set_bind_group(0, &self.camera_bind_group, &[]);
         pass.set_bind_group(2, &self.objects_bind_group, &[]);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         for object in 0..OBJECT_COUNT as u32 {
             // Role per material: separate keeps the warm/cool pair, shared binds warm for both.
             let material = usize::from(!self.shared_material && object == 1);
             pass.set_bind_group(1, &self.material_bind_groups[material], &[]);
             // Role per draw: the object index rides in the command state, no buffer written between draws.
-            pass.set_immediates(0, bytemuck::bytes_of(&object));
+            pass.set_immediates(0, bytes_of(&object));
             pass.draw_indexed(0..INDICES.len() as u32, 0, 0..1);
         }
     }
 
-    fn window_event(&mut self, window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self, window: &Window, event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event

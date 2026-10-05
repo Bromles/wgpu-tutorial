@@ -1,8 +1,14 @@
-use std::error::Error;
-
+use crate::mesh::{FACE_VIEWS, INDICES, VERTICES, Vertex, ortho};
+use crate::texture::create;
+use bytemuck::cast_slice;
 use encase::UniformBuffer;
-use glam::{Mat4, Vec3};
 use framework::{Gpu, Sample};
+use glam::Vec3;
+use glam::camera::rh::view::look_at_mat4;
+use std::error::Error;
+use wgpu::BindingResource;
+use wgpu::IndexFormat;
+use wgpu::MultisampleState;
 use wgpu::{
     BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
     BindGroupLayoutEntry, BindingType, Buffer, BufferBinding, BufferBindingType, BufferDescriptor,
@@ -12,197 +18,13 @@ use wgpu::{
     RenderPassColorAttachment, RenderPassDepthStencilAttachment, RenderPassDescriptor,
     RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, Texture, TextureDescriptor,
     TextureDimension, TextureFormat, TextureSampleType, TextureUsages, TextureView,
-    TextureViewDescriptor, TextureViewDimension, VertexAttribute, VertexBufferLayout, VertexFormat,
-    VertexState, VertexStepMode, include_wgsl,
+    TextureViewDescriptor, TextureViewDimension, VertexState, include_wgsl,
 };
 use winit::dpi::PhysicalSize;
 use winit::event::{ElementState, WindowEvent};
-use winit::keyboard::{KeyCode, PhysicalKey};
-
-/// Static camera pose: eye on the face normal, up hint +Y (sides) or +Z (top/bottom).
-pub struct FaceView {
-    pub eye: Vec3,
-    pub up: Vec3,
-}
-
-/// Six views in key order 1..6: +Z, -Z, +X, -X, +Y, -Y.
-pub const FACE_VIEWS: [FaceView; 6] = [
-    FaceView {
-        eye: Vec3::new(0.0, 0.0, 3.0),
-        up: Vec3::Y,
-    },
-    FaceView {
-        eye: Vec3::new(0.0, 0.0, -3.0),
-        up: Vec3::Y,
-    },
-    FaceView {
-        eye: Vec3::new(3.0, 0.0, 0.0),
-        up: Vec3::Y,
-    },
-    FaceView {
-        eye: Vec3::new(-3.0, 0.0, 0.0),
-        up: Vec3::Y,
-    },
-    FaceView {
-        eye: Vec3::new(0.0, 3.0, 0.0),
-        up: Vec3::Z,
-    },
-    FaceView {
-        eye: Vec3::new(0.0, -3.0, 0.0),
-        up: Vec3::Z,
-    },
-];
-
-/// Fixed ortho volume -2..2 x -1.5..1.5; fits the cube, matches the 4:3 frame.
-fn ortho() -> Mat4 {
-    glam::camera::rh::proj::directx::orthographic(-2.0, 2.0, -1.5, 1.5, 0.1, 10.0)
-}
-
-#[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct Vertex {
-    /// Position with w = 1, padded to four components for 4-byte alignment.
-    pub position: [f32; 4],
-    /// Texture coordinates of this corner inside this face's copy.
-    pub uv: [f32; 2],
-}
-
-impl Vertex {
-    const LAYOUT: VertexBufferLayout<'static> = VertexBufferLayout {
-        array_stride: 24,
-        step_mode: VertexStepMode::Vertex,
-        attributes: &[
-            VertexAttribute {
-                format: VertexFormat::Float32x4,
-                offset: 0,
-                shader_location: 0,
-            },
-            VertexAttribute {
-                format: VertexFormat::Float32x2,
-                offset: 16,
-                shader_location: 1,
-            },
-        ],
-    };
-}
-
-/// The 24 cube corners: four records per face, uv (0,0), (1,0), (0,1), (1,1) as seen from outside.
-/// Each corner appears in three records with different UV.
-pub const VERTICES: [Vertex; 24] = [
-    // +Z face: screen right is +X, screen up is +Y.
-    Vertex {
-        position: [-0.5, 0.5, 0.5, 1.0],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, 0.5, 1.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5, 1.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5, 1.0],
-        uv: [1.0, 1.0],
-    },
-    // -Z face: screen right is -X, screen up is +Y.
-    Vertex {
-        position: [0.5, 0.5, -0.5, 1.0],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5, 1.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5, 1.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5, 1.0],
-        uv: [1.0, 1.0],
-    },
-    // +X face: screen right is -Z, screen up is +Y.
-    Vertex {
-        position: [0.5, 0.5, 0.5, 1.0],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5, 1.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5, 1.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5, 1.0],
-        uv: [1.0, 1.0],
-    },
-    // -X face: screen right is +Z, screen up is +Y.
-    Vertex {
-        position: [-0.5, 0.5, -0.5, 1.0],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5, 1.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5, 1.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, 0.5, 1.0],
-        uv: [1.0, 1.0],
-    },
-    // +Y face (top): screen right is -X, screen up is +Z.
-    Vertex {
-        position: [0.5, 0.5, 0.5, 1.0],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, 0.5, 1.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, 0.5, -0.5, 1.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [-0.5, 0.5, -0.5, 1.0],
-        uv: [1.0, 1.0],
-    },
-    // -Y face (bottom): screen right is +X, screen up is +Z.
-    Vertex {
-        position: [-0.5, -0.5, 0.5, 1.0],
-        uv: [0.0, 0.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, 0.5, 1.0],
-        uv: [1.0, 0.0],
-    },
-    Vertex {
-        position: [-0.5, -0.5, -0.5, 1.0],
-        uv: [0.0, 1.0],
-    },
-    Vertex {
-        position: [0.5, -0.5, -0.5, 1.0],
-        uv: [1.0, 1.0],
-    },
-];
-
-// Two triangles per face; the shared diagonal keeps the quad flat in UV.
-const INDICES: [u16; 36] = [
-    0, 1, 2, 2, 1, 3, // +Z
-    4, 5, 6, 6, 5, 7, // -Z
-    8, 9, 10, 10, 9, 11, // +X
-    12, 13, 14, 14, 13, 15, // -X
-    16, 17, 18, 18, 17, 19, // +Y
-    20, 21, 22, 22, 21, 23, // -Y
-];
-
+use winit::keyboard::KeyCode;
+use winit::keyboard::PhysicalKey;
+use winit::window::Window;
 /// Chapter 22: six explicit quads form a cube; corners repeat per face because the UVs differ.
 pub struct CubeUv {
     pipeline: RenderPipeline,
@@ -292,7 +114,7 @@ impl Sample for CubeUv {
                     stencil: Default::default(),
                     bias: Default::default(),
                 }),
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -302,14 +124,14 @@ impl Sample for CubeUv {
             usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let (_texture, texture_view) = crate::texture::create(gpu);
+        let (_texture, texture_view) = create(gpu);
         let bind_group = gpu.device.create_bind_group(&BindGroupDescriptor {
             label: Some("Cube UV bind group"),
             layout: &layout,
             entries: &[
                 BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(BufferBinding {
+                    resource: BindingResource::Buffer(BufferBinding {
                         buffer: &view_proj_buffer,
                         offset: 0,
                         size: None,
@@ -317,7 +139,7 @@ impl Sample for CubeUv {
                 },
                 BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&texture_view),
+                    resource: BindingResource::TextureView(&texture_view),
                 },
             ],
         });
@@ -328,7 +150,7 @@ impl Sample for CubeUv {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Cube indices"),
             size: size_of_val(&INDICES) as u64,
@@ -336,7 +158,7 @@ impl Sample for CubeUv {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             bind_group,
@@ -366,8 +188,7 @@ impl Sample for CubeUv {
         }
 
         let face = &FACE_VIEWS[self.face];
-        let view_proj =
-            ortho() * glam::camera::rh::view::look_at_mat4(face.eye, Vec3::ZERO, face.up);
+        let view_proj = ortho() * look_at_mat4(face.eye, Vec3::ZERO, face.up);
         let mut bytes = UniformBuffer::new(Vec::<u8>::new());
         bytes.write(&view_proj).expect("fits the uniform contract");
         gpu.queue
@@ -405,11 +226,11 @@ impl Sample for CubeUv {
         pass.set_pipeline(&self.pipeline);
         pass.set_bind_group(0, &self.bind_group, &[]);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         pass.draw_indexed(0..INDICES.len() as u32, 0, 0..1);
     }
 
-    fn window_event(&mut self, window: &winit::window::Window, event: &WindowEvent) {
+    fn window_event(&mut self, window: &Window, event: &WindowEvent) {
         if let WindowEvent::KeyboardInput {
             event: key_event, ..
         } = event

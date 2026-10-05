@@ -1,8 +1,12 @@
+use bytemuck::Pod;
+use bytemuck::Zeroable;
+use bytemuck::cast_slice;
 use framework::{Gpu, Sample};
 use std::error::Error;
 use wgpu::{
     Buffer, BufferAddress, BufferDescriptor, BufferUsages, Color, ColorTargetState, ColorWrites,
-    CommandEncoder, FragmentState, FrontFace, LoadOp, Operations, PipelineCompilationOptions,
+    CommandEncoder, FragmentState, FrontFace, LoadOp, MultisampleState, Operations,
+    PipelineCompilationOptions,
     PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
     RenderPipeline, RenderPipelineDescriptor, StoreOp, TextureView, VertexAttribute,
     VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,
@@ -10,7 +14,7 @@ use wgpu::{
 
 /// Two 16-byte attributes, no padding: Rust layout = buffer layout.
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     position: [f32; 4],
     color: [f32; 4],
@@ -89,7 +93,7 @@ impl Sample for VertexFetch {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -101,7 +105,7 @@ impl Sample for VertexFetch {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         Ok(Self {
             pipeline,
             vertex_buffer,

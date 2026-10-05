@@ -1,5 +1,8 @@
 use glam::Vec3;
 
+
+use glam::Mat4;
+
 /// Explicit camera transform: returns (right, up, backward, position), the camera matrix columns.
 pub fn camera_axes(
     eye: Vec3,
@@ -20,9 +23,9 @@ pub fn camera_axes(
 }
 
 /// Hand-built view matrix: the world in the camera basis, minus the eye; equals inverse(camera).
-pub fn manual_view(eye: Vec3, target: Vec3, up_hint: Vec3) -> Result<glam::Mat4, String> {
+pub fn manual_view(eye: Vec3, target: Vec3, up_hint: Vec3) -> Result<Mat4, String> {
     let (right, up, backward, eye) = camera_axes(eye, target, up_hint)?;
-    Ok(glam::Mat4::from_cols(
+    Ok(Mat4::from_cols(
         right.extend(0.0),
         up.extend(0.0),
         backward.extend(0.0),
@@ -34,6 +37,7 @@ pub fn manual_view(eye: Vec3, target: Vec3, up_hint: Vec3) -> Result<glam::Mat4,
 #[cfg(test)]
 mod tests {
     use super::*;
+    use glam::camera::rh::view::look_at_mat4;
 
     #[test]
     fn world_origin_maps_to_negative_five_on_z() {
@@ -56,7 +60,7 @@ mod tests {
         let eye = Vec3::new(0.4, 0.7, 5.0);
         let target = Vec3::new(-0.2, 0.1, 0.0);
         let manual = manual_view(eye, target, Vec3::Y).unwrap();
-        let library = glam::camera::rh::view::look_at_mat4(eye, target, Vec3::Y);
+        let library = look_at_mat4(eye, target, Vec3::Y);
         for (m, l) in manual.to_cols_array().iter().zip(library.to_cols_array()) {
             assert!((m - l).abs() < 1e-5, "manual {m} vs look_at_rh {l}");
         }
@@ -67,7 +71,7 @@ mod tests {
         let eye = Vec3::new(0.3, -0.2, 4.0);
         let target = Vec3::new(0.1, 0.2, 0.0);
         let (right, up, backward, eye) = camera_axes(eye, target, Vec3::Y).unwrap();
-        let camera = glam::Mat4::from_cols(
+        let camera = Mat4::from_cols(
             right.extend(0.0),
             up.extend(0.0),
             backward.extend(0.0),
@@ -76,7 +80,7 @@ mod tests {
         let view = manual_view(eye, target, Vec3::Y).unwrap();
         let product = camera * view;
         for (index, value) in product.to_cols_array().iter().enumerate() {
-            let expected = glam::Mat4::IDENTITY.to_cols_array()[index];
+            let expected = Mat4::IDENTITY.to_cols_array()[index];
             assert!((value - expected).abs() < 1e-5);
         }
     }

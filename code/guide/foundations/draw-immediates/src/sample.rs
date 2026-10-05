@@ -1,19 +1,18 @@
-use encase::UniformBuffer;
+use bytemuck::{Pod, Zeroable, bytes_of, cast_slice};
+use encase::{ShaderType, UniformBuffer};
 use framework::{Gpu, Sample};
 use std::error::Error;
-use wgpu::{
-    BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
-    BindGroupLayoutEntry, BindingType, Buffer, BufferAddress, BufferBinding, BufferBindingType,
-    BufferDescriptor, BufferSize, BufferUsages, Color, ColorTargetState, ColorWrites,
-    CommandEncoder, FragmentState, FrontFace, LoadOp, Operations, PipelineCompilationOptions,
-    PipelineLayoutDescriptor, PrimitiveState, PrimitiveTopology, RenderPassColorAttachment,
-    RenderPassDescriptor, RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp,
-    TextureView, VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode,
-    include_wgsl,
-};
+use wgpu::{BindGroup, BindGroupDescriptor, BindGroupEntry, BindGroupLayoutDescriptor,
+    BindGroupLayoutEntry, BindingResource, BindingType, Buffer, BufferAddress, BufferBinding,
+    BufferBindingType, BufferDescriptor, BufferSize, BufferUsages, Color, ColorTargetState,
+    ColorWrites, CommandEncoder, Features, FragmentState, FrontFace, IndexFormat, LoadOp,
+    MultisampleState, Operations, PipelineCompilationOptions, PipelineLayoutDescriptor,
+    PrimitiveState, PrimitiveTopology, RenderPassColorAttachment, RenderPassDescriptor,
+    RenderPipeline, RenderPipelineDescriptor, ShaderStages, StoreOp, TextureView,
+    VertexAttribute, VertexBufferLayout, VertexFormat, VertexState, VertexStepMode, include_wgsl,};
 
 #[repr(C)]
-#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Clone, Copy, Pod, Zeroable)]
 struct Vertex {
     position: [f32; 4],
     color: [f32; 4],
@@ -74,7 +73,7 @@ pub struct DrawImmediates {
 
 impl Sample for DrawImmediates {
     fn init(gpu: &Gpu) -> Result<Self, Box<dyn Error>> {
-        if !gpu.device.features().contains(wgpu::Features::IMMEDIATES) {
+        if !gpu.device.features().contains(Features::IMMEDIATES) {
             return Err(
                 "This example requires the IMMEDIATES feature; run the 09 binding path instead"
                     .into(),
@@ -152,7 +151,7 @@ impl Sample for DrawImmediates {
                     ..PrimitiveState::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: MultisampleState::default(),
                 cache: None,
                 multiview_mask: None,
             });
@@ -164,7 +163,7 @@ impl Sample for DrawImmediates {
             mapped_at_creation: false,
         });
         let mut params_bytes = UniformBuffer::new(Vec::<u8>::new());
-        #[derive(encase::ShaderType)]
+        #[derive(ShaderType)]
         struct Params {
             gain: f32,
         }
@@ -178,7 +177,7 @@ impl Sample for DrawImmediates {
             layout: &params_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &params_buffer,
                     offset: 0,
                     size: None,
@@ -193,13 +192,13 @@ impl Sample for DrawImmediates {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&tints_buffer, 0, bytemuck::cast_slice(&TINTS));
+            .write_buffer(&tints_buffer, 0, cast_slice(&TINTS));
         let tints_bind_group = gpu.device.create_bind_group(&BindGroupDescriptor {
             label: Some("Tints bind group"),
             layout: &tints_layout,
             entries: &[BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(BufferBinding {
+                resource: BindingResource::Buffer(BufferBinding {
                     buffer: &tints_buffer,
                     offset: 0,
                     size: None,
@@ -214,7 +213,7 @@ impl Sample for DrawImmediates {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&vertex_buffer, 0, bytemuck::cast_slice(&VERTICES));
+            .write_buffer(&vertex_buffer, 0, cast_slice(&VERTICES));
         let index_buffer = gpu.device.create_buffer(&BufferDescriptor {
             label: Some("Rectangle indices"),
             size: size_of_val(&INDICES) as u64,
@@ -222,7 +221,7 @@ impl Sample for DrawImmediates {
             mapped_at_creation: false,
         });
         gpu.queue
-            .write_buffer(&index_buffer, 0, bytemuck::cast_slice(&INDICES));
+            .write_buffer(&index_buffer, 0, cast_slice(&INDICES));
         Ok(Self {
             pipeline,
             params_bind_group,
@@ -233,7 +232,10 @@ impl Sample for DrawImmediates {
         })
     }
 
-    fn draw(&mut self, _gpu: &Gpu, encoder: &mut CommandEncoder, view: &TextureView) {
+    fn draw(&mut self,
+    _gpu: &Gpu,
+    encoder: &mut CommandEncoder,
+    view: &TextureView) {
         let mut pass = encoder.begin_render_pass(&RenderPassDescriptor {
             label: Some("Immediates pass"),
             color_attachments: &[Some(RenderPassColorAttachment {
@@ -256,11 +258,11 @@ impl Sample for DrawImmediates {
         pass.set_bind_group(0, &self.params_bind_group, &[]);
         pass.set_bind_group(1, &self.tints_bind_group, &[]);
         pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-        pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        pass.set_index_buffer(self.index_buffer.slice(..), IndexFormat::Uint16);
         // The index travels in command state: no upload between draws.
-        pass.set_immediates(0, bytemuck::bytes_of(&self.selected[0]));
+        pass.set_immediates(0, bytes_of(&self.selected[0]));
         pass.draw_indexed(0..3, 0, 0..1);
-        pass.set_immediates(0, bytemuck::bytes_of(&self.selected[1]));
+        pass.set_immediates(0, bytes_of(&self.selected[1]));
         pass.draw_indexed(3..6, 0, 0..1);
     }
 }

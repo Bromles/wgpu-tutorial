@@ -30,7 +30,8 @@ impl LightParams {
     }
 
     /// The shading formula, mirrored on the CPU for the checks below.
-    pub fn shade(&self, normal: Vec3) -> Vec3 {
+    pub fn shade(&self,
+    normal: Vec3) -> Vec3 {
         let d = normal.normalize().dot(self.light_dir).max(0.0);
         self.albedo * (self.ambient + self.intensity * d)
     }
@@ -66,7 +67,7 @@ mod tests {
     /// Uniform contract: vec3s at 16-byte alignment, scalars packed at 4, size 48.
     #[test]
     fn uniform_layout_matches_the_quoted_offsets() {
-        use encase::UniformBuffer;
+use encase::UniformBuffer;
 
         let mut buffer = UniformBuffer::new(Vec::<u8>::new());
         buffer
